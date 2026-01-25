@@ -3,7 +3,7 @@ import db from '../models/index.js';
 import { sendInvitationEmail } from '../services/emailService.js';
 import { logAudit } from '../utils/audit.js';
 
-const { Shop, ShopInvitation } = db;
+const { Shop, ShopInvitation, User } = db;
 
 const generateInviteToken = () => crypto.randomBytes(32).toString('hex');
 
@@ -117,6 +117,90 @@ export const deleteShop = async (req, res) => {
   } catch (error) {
     console.error('Admin delete shop error:', error);
     return res.status(500).json({ success: false, message: 'Failed to delete shop', error: error.message });
+  }
+};
+
+export const assignOwner = async (req, res) => {
+  try {
+    const { shopId } = req.params;
+    const { user_id } = req.body;
+
+    if (!user_id) {
+      return res.status(400).json({ success: false, message: 'user_id is required' });
+    }
+
+    // Verify shop exists
+    const shop = await Shop.findByPk(shopId);
+    if (!shop) {
+      return res.status(404).json({ success: false, message: 'Shop not found' });
+    }
+
+    // Verify user exists
+    const user = await User.findByPk(user_id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Check if user is already assigned to another shop
+    if (user.shop_id && user.shop_id !== parseInt(shopId)) {
+      const currentShop = await Shop.findByPk(user.shop_id);
+      return res.status(400).json({
+        success: false,
+        message: `User is already assigned to shop: ${currentShop ? currentShop.name : 'Unknown'}`
+      });
+    }
+
+    // Store previous shop_id for audit log
+    const previousShopId = user.shop_id;
+    const previousRole = user.role;
+
+    // Assign user to shop
+    user.shop_id = parseInt(shopId);
+    
+    // Update role to seller if not already admin
+    if (user.role !== 'admin') {
+      user.role = 'seller';
+    }
+
+    await user.save();
+
+    await logAudit({
+      action: 'admin.shop.assign_owner',
+      actor_user_id: req.user.id,
+      target_type: 'user',
+      target_id: user.id,
+      metadata: {
+        shop_id: shop.id,
+        shop_name: shop.name,
+        user_id: user.id,
+        user_name: user.name,
+        user_email: user.email,
+        previous_shop_id: previousShopId,
+        previous_role: previousRole,
+        new_role: user.role
+      },
+      ip_address: req.ip
+    });
+
+    return res.json({
+      success: true,
+      message: 'User assigned to shop successfully',
+      data: {
+        user_id: user.id,
+        user_name: user.name,
+        user_email: user.email,
+        shop_id: shop.id,
+        shop_name: shop.name,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    console.error('Admin assign owner error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to assign user to shop',
+      error: error.message
+    });
   }
 };
 
