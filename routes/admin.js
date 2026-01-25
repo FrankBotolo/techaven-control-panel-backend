@@ -17,6 +17,8 @@ router.post('/shops/:shopId/invite-owner', AdminShopController.inviteOwner);
 
 // Categories
 router.get('/categories/pending', AdminCategoryController.listPending);
+router.get('/categories/rejected', AdminCategoryController.listRejected);
+router.get('/categories/approved', AdminCategoryController.listApproved);
 router.post('/categories/:categoryId/approve', AdminCategoryController.approveCategory);
 
 export default router;

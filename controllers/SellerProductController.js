@@ -42,14 +42,10 @@ export const create = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Shop not found' });
     }
 
-    // Verify category exists and is approved
+    // Verify category exists
     const category = await Category.findByPk(category_id);
     if (!category) {
       return res.status(404).json({ success: false, message: 'Category not found' });
-    }
-
-    if (category.status !== 'approved') {
-      return res.status(400).json({ success: false, message: 'Category must be approved before adding products' });
     }
 
     // Parse images array if provided
@@ -184,9 +180,6 @@ export const update = async (req, res) => {
       const category = await Category.findByPk(category_id);
       if (!category) {
         return res.status(404).json({ success: false, message: 'Category not found' });
-      }
-      if (category.status !== 'approved') {
-        return res.status(400).json({ success: false, message: 'Category must be approved' });
       }
       product.category_id = parseInt(category_id);
     }
