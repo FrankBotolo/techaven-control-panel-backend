@@ -8,6 +8,9 @@ import Banner from './Banner.js';
 import Notification from './Notification.js';
 import ShopInvitation from './ShopInvitation.js';
 import AuditLog from './AuditLog.js';
+import Cart from './Cart.js';
+import Order from './Order.js';
+import OrderItem from './OrderItem.js';
 
 // Define associations
 Product.belongsTo(Category, { foreignKey: 'category_id', as: 'category' });
@@ -38,6 +41,22 @@ User.hasMany(ShopInvitation, { foreignKey: 'accepted_by_user_id', as: 'accepted_
 AuditLog.belongsTo(User, { foreignKey: 'actor_user_id', as: 'actor' });
 User.hasMany(AuditLog, { foreignKey: 'actor_user_id', as: 'audit_logs' });
 
+// Cart associations
+Cart.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+Cart.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
+User.hasMany(Cart, { foreignKey: 'user_id', as: 'cart' });
+Product.hasMany(Cart, { foreignKey: 'product_id', as: 'carts' });
+
+// Order associations
+Order.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+Order.hasMany(OrderItem, { foreignKey: 'order_id', as: 'items' });
+User.hasMany(Order, { foreignKey: 'user_id', as: 'orders' });
+
+// OrderItem associations
+OrderItem.belongsTo(Order, { foreignKey: 'order_id', as: 'order' });
+OrderItem.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
+Product.hasMany(OrderItem, { foreignKey: 'product_id', as: 'order_items' });
+
 const db = {
   sequelize,
   Sequelize: sequelize.Sequelize,
@@ -49,7 +68,10 @@ const db = {
   Banner,
   Notification,
   ShopInvitation,
-  AuditLog
+  AuditLog,
+  Cart,
+  Order,
+  OrderItem
 };
 
 export default db;

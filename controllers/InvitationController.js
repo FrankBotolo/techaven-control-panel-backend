@@ -1,6 +1,46 @@
 import db from '../models/index.js';
+import moment from 'moment';
+import { Op } from 'sequelize';
 
-const { ShopInvitation, Shop, User, sequelize } = db;
+const { ShopInvitation, Shop, User, Otp, sequelize } = db;
+
+// Helper function to get or generate OTP for invitation
+const getOrGenerateOtp = async (invitation) => {
+  const identifier = invitation.owner_email || invitation.owner_phone;
+  
+  if (!identifier) {
+    return null;
+  }
+
+  // Check if there's an existing valid OTP for this invitation
+  const existingOtp = await Otp.findOne({
+    where: {
+      identifier: identifier,
+      type: 'invitation',
+      expires_at: {
+        [Op.gt]: new Date()
+      }
+    },
+    order: [['id', 'DESC']] // Order by id DESC to get most recent
+  });
+
+  if (existingOtp) {
+    return existingOtp.token;
+  }
+
+  // Generate a new 6-digit OTP
+  const code = Math.floor(100000 + Math.random() * 900000).toString().padStart(6, '0');
+  
+  // Create OTP record
+  await Otp.create({
+    identifier: identifier,
+    token: code,
+    type: 'invitation',
+    expires_at: moment().add(7, 'days').toDate() // 7 days expiry for invitations
+  });
+
+  return code;
+};
 
 export const index = async (req, res) => {
   try {
@@ -47,6 +87,20 @@ export const index = async (req, res) => {
 
     const invitations = await ShopInvitation.findAll({
       where,
+      attributes: [
+        'id',
+        'shop_id',
+        'owner_name',
+        'owner_email',
+        'owner_phone',
+        'token',
+        'status',
+        'invited_by_user_id',
+        'accepted_by_user_id',
+        'expires_at',
+        'created_at',
+        'updated_at'
+      ],
       include: [
         {
           model: Shop,
@@ -67,9 +121,19 @@ export const index = async (req, res) => {
       order: [[sequelize.literal('ShopInvitation.created_at'), 'DESC']]
     });
 
+    // Add OTP to each invitation
+    const invitationsWithOtp = await Promise.all(
+      invitations.map(async (invitation) => {
+        const invitationData = invitation.toJSON();
+        const otp = await getOrGenerateOtp(invitation);
+        invitationData.otp = otp;
+        return invitationData;
+      })
+    );
+
     return res.json({
       status: 'success',
-      data: invitations
+      data: invitationsWithOtp
     });
   } catch (error) {
     console.error('Invitations index error:', error);
@@ -87,6 +151,20 @@ export const show = async (req, res) => {
     const user = req.user;
 
     const invitation = await ShopInvitation.findByPk(id, {
+      attributes: [
+        'id',
+        'shop_id',
+        'owner_name',
+        'owner_email',
+        'owner_phone',
+        'token',
+        'status',
+        'invited_by_user_id',
+        'accepted_by_user_id',
+        'expires_at',
+        'created_at',
+        'updated_at'
+      ],
       include: [
         {
           model: Shop,
@@ -131,9 +209,14 @@ export const show = async (req, res) => {
     }
     // Admin can view any invitation
 
+    // Add OTP to invitation
+    const invitationData = invitation.toJSON();
+    const otp = await getOrGenerateOtp(invitation);
+    invitationData.otp = otp;
+
     return res.json({
       status: 'success',
-      data: invitation
+      data: invitationData
     });
   } catch (error) {
     console.error('Invitation show error:', error);

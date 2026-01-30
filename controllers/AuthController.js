@@ -16,7 +16,8 @@ const generateToken = (user) => {
 };
 
 const sendOtp = async (user, type) => {
-  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  // Generate a 6-digit OTP (always exactly 6 digits)
+  const code = Math.floor(100000 + Math.random() * 900000).toString().padStart(6, '0');
   const identifier = user.email || user.phone_number;
 
   await Otp.create({
@@ -222,6 +223,15 @@ export const verifyOtp = async (req, res) => {
       });
     }
 
+    // Validate that OTP is exactly 6 digits
+    const otpString = otp.toString().trim();
+    if (!/^\d{6}$/.test(otpString)) {
+      return res.status(400).json({
+        success: false,
+        message: 'OTP must be exactly 6 digits'
+      });
+    }
+
     if (!email && !phone_number) {
       return res.status(400).json({
         success: false,
@@ -234,7 +244,7 @@ export const verifyOtp = async (req, res) => {
     const otpRecord = await Otp.findOne({
       where: {
         identifier: identifier,
-        token: otp,
+        token: otpString,
         type: type,
         expires_at: {
           [Op.gt]: new Date()
@@ -411,6 +421,15 @@ export const resetPassword = async (req, res) => {
       });
     }
 
+    // Validate that OTP is exactly 6 digits
+    const otpString = otp.toString().trim();
+    if (!/^\d{6}$/.test(otpString)) {
+      return res.status(400).json({
+        success: false,
+        message: 'OTP must be exactly 6 digits'
+      });
+    }
+
     if (!email && !phone_number) {
       return res.status(400).json({
         success: false,
@@ -423,7 +442,7 @@ export const resetPassword = async (req, res) => {
     const otpRecord = await Otp.findOne({
       where: {
         identifier: identifier,
-        token: otp,
+        token: otpString,
         type: 'password_reset',
         expires_at: {
           [Op.gt]: new Date()
