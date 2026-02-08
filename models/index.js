@@ -11,6 +11,10 @@ import AuditLog from './AuditLog.js';
 import Cart from './Cart.js';
 import Order from './Order.js';
 import OrderItem from './OrderItem.js';
+import Favorite from './Favorite.js';
+import Wallet from './Wallet.js';
+import WalletTransaction from './WalletTransaction.js';
+import Review from './Review.js';
 
 // Define associations
 Product.belongsTo(Category, { foreignKey: 'category_id', as: 'category' });
@@ -57,6 +61,26 @@ OrderItem.belongsTo(Order, { foreignKey: 'order_id', as: 'order' });
 OrderItem.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
 Product.hasMany(OrderItem, { foreignKey: 'product_id', as: 'order_items' });
 
+// Favorite associations
+Favorite.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+Favorite.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
+User.hasMany(Favorite, { foreignKey: 'user_id', as: 'favorites' });
+Product.hasMany(Favorite, { foreignKey: 'product_id', as: 'favorites' });
+
+// Wallet associations
+Wallet.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+User.hasOne(Wallet, { foreignKey: 'user_id', as: 'wallet' });
+Wallet.hasMany(WalletTransaction, { foreignKey: 'wallet_id', as: 'transactions' });
+WalletTransaction.belongsTo(Wallet, { foreignKey: 'wallet_id', as: 'wallet' });
+WalletTransaction.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+User.hasMany(WalletTransaction, { foreignKey: 'user_id', as: 'wallet_transactions' });
+
+// Review associations
+Review.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
+Review.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+Product.hasMany(Review, { foreignKey: 'product_id', as: 'reviews' });
+User.hasMany(Review, { foreignKey: 'user_id', as: 'reviews' });
+
 const db = {
   sequelize,
   Sequelize: sequelize.Sequelize,
@@ -71,7 +95,11 @@ const db = {
   AuditLog,
   Cart,
   Order,
-  OrderItem
+  OrderItem,
+  Favorite,
+  Wallet,
+  WalletTransaction,
+  Review
 };
 
 export default db;

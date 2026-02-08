@@ -11,6 +11,13 @@ import sellerRoutes from './sellers.js';
 import invitationRoutes from './invitations.js';
 import cartRoutes from './cart.js';
 import orderRoutes from './orders.js';
+import favoriteRoutes from './favorites.js';
+import walletRoutes from './wallet.js';
+import addressRoutes from './addresses.js';
+import paymentMethodRoutes from './payment-methods.js';
+import searchRoutes from './search.js';
+import helpRoutes from './help.js';
+import appRoutes from './app.js';
 
 const router = express.Router();
 
@@ -26,6 +33,13 @@ router.use('/sellers', sellerRoutes);
 router.use('/invitations', invitationRoutes);
 router.use('/cart', cartRoutes);
 router.use('/orders', orderRoutes);
+router.use('/wishlist', favoriteRoutes);
+router.use('/wallet', walletRoutes);
+router.use('/addresses', addressRoutes);
+router.use('/payment-methods', paymentMethodRoutes);
+router.use('/search', searchRoutes);
+router.use('/help', helpRoutes);
+router.use('/app', appRoutes);
 
 export default router;
 

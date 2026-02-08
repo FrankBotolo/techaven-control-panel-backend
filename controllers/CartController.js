@@ -18,7 +18,7 @@ export const getCart = async (req, res) => {
             ]
           }
         ],
-      order: [['created_at', 'DESC']]
+      order: [['id', 'DESC']]
     });
 
     // Calculate totals
@@ -27,31 +27,37 @@ export const getCart = async (req, res) => {
 
     const items = cartItems.map(item => {
       const product = item.product;
-      const itemTotal = parseFloat(product.price) * item.quantity;
+      const unitPrice = parseFloat(product.price) || 0;
+      const itemTotal = unitPrice * item.quantity;
       totalItems += item.quantity;
       totalAmount += itemTotal;
 
       return {
-        id: item.id,
+        id: `item_${item.id}`,
         product_id: product.id,
         product_name: product.name,
-        product_image: product.image,
-        price: parseFloat(product.price),
+        product_image: product.image || product.image_url || null,
+        unit_price: unitPrice,
         quantity: item.quantity,
         subtotal: itemTotal,
-        product: product
+        is_available: (product.stock || 0) >= item.quantity
       };
     });
 
     return res.json({
       success: true,
-      message: 'Cart retrieved successfully',
+      message: 'Cart retrieved',
       data: {
+        id: `cart_${userId}`,
         items,
         summary: {
-          total_items: totalItems,
-          total_amount: totalAmount,
-          item_count: cartItems.length
+          subtotal: totalAmount,
+          discount: 0,
+          shipping: 0,
+          tax: 0,
+          total: totalAmount,
+          currency: 'MWK',
+          item_count: totalItems
         }
       }
     });
@@ -105,23 +111,9 @@ export const addToCart = async (req, res) => {
     });
 
     if (existingCartItem) {
-      // Update quantity
-      const newQuantity = existingCartItem.quantity + qty;
-      
-      if (product.stock < newQuantity) {
-        return res.status(400).json({
-          success: false,
-          message: `Insufficient stock. Only ${product.stock} available`
-        });
-      }
-
-      existingCartItem.quantity = newQuantity;
-      await existingCartItem.save();
-
-      return res.json({
-        success: true,
-        message: 'Cart updated successfully',
-        data: existingCartItem
+      return res.status(409).json({
+        success: false,
+        message: 'Item already in cart (use update instead)'
       });
     }
 
@@ -132,10 +124,16 @@ export const addToCart = async (req, res) => {
       quantity: qty
     });
 
-    return res.json({
+    // Get updated cart count
+    const cartItemCount = await Cart.count({ where: { user_id: userId } });
+
+    return res.status(201).json({
       success: true,
-      message: 'Item added to cart successfully',
-      data: cartItem
+      message: 'Item added to cart',
+      data: {
+        item_id: `item_${cartItem.id}`,
+        cart_item_count: cartItemCount
+      }
     });
   } catch (error) {
     console.error('Add to cart error:', error);
@@ -150,7 +148,7 @@ export const addToCart = async (req, res) => {
 export const updateCartItem = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { id } = req.params;
+    const { item_id } = req.params;
     const { quantity } = req.body;
 
     if (!quantity || quantity < 1) {
@@ -160,9 +158,12 @@ export const updateCartItem = async (req, res) => {
       });
     }
 
+    // Extract numeric ID from item_id (e.g., "item_1" -> 1)
+    const numericId = item_id.toString().replace('item_', '');
+    
     const cartItem = await Cart.findOne({
       where: {
-        id: id,
+        id: numericId,
         user_id: userId
       },
       include: [{ model: Product, as: 'product' }]
@@ -186,10 +187,16 @@ export const updateCartItem = async (req, res) => {
     cartItem.quantity = quantity;
     await cartItem.save();
 
+    const subtotal = parseFloat(cartItem.product.price || 0) * quantity;
+
     return res.json({
       success: true,
-      message: 'Cart item updated successfully',
-      data: cartItem
+      message: 'Cart item updated',
+      data: {
+        item_id: `item_${cartItem.id}`,
+        quantity: quantity,
+        subtotal: subtotal
+      }
     });
   } catch (error) {
     console.error('Update cart item error:', error);
@@ -204,11 +211,14 @@ export const updateCartItem = async (req, res) => {
 export const removeFromCart = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { id } = req.params;
+    const { item_id } = req.params;
 
+    // Extract numeric ID from item_id (e.g., "item_1" -> 1)
+    const numericId = item_id.toString().replace('item_', '');
+    
     const cartItem = await Cart.findOne({
       where: {
-        id: id,
+        id: numericId,
         user_id: userId
       }
     });
@@ -222,9 +232,15 @@ export const removeFromCart = async (req, res) => {
 
     await cartItem.destroy();
 
+    // Get updated cart count
+    const cartItemCount = await Cart.count({ where: { user_id: userId } });
+
     return res.json({
       success: true,
-      message: 'Item removed from cart successfully'
+      message: 'Item removed from cart',
+      data: {
+        cart_item_count: cartItemCount
+      }
     });
   } catch (error) {
     console.error('Remove from cart error:', error);
@@ -246,7 +262,8 @@ export const clearCart = async (req, res) => {
 
     return res.json({
       success: true,
-      message: 'Cart cleared successfully'
+      message: 'Cart cleared',
+      data: null
     });
   } catch (error) {
     console.error('Clear cart error:', error);

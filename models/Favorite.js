@@ -1,7 +1,7 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
 
-const Cart = sequelize.define('Cart', {
+const Favorite = sequelize.define('Favorite', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -22,17 +22,9 @@ const Cart = sequelize.define('Cart', {
       model: 'products',
       key: 'id'
     }
-  },
-  quantity: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    defaultValue: 1,
-    validate: {
-      min: 1
-    }
   }
 }, {
-  tableName: 'carts',
+  tableName: 'favorites',
   timestamps: true,
   indexes: [
     {
@@ -42,14 +34,5 @@ const Cart = sequelize.define('Cart', {
   ]
 });
 
-export default Cart;
-
-
-
-
-
-
-
-
-
+export default Favorite;
 

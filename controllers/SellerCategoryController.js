@@ -6,26 +6,31 @@ const { Category, Shop } = db;
 export const create = async (req, res) => {
   try {
     const { shopId } = req.params;
-    const { category_name, description, icon_url, image_url } = req.body;
+    // Accept both 'name' (from API docs) and 'category_name' (backward compatibility)
+    const { name, category_name, description, icon, icon_url, image, image_url } = req.body;
 
-    if (!category_name) {
-      return res.status(400).json({ success: false, message: 'category_name is required' });
+    // Use name or category_name (name takes precedence)
+    const categoryName = name || category_name;
+    if (!categoryName) {
+      return res.status(400).json({ success: false, message: 'name (or category_name) is required' });
     }
 
-    if (!icon_url) {
-      return res.status(400).json({ success: false, message: 'icon_url is required' });
-    }
+    // Accept both 'icon' and 'icon_url' (icon takes precedence) - optional
+    const categoryIcon = icon || icon_url || null;
+
+    // Accept both 'image' and 'image_url' (image takes precedence) - optional
+    const categoryImage = image || image_url || null;
 
     const shop = await Shop.findByPk(shopId);
     if (!shop) return res.status(404).json({ success: false, message: 'Shop not found' });
 
     const category = await Category.create({
       shop_id: shop.id,
-      name: category_name,
+      name: categoryName,
       description: description || null,
-      icon: icon_url,
-      image: image_url || null,
-      status: 'pending'
+      icon: categoryIcon,
+      image: categoryImage,
+      status: 'approved' // Categories are automatically approved
     });
 
     await logAudit({
@@ -33,7 +38,7 @@ export const create = async (req, res) => {
       actor_user_id: req.user.id,
       target_type: 'category',
       target_id: category.id,
-      metadata: { shop_id: shop.id, category_name, description, icon_url, image_url },
+      metadata: { shop_id: shop.id, category_name: categoryName, description, icon_url: categoryIcon, image_url: categoryImage },
       ip_address: req.ip
     });
 

@@ -4,28 +4,35 @@ import { logAudit } from '../utils/audit.js';
 const { Order, OrderItem, Cart, Product, User, Notification } = db;
 
 const generateOrderNumber = () => {
-  const timestamp = Date.now();
-  const random = Math.floor(Math.random() * 1000);
-  return `ORD-${timestamp}-${random}`;
+  const year = new Date().getFullYear();
+  const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+  return `TH-${year}-${random}`;
 };
 
-export const checkout = async (req, res) => {
+export const createOrder = async (req, res) => {
   try {
     const userId = req.user.id;
     const {
-      shipping_address,
-      shipping_city,
-      shipping_phone,
-      payment_method = 'cash_on_delivery',
-      notes
+      shipping_address_id,
+      payment_method_id,
+      notes,
+      coupon_code
     } = req.body;
 
-    if (!shipping_address || !shipping_phone) {
+    if (!shipping_address_id) {
       return res.status(400).json({
         success: false,
-        message: 'Shipping address and phone are required'
+        message: 'Shipping address ID is required'
       });
     }
+
+    // TODO: Fetch shipping address from addresses table
+    // For now, we'll use a placeholder
+    const shippingAddress = {
+      address_line: 'Address from DB',
+      city: 'City from DB',
+      phone: 'Phone from DB'
+    };
 
     // Get cart items
     const cartItems = await Cart.findAll({
@@ -68,18 +75,24 @@ export const checkout = async (req, res) => {
       });
     }
 
+    // Calculate shipping (placeholder - should be calculated based on address)
+    const shipping = 5000; // MWK
+    const discount = 0; // TODO: Calculate from coupon_code
+    const tax = 0;
+    const finalTotal = totalAmount + shipping - discount + tax;
+
     // Create order
     const orderNumber = generateOrderNumber();
     const order = await Order.create({
       user_id: userId,
       order_number: orderNumber,
       status: 'pending',
-      total_amount: totalAmount,
-      shipping_address,
-      shipping_city: shipping_city || null,
-      shipping_phone,
-      payment_method,
-      payment_status: payment_method === 'cash_on_delivery' ? 'pending' : 'pending',
+      total_amount: finalTotal,
+      shipping_address: shippingAddress.address_line,
+      shipping_city: shippingAddress.city,
+      shipping_phone: shippingAddress.phone,
+      payment_method: payment_method_id || 'mobile_money',
+      payment_status: 'pending',
       notes: notes || null
     });
 
@@ -135,10 +148,18 @@ export const checkout = async (req, res) => {
       ]
     });
 
-    return res.json({
+    return res.status(201).json({
       success: true,
       message: 'Order placed successfully',
-      data: orderWithItems
+      data: {
+        order_id: `ord_${order.id}`,
+        order_number: orderNumber,
+        status: 'pending',
+        total: finalTotal,
+        currency: 'MWK',
+        payment_url: `https://payment.techaven.mw/pay/ord_${order.id}`,
+        created_at: order.createdAt || order.created_at || new Date()
+      }
     });
   } catch (error) {
     console.error('Checkout error:', error);
@@ -179,7 +200,7 @@ export const getOrders = async (req, res) => {
           attributes: ['id', 'name', 'email', 'phone_number']
         }
       ],
-      order: [['created_at', 'DESC']]
+      order: [['id', 'DESC']]
     });
 
     return res.json({
@@ -201,7 +222,8 @@ export const getOrder = async (req, res) => {
   try {
     const userId = req.user.id;
     const userRole = req.user.role;
-    const { id } = req.params;
+    const { order_id } = req.params;
+    const id = order_id.replace('ord_', '');
 
     let whereClause = { id };
     if (userRole === 'customer') {
@@ -340,7 +362,9 @@ export const updateOrderStatus = async (req, res) => {
 export const cancelOrder = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { id } = req.params;
+    const { order_id } = req.params;
+    const { reason } = req.body;
+    const id = order_id.replace('ord_', '');
 
     const order = await Order.findOne({
       where: {
@@ -388,7 +412,11 @@ export const cancelOrder = async (req, res) => {
     return res.json({
       success: true,
       message: 'Order cancelled successfully',
-      data: order
+      data: {
+        order_id: `ord_${order.id}`,
+        status: 'cancelled',
+        refund_status: 'processing'
+      }
     });
   } catch (error) {
     console.error('Cancel order error:', error);

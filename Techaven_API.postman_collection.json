@@ -1,0 +1,1731 @@
+{
+	"info": {
+		"_postman_id": "techaven-api-collection",
+		"name": "Techaven API",
+		"description": "Complete API documentation for Techaven e-commerce platform\n\n**Organization:**\n- **Mobile App (Customer APIs)**: All customer-facing endpoints for mobile application\n- **Web (Admin & Seller APIs)**: Admin dashboard and seller dashboard endpoints for web application",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"item": [
+		{
+			"name": "Mobile App (Customer APIs)",
+			"description": "All APIs for mobile customer application",
+			"item": [
+				{
+					"name": "1. Authentication",
+					"item": [
+						{
+							"name": "Register",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"full_name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"phone_number\": \"+265991234567\",\n  \"password\": \"securePassword123\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/auth/register",
+									"host": ["{{base_url}}"],
+									"path": ["api", "auth", "register"]
+								},
+								"description": "Creates a new customer account. After registration, verify OTP to complete the process."
+							},
+							"response": []
+						},
+						{
+							"name": "Login",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"securePassword123\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/auth/login",
+									"host": ["{{base_url}}"],
+									"path": ["api", "auth", "login"]
+								},
+								"description": "Authenticates user and returns session tokens."
+							},
+							"response": []
+						},
+						{
+							"name": "Verify OTP",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"john@example.com\",\n  \"otp\": \"123456\",\n  \"type\": \"signup\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/auth/verify-otp",
+									"host": ["{{base_url}}"],
+									"path": ["api", "auth", "verify-otp"]
+								},
+								"description": "Verifies OTP for signup, login, or password reset. Types: signup, login, password_reset"
+							},
+							"response": []
+						},
+						{
+							"name": "Resend OTP",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"john@example.com\",\n  \"type\": \"signup\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/auth/resend-otp",
+									"host": ["{{base_url}}"],
+									"path": ["api", "auth", "resend-otp"]
+								},
+								"description": "Resends OTP to user's email or phone."
+							},
+							"response": []
+						},
+						{
+							"name": "Forgot Password",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"john@example.com\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/auth/forgot-password",
+									"host": ["{{base_url}}"],
+									"path": ["api", "auth", "forgot-password"]
+								},
+								"description": "Initiates password reset flow by sending OTP."
+							},
+							"response": []
+						},
+						{
+							"name": "Reset Password",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"john@example.com\",\n  \"reset_token\": \"rst_abc123xyz\",\n  \"new_password\": \"newSecurePassword456\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/auth/reset-password",
+									"host": ["{{base_url}}"],
+									"path": ["api", "auth", "reset-password"]
+								},
+								"description": "Sets new password after OTP verification."
+							},
+							"response": []
+						},
+						{
+							"name": "Refresh Token",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"refresh_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/auth/refresh-token",
+									"host": ["{{base_url}}"],
+									"path": ["api", "auth", "refresh-token"]
+								},
+								"description": "Gets new access token using refresh token."
+							},
+							"response": []
+						},
+						{
+							"name": "Logout",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{base_url}}/api/auth/logout",
+									"host": ["{{base_url}}"],
+									"path": ["api", "auth", "logout"]
+								},
+								"description": "Invalidates current tokens."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "2. User Management",
+					"item": [
+						{
+							"name": "Get Profile",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/user/profile",
+									"host": ["{{base_url}}"],
+									"path": ["api", "user", "profile"]
+								},
+								"description": "Get current authenticated user's profile."
+							},
+							"response": []
+						},
+						{
+							"name": "Update Profile",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"full_name\": \"John Smith\",\n  \"phone\": \"+265991234567\",\n  \"date_of_birth\": \"1990-05-15\",\n  \"gender\": \"male\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/user/profile",
+									"host": ["{{base_url}}"],
+									"path": ["api", "user", "profile"]
+								},
+								"description": "Update user profile."
+							},
+							"response": []
+						},
+						{
+							"name": "Upload Avatar",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "avatar",
+											"type": "file",
+											"src": []
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/api/user/avatar",
+									"host": ["{{base_url}}"],
+									"path": ["api", "user", "avatar"]
+								},
+								"description": "Upload user avatar image (max 5MB, jpg/png/webp)."
+							},
+							"response": []
+						},
+						{
+							"name": "Change Password",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"current_password\": \"oldPassword123\",\n  \"new_password\": \"newPassword456\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/user/password",
+									"host": ["{{base_url}}"],
+									"path": ["api", "user", "password"]
+								},
+								"description": "Change user password."
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Account",
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"password\": \"currentPassword123\",\n  \"reason\": \"No longer using the app\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/user/account",
+									"host": ["{{base_url}}"],
+									"path": ["api", "user", "account"]
+								},
+								"description": "Delete user account permanently."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "3. Products",
+					"item": [
+						{
+							"name": "Get All Products",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/products?page=1&limit=20&sort=name&order=asc",
+									"host": ["{{base_url}}"],
+									"path": ["api", "products"],
+									"query": [
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "limit",
+											"value": "20"
+										},
+										{
+											"key": "sort",
+											"value": "name"
+										},
+										{
+											"key": "order",
+											"value": "asc"
+										}
+									]
+								},
+								"description": "Get all products with pagination and filtering."
+							},
+							"response": []
+						},
+						{
+							"name": "Get Single Product",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/products/1",
+									"host": ["{{base_url}}"],
+									"path": ["api", "products", "1"]
+								},
+								"description": "Get detailed information about a single product."
+							},
+							"response": []
+						},
+						{
+							"name": "Get Featured Products",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/products/featured?limit=10",
+									"host": ["{{base_url}}"],
+									"path": ["api", "products", "featured"],
+									"query": [
+										{
+											"key": "limit",
+											"value": "10"
+										}
+									]
+								},
+								"description": "Get featured products."
+							},
+							"response": []
+						},
+						{
+							"name": "Get Hot Sales",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/products/hot-sales?limit=10",
+									"host": ["{{base_url}}"],
+									"path": ["api", "products", "hot-sales"],
+									"query": [
+										{
+											"key": "limit",
+											"value": "10"
+										}
+									]
+								},
+								"description": "Get hot sale products."
+							},
+							"response": []
+						},
+						{
+							"name": "Get Special Offers",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/products/special-offers?limit=10",
+									"host": ["{{base_url}}"],
+									"path": ["api", "products", "special-offers"],
+									"query": [
+										{
+											"key": "limit",
+											"value": "10"
+										}
+									]
+								},
+								"description": "Get special offer products."
+							},
+							"response": []
+						},
+						{
+							"name": "Get New Arrivals",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/products/new-arrivals?limit=10",
+									"host": ["{{base_url}}"],
+									"path": ["api", "products", "new-arrivals"],
+									"query": [
+										{
+											"key": "limit",
+											"value": "10"
+										}
+									]
+								},
+								"description": "Get new arrival products."
+							},
+							"response": []
+						},
+						{
+							"name": "Get Product Reviews",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/products/1/reviews?page=1&limit=10",
+									"host": ["{{base_url}}"],
+									"path": ["api", "products", "1", "reviews"],
+									"query": [
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "limit",
+											"value": "10"
+										}
+									]
+								},
+								"description": "Get reviews for a specific product."
+							},
+							"response": []
+						},
+						{
+							"name": "Add Product Review",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"rating\": 5,\n  \"title\": \"Amazing phone!\",\n  \"comment\": \"Best phone I've ever owned.\",\n  \"images\": [\"base64_encoded_image_1\", \"base64_encoded_image_2\"]\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/products/1/reviews",
+									"host": ["{{base_url}}"],
+									"path": ["api", "products", "1", "reviews"]
+								},
+								"description": "Add a review for a product."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "4. Categories",
+					"item": [
+						{
+							"name": "Get All Categories",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/categories",
+									"host": ["{{base_url}}"],
+									"path": ["api", "categories"]
+								},
+								"description": "Get all categories with subcategories."
+							},
+							"response": []
+						},
+						{
+							"name": "Get Category Products",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/categories/1/products",
+									"host": ["{{base_url}}"],
+									"path": ["api", "categories", "1", "products"]
+								},
+								"description": "Get all products in a specific category."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "5. Cart",
+					"item": [
+						{
+							"name": "Get Cart",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/cart",
+									"host": ["{{base_url}}"],
+									"path": ["api", "cart"]
+								},
+								"description": "Get all items in the authenticated user's cart."
+							},
+							"response": []
+						},
+						{
+							"name": "Add to Cart",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"product_id\": 1,\n  \"quantity\": 1\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/cart/items",
+									"host": ["{{base_url}}"],
+									"path": ["api", "cart", "items"]
+								},
+								"description": "Add a product to the cart."
+							},
+							"response": []
+						},
+						{
+							"name": "Update Cart Item",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"quantity\": 2\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/cart/items/item_1",
+									"host": ["{{base_url}}"],
+									"path": ["api", "cart", "items", "item_1"]
+								},
+								"description": "Update the quantity of a cart item."
+							},
+							"response": []
+						},
+						{
+							"name": "Remove from Cart",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/cart/items/item_1",
+									"host": ["{{base_url}}"],
+									"path": ["api", "cart", "items", "item_1"]
+								},
+								"description": "Remove an item from the cart."
+							},
+							"response": []
+						},
+						{
+							"name": "Clear Cart",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/cart",
+									"host": ["{{base_url}}"],
+									"path": ["api", "cart"]
+								},
+								"description": "Remove all items from the cart."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "6. Orders",
+					"item": [
+						{
+							"name": "Create Order",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"shipping_address_id\": \"addr_123\",\n  \"payment_method_id\": \"pm_456\",\n  \"notes\": \"Please call before delivery\",\n  \"coupon_code\": \"SAVE10\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/orders",
+									"host": ["{{base_url}}"],
+									"path": ["api", "orders"]
+								},
+								"description": "Create a new order from cart items."
+							},
+							"response": []
+						},
+						{
+							"name": "Get Orders",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/orders?page=1&limit=20&status=pending",
+									"host": ["{{base_url}}"],
+									"path": ["api", "orders"],
+									"query": [
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "limit",
+											"value": "20"
+										},
+										{
+											"key": "status",
+											"value": "pending"
+										}
+									]
+								},
+								"description": "Get all orders for the authenticated user."
+							},
+							"response": []
+						},
+						{
+							"name": "Get Single Order",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/orders/ord_789",
+									"host": ["{{base_url}}"],
+									"path": ["api", "orders", "ord_789"]
+								},
+								"description": "Get detailed information about a specific order."
+							},
+							"response": []
+						},
+						{
+							"name": "Cancel Order",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"reason\": \"Changed my mind\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/orders/ord_789/cancel",
+									"host": ["{{base_url}}"],
+									"path": ["api", "orders", "ord_789", "cancel"]
+								},
+								"description": "Cancel an order."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "7. Wishlist",
+					"item": [
+						{
+							"name": "Get Wishlist",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/wishlist",
+									"host": ["{{base_url}}"],
+									"path": ["api", "wishlist"]
+								},
+								"description": "Get all products in the user's wishlist."
+							},
+							"response": []
+						},
+						{
+							"name": "Add to Wishlist",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"product_id\": 1\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/wishlist",
+									"host": ["{{base_url}}"],
+									"path": ["api", "wishlist"]
+								},
+								"description": "Add a product to wishlist."
+							},
+							"response": []
+						},
+						{
+							"name": "Remove from Wishlist",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/wishlist/1",
+									"host": ["{{base_url}}"],
+									"path": ["api", "wishlist", "1"]
+								},
+								"description": "Remove a product from wishlist."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "8. Wallet",
+					"item": [
+						{
+							"name": "Get Wallet Balance",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/wallet",
+									"host": ["{{base_url}}"],
+									"path": ["api", "wallet"]
+								},
+								"description": "Get wallet balance for the authenticated user."
+							},
+							"response": []
+						},
+						{
+							"name": "Get Wallet Transactions",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/wallet/transactions?page=1&limit=20&type=credit",
+									"host": ["{{base_url}}"],
+									"path": ["api", "wallet", "transactions"],
+									"query": [
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "limit",
+											"value": "20"
+										},
+										{
+											"key": "type",
+											"value": "credit"
+										}
+									]
+								},
+								"description": "Get wallet transaction history."
+							},
+							"response": []
+						},
+						{
+							"name": "Top Up Wallet",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"amount\": 10000,\n  \"payment_method\": \"mobile_money\",\n  \"phone_number\": \"+265991234567\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/wallet/topup",
+									"host": ["{{base_url}}"],
+									"path": ["api", "wallet", "topup"]
+								},
+								"description": "Top up wallet balance."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "9. Shipping Addresses",
+					"item": [
+						{
+							"name": "Get Addresses",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/addresses",
+									"host": ["{{base_url}}"],
+									"path": ["api", "addresses"]
+								},
+								"description": "Get all shipping addresses for the authenticated user."
+							},
+							"response": []
+						},
+						{
+							"name": "Add Address",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"label\": \"Office\",\n  \"full_name\": \"John Doe\",\n  \"phone\": \"+265991234567\",\n  \"address_line_1\": \"456 Business Park\",\n  \"address_line_2\": \"City Center\",\n  \"city\": \"Blantyre\",\n  \"state\": \"Southern Region\",\n  \"postal_code\": \"\",\n  \"country\": \"Malawi\",\n  \"is_default\": false\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/addresses",
+									"host": ["{{base_url}}"],
+									"path": ["api", "addresses"]
+								},
+								"description": "Add a new shipping address."
+							},
+							"response": []
+						},
+						{
+							"name": "Update Address",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"label\": \"Home\",\n  \"full_name\": \"John Doe\",\n  \"phone\": \"+265991234567\",\n  \"address_line_1\": \"123 Main Street\",\n  \"address_line_2\": \"Area 47\",\n  \"city\": \"Lilongwe\",\n  \"state\": \"Central Region\",\n  \"postal_code\": \"\",\n  \"country\": \"Malawi\",\n  \"is_default\": true\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/addresses/addr_123",
+									"host": ["{{base_url}}"],
+									"path": ["api", "addresses", "addr_123"]
+								},
+								"description": "Update a shipping address."
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Address",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/addresses/addr_123",
+									"host": ["{{base_url}}"],
+									"path": ["api", "addresses", "addr_123"]
+								},
+								"description": "Delete a shipping address."
+							},
+							"response": []
+						},
+						{
+							"name": "Set Default Address",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{base_url}}/api/addresses/addr_123/default",
+									"host": ["{{base_url}}"],
+									"path": ["api", "addresses", "addr_123", "default"]
+								},
+								"description": "Set an address as default."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "10. Payment Methods",
+					"item": [
+						{
+							"name": "Get Payment Methods",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/payment-methods",
+									"host": ["{{base_url}}"],
+									"path": ["api", "payment-methods"]
+								},
+								"description": "Get all payment methods for the authenticated user."
+							},
+							"response": []
+						},
+						{
+							"name": "Add Payment Method",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"type\": \"mobile_money\",\n  \"provider\": \"Airtel Money\",\n  \"phone_number\": \"+265991234567\",\n  \"is_default\": true\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/payment-methods",
+									"host": ["{{base_url}}"],
+									"path": ["api", "payment-methods"]
+								},
+								"description": "Add a new payment method."
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Payment Method",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/payment-methods/pm_123",
+									"host": ["{{base_url}}"],
+									"path": ["api", "payment-methods", "pm_123"]
+								},
+								"description": "Delete a payment method."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "11. Notifications",
+					"item": [
+						{
+							"name": "Get Notifications",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/notifications?page=1&limit=20&unread_only=false",
+									"host": ["{{base_url}}"],
+									"path": ["api", "notifications"],
+									"query": [
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "limit",
+											"value": "20"
+										},
+										{
+											"key": "unread_only",
+											"value": "false"
+										}
+									]
+								},
+								"description": "Get all notifications for the authenticated user."
+							},
+							"response": []
+						},
+						{
+							"name": "Mark Notification as Read",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{base_url}}/api/notifications/notif_123/read",
+									"host": ["{{base_url}}"],
+									"path": ["api", "notifications", "notif_123", "read"]
+								},
+								"description": "Mark a notification as read."
+							},
+							"response": []
+						},
+						{
+							"name": "Mark All as Read",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{base_url}}/api/notifications/read-all",
+									"host": ["{{base_url}}"],
+									"path": ["api", "notifications", "read-all"]
+								},
+								"description": "Mark all notifications as read."
+							},
+							"response": []
+						},
+						{
+							"name": "Register Device for Push Notifications",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"device_token\": \"fcm_token_abc123\",\n  \"platform\": \"android\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/notifications/register-device",
+									"host": ["{{base_url}}"],
+									"path": ["api", "notifications", "register-device"]
+								},
+								"description": "Register device for push notifications."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "12. Shops",
+					"item": [
+						{
+							"name": "Get All Shops",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/shops?page=1&limit=20",
+									"host": ["{{base_url}}"],
+									"path": ["api", "shops"],
+									"query": [
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "limit",
+											"value": "20"
+										}
+									]
+								},
+								"description": "Get all shops/vendors."
+							},
+							"response": []
+						},
+						{
+							"name": "Get Shop Details",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/shops/vnd_123",
+									"host": ["{{base_url}}"],
+									"path": ["api", "shops", "vnd_123"]
+								},
+								"description": "Get detailed information about a shop."
+							},
+							"response": []
+						},
+						{
+							"name": "Get Shop Products",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/shops/vnd_123/products",
+									"host": ["{{base_url}}"],
+									"path": ["api", "shops", "vnd_123", "products"]
+								},
+								"description": "Get all products from a specific shop."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "13. Search",
+					"item": [
+						{
+							"name": "Search Products",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/search?q=iphone&page=1&limit=20&sort=relevance",
+									"host": ["{{base_url}}"],
+									"path": ["api", "search"],
+									"query": [
+										{
+											"key": "q",
+											"value": "iphone"
+										},
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "limit",
+											"value": "20"
+										},
+										{
+											"key": "sort",
+											"value": "relevance"
+										}
+									]
+								},
+								"description": "Search for products."
+							},
+							"response": []
+						},
+						{
+							"name": "Search Suggestions",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/search/suggestions?q=iph",
+									"host": ["{{base_url}}"],
+									"path": ["api", "search", "suggestions"],
+									"query": [
+										{
+											"key": "q",
+											"value": "iph"
+										}
+									]
+								},
+								"description": "Get search suggestions/autocomplete."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "14. Help & Support",
+					"item": [
+						{
+							"name": "Get Help Topics",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/help/topics",
+									"host": ["{{base_url}}"],
+									"path": ["api", "help", "topics"]
+								},
+								"description": "Get help topics and articles."
+							},
+							"response": []
+						},
+						{
+							"name": "Get FAQs",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/help/faqs",
+									"host": ["{{base_url}}"],
+									"path": ["api", "help", "faqs"]
+								},
+								"description": "Get frequently asked questions."
+							},
+							"response": []
+						},
+						{
+							"name": "Submit Support Ticket",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"subject\": \"Issue with my order\",\n  \"category\": \"orders\",\n  \"message\": \"I received a damaged product...\",\n  \"order_id\": \"ord_789\",\n  \"attachments\": [\"base64_image_1\"]\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/help/tickets",
+									"host": ["{{base_url}}"],
+									"path": ["api", "help", "tickets"]
+								},
+								"description": "Submit a support ticket."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "15. App Info",
+					"item": [
+						{
+							"name": "Get App Info",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/app/info",
+									"host": ["{{base_url}}"],
+									"path": ["api", "app", "info"]
+								},
+								"description": "Get app information including version, terms, privacy, support contacts."
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Web (Admin & Seller APIs)",
+			"description": "All APIs for web admin dashboard and seller dashboard",
+			"item": [
+				{
+					"name": "Admin APIs",
+					"item": [
+						{
+							"name": "Dashboard",
+							"item": [
+								{
+									"name": "Get Dashboard",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/dashboard",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "dashboard"]
+										},
+										"description": "Get admin dashboard statistics. Requires admin role."
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Shops Management",
+							"item": [
+								{
+									"name": "List All Shops",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/shops",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "shops"]
+										},
+										"description": "Get all shops (admin view). Requires admin role."
+									},
+									"response": []
+								},
+								{
+									"name": "Create Shop",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"shop_name\": \"New Shop\",\n  \"location\": \"Lilongwe\",\n  \"address\": \"123 Main Street\",\n  \"phone\": \"+265 999 123 456\",\n  \"email\": \"shop@example.com\",\n  \"logo_url\": \"https://example.com/logo.png\"\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/api/admin/shops",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "shops"]
+										},
+										"description": "Create a new shop. Requires admin role."
+									},
+									"response": []
+								},
+								{
+									"name": "Update Shop",
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"shop_name\": \"Updated Shop Name\",\n  \"location\": \"Blantyre\",\n  \"address\": \"456 New Street\",\n  \"phone\": \"+265 999 999 999\",\n  \"email\": \"newemail@example.com\",\n  \"status\": \"active\",\n  \"logo_url\": \"https://example.com/new-logo.png\"\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/api/admin/shops/1",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "shops", "1"]
+										},
+										"description": "Update a shop. Requires admin role."
+									},
+									"response": []
+								},
+								{
+									"name": "Delete Shop",
+									"request": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/shops/1",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "shops", "1"]
+										},
+										"description": "Delete a shop permanently. Requires admin role."
+									},
+									"response": []
+								},
+								{
+									"name": "Invite Shop Owner",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"owner_name\": \"John Doe\",\n  \"owner_email\": \"john.doe@example.com\",\n  \"owner_phone\": \"+265 999 123 456\"\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/api/admin/shops/1/invite-owner",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "shops", "1", "invite-owner"]
+										},
+										"description": "Send invitation to shop owner. Requires admin role."
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Categories Management",
+							"item": [
+								{
+									"name": "List Pending Categories",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/categories/pending",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "categories", "pending"]
+										},
+										"description": "Get all pending categories awaiting approval. Requires admin role."
+									},
+									"response": []
+								},
+								{
+									"name": "List Rejected Categories",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/categories/rejected",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "categories", "rejected"]
+										},
+										"description": "Get all rejected categories. Requires admin role."
+									},
+									"response": []
+								},
+								{
+									"name": "List Approved Categories",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/categories/approved",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "categories", "approved"]
+										},
+										"description": "Get all approved categories. Requires admin role."
+									},
+									"response": []
+								},
+								{
+									"name": "Approve Category",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{base_url}}/api/admin/categories/1/approve",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "categories", "1", "approve"]
+										},
+										"description": "Approve a pending category. Requires admin role."
+									},
+									"response": []
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Seller APIs",
+					"item": [
+						{
+							"name": "Dashboard",
+							"item": [
+								{
+									"name": "Get Dashboard",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/sellers/dashboard",
+											"host": ["{{base_url}}"],
+											"path": ["api", "sellers", "dashboard"]
+										},
+										"description": "Get seller dashboard statistics. Requires seller role."
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Categories",
+							"item": [
+								{
+									"name": "List Shop Categories",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/sellers/1/categories",
+											"host": ["{{base_url}}"],
+											"path": ["api", "sellers", "1", "categories"]
+										},
+										"description": "Get all categories for a shop. Requires seller role and shop ownership."
+									},
+									"response": []
+								},
+								{
+									"name": "Create Category",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"New Category\",\n  \"image\": \"https://example.com/category-image.jpg\"\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/api/sellers/1/categories",
+											"host": ["{{base_url}}"],
+											"path": ["api", "sellers", "1", "categories"]
+										},
+										"description": "Create a new category for a shop. Requires seller role and shop ownership."
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Products",
+							"item": [
+								{
+									"name": "List Shop Products",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/sellers/1/products",
+											"host": ["{{base_url}}"],
+											"path": ["api", "sellers", "1", "products"]
+										},
+										"description": "Get all products for a shop. Requires seller role and shop ownership."
+									},
+									"response": []
+								},
+								{
+									"name": "Create Product",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"New Product\",\n  \"category_id\": 1,\n  \"price\": 50000,\n  \"image_url\": \"https://example.com/product-image.jpg\",\n  \"images_urls\": [\"https://example.com/image1.jpg\", \"https://example.com/image2.jpg\"],\n  \"description\": \"Product description\",\n  \"stock\": 100,\n  \"original_price\": 60000,\n  \"discount\": 17,\n  \"vendor\": \"Shop Name\",\n  \"is_featured\": false,\n  \"is_hot\": false,\n  \"is_special\": false\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/api/sellers/1/products",
+											"host": ["{{base_url}}"],
+											"path": ["api", "sellers", "1", "products"]
+										},
+										"description": "Create a new product for a shop. Requires seller role and shop ownership."
+									},
+									"response": []
+								},
+								{
+									"name": "Update Product",
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"Updated Product Name\",\n  \"category_id\": 2,\n  \"price\": 55000,\n  \"image_url\": \"https://example.com/new-image.jpg\",\n  \"images_urls\": [\"https://example.com/new-image1.jpg\"],\n  \"description\": \"Updated description\",\n  \"stock\": 150,\n  \"original_price\": 65000,\n  \"discount\": 15,\n  \"vendor\": \"Updated Shop Name\",\n  \"is_featured\": true,\n  \"is_hot\": false,\n  \"is_special\": true\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/api/sellers/1/products/1",
+											"host": ["{{base_url}}"],
+											"path": ["api", "sellers", "1", "products", "1"]
+										},
+										"description": "Update a product. Requires seller role and shop ownership."
+									},
+									"response": []
+								},
+								{
+									"name": "Delete Product",
+									"request": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/sellers/1/products/1",
+											"host": ["{{base_url}}"],
+											"path": ["api", "sellers", "1", "products", "1"]
+										},
+										"description": "Delete a product. Requires seller role and shop ownership."
+									},
+									"response": []
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "https://api.techaven.mw",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
+

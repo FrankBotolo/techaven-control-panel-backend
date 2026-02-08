@@ -1,7 +1,7 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
 
-const Cart = sequelize.define('Cart', {
+const Wallet = sequelize.define('Wallet', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -10,46 +10,32 @@ const Cart = sequelize.define('Cart', {
   user_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    unique: true,
     references: {
       model: 'users',
       key: 'id'
     }
   },
-  product_id: {
-    type: DataTypes.INTEGER,
+  balance: {
+    type: DataTypes.DECIMAL(12, 2),
     allowNull: false,
-    references: {
-      model: 'products',
-      key: 'id'
-    }
+    defaultValue: 0.00
   },
-  quantity: {
-    type: DataTypes.INTEGER,
+  currency: {
+    type: DataTypes.STRING(3),
     allowNull: false,
-    defaultValue: 1,
-    validate: {
-      min: 1
-    }
+    defaultValue: 'MWK'
   }
 }, {
-  tableName: 'carts',
+  tableName: 'wallets',
   timestamps: true,
   indexes: [
     {
       unique: true,
-      fields: ['user_id', 'product_id']
+      fields: ['user_id']
     }
   ]
 });
 
-export default Cart;
-
-
-
-
-
-
-
-
-
+export default Wallet;
 

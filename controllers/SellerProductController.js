@@ -19,7 +19,8 @@ export const create = async (req, res) => {
       vendor,
       is_featured,
       is_hot,
-      is_special
+      is_special,
+      specifications
     } = req.body;
 
     // Validation
@@ -64,6 +65,21 @@ export const create = async (req, res) => {
       calculatedDiscount = Math.round(((original_price - price) / original_price) * 100);
     }
 
+    // Parse specifications if provided
+    let specificationsObj = null;
+    if (specifications) {
+      try {
+        specificationsObj = typeof specifications === 'string' 
+          ? JSON.parse(specifications) 
+          : specifications;
+      } catch (e) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Invalid specifications format. Must be valid JSON object.' 
+        });
+      }
+    }
+
     const product = await Product.create({
       shop_id: shop.id,
       category_id: parseInt(category_id),
@@ -78,7 +94,8 @@ export const create = async (req, res) => {
       vendor: vendor || shop.name,
       is_featured: is_featured === true || is_featured === 'true',
       is_hot: is_hot === true || is_hot === 'true',
-      is_special: is_special === true || is_special === 'true'
+      is_special: is_special === true || is_special === 'true',
+      specifications: specificationsObj
     });
 
     // Update shop product count
@@ -171,7 +188,8 @@ export const update = async (req, res) => {
       vendor,
       is_featured,
       is_hot,
-      is_special
+      is_special,
+      specifications
     } = req.body;
 
     // Update fields if provided
@@ -200,6 +218,18 @@ export const update = async (req, res) => {
     if (is_featured !== undefined) product.is_featured = is_featured === true || is_featured === 'true';
     if (is_hot !== undefined) product.is_hot = is_hot === true || is_hot === 'true';
     if (is_special !== undefined) product.is_special = is_special === true || is_special === 'true';
+    if (specifications !== undefined) {
+      try {
+        product.specifications = typeof specifications === 'string' 
+          ? JSON.parse(specifications) 
+          : specifications;
+      } catch (e) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Invalid specifications format. Must be valid JSON object.' 
+        });
+      }
+    }
 
     // Recalculate discount if original_price and price changed
     if (product.original_price && product.original_price > product.price && !product.discount) {

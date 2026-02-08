@@ -7,11 +7,19 @@ import { logAudit } from '../utils/audit.js';
 
 const { User, Otp, ShopInvitation } = db;
 
-const generateToken = (user) => {
+const generateAccessToken = (user) => {
   return jwt.sign(
-    { id: user.id, email: user.email, role: user.role, shop_id: user.shop_id || null },
+    { id: user.id, email: user.email, role: user.role, shop_id: user.shop_id || null, type: 'access' },
     process.env.JWT_SECRET || 'your-secret-key-change-this-in-production',
-    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+    { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
+  );
+};
+
+const generateRefreshToken = (user) => {
+  return jwt.sign(
+    { id: user.id, type: 'refresh' },
+    process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET || 'your-secret-key-change-this-in-production',
+    { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d' }
   );
 };
 
@@ -191,15 +199,25 @@ export const login = async (req, res) => {
       });
     }
 
-    const token = generateToken(user);
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
 
     return res.json({
       success: true,
       message: 'Login successful',
       data: {
-        access_token: token,
-        token_type: 'Bearer',
-        user: user
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        sessionId: `session_${user.id}_${Date.now()}`,
+        user: {
+          id: `usr_${user.id}`,
+          username: user.name?.split(' ')[0] || user.email?.split('@')[0] || 'user',
+          email: user.email,
+          phone_number: user.phone_number,
+          role: user.role,
+          shop_id: user.shop_id || null,
+          created_at: user.createdAt || user.created_at || new Date()
+        }
       }
     });
   } catch (error) {
@@ -278,18 +296,46 @@ export const verifyOtp = async (req, res) => {
         user.email_verified_at = new Date();
         await user.save();
 
-        const token = generateToken(user);
+        const accessToken = generateAccessToken(user);
+        const refreshToken = generateRefreshToken(user);
 
         return res.json({
           success: true,
           message: 'Verification successful',
           data: {
-            user: user,
-            access_token: token,
-            token_type: 'Bearer'
+            user: {
+              id: `usr_${user.id}`,
+              full_name: user.name,
+              email: user.email,
+              phone_number: user.phone_number,
+              role: user.role,
+              shop_id: user.shop_id || null,
+              created_at: user.createdAt || user.created_at || new Date()
+            },
+            access_token: accessToken,
+            refresh_token: refreshToken,
+            token_type: 'Bearer',
+            expires_in: 3600
           }
         });
       }
+    }
+
+    if (type === 'password_reset') {
+      // Generate reset token for password reset
+      const resetToken = jwt.sign(
+        { identifier, type: 'password_reset' },
+        process.env.JWT_SECRET || 'your-secret-key-change-this-in-production',
+        { expiresIn: '1h' }
+      );
+
+      return res.json({
+        success: true,
+        message: 'OTP verified',
+        data: {
+          reset_token: resetToken
+        }
+      });
     }
 
     return res.json({
@@ -412,21 +458,12 @@ export const forgotPassword = async (req, res) => {
 
 export const resetPassword = async (req, res) => {
   try {
-    const { email, phone_number, otp, new_password } = req.body;
+    const { email, phone_number, reset_token, new_password } = req.body;
 
-    if (!otp || !new_password) {
+    if (!reset_token || !new_password) {
       return res.status(400).json({
         success: false,
-        message: 'OTP and new password are required'
-      });
-    }
-
-    // Validate that OTP is exactly 6 digits
-    const otpString = otp.toString().trim();
-    if (!/^\d{6}$/.test(otpString)) {
-      return res.status(400).json({
-        success: false,
-        message: 'OTP must be exactly 6 digits'
+        message: 'Reset token and new password are required'
       });
     }
 
@@ -437,23 +474,17 @@ export const resetPassword = async (req, res) => {
       });
     }
 
-    const identifier = email || phone_number;
-
-    const otpRecord = await Otp.findOne({
-      where: {
-        identifier: identifier,
-        token: otpString,
-        type: 'password_reset',
-        expires_at: {
-          [Op.gt]: new Date()
-        }
+    // Verify reset token
+    let decoded;
+    try {
+      decoded = jwt.verify(reset_token, process.env.JWT_SECRET || 'your-secret-key-change-this-in-production');
+      if (decoded.type !== 'password_reset') {
+        throw new Error('Invalid token type');
       }
-    });
-
-    if (!otpRecord) {
+    } catch (error) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid or expired OTP'
+        message: 'Invalid or expired reset token'
       });
     }
 
@@ -475,7 +506,6 @@ export const resetPassword = async (req, res) => {
 
     user.password = new_password;
     await user.save();
-    await otpRecord.destroy({ force: true });
 
     return res.json({
       success: true,
@@ -487,6 +517,85 @@ export const resetPassword = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Password reset failed',
+      error: error.message
+    });
+  }
+};
+
+export const refreshToken = async (req, res) => {
+  try {
+    const { refresh_token } = req.body;
+
+    if (!refresh_token) {
+      return res.status(400).json({
+        success: false,
+        message: 'Refresh token is required'
+      });
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(
+        refresh_token,
+        process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET || 'your-secret-key-change-this-in-production'
+      );
+      if (decoded.type !== 'refresh') {
+        throw new Error('Invalid token type');
+      }
+    } catch (error) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid or expired refresh token'
+      });
+    }
+
+    const user = await User.findByPk(decoded.id);
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const accessToken = generateAccessToken(user);
+    const newRefreshToken = generateRefreshToken(user);
+
+    return res.json({
+      success: true,
+      message: 'Token refreshed',
+      data: {
+        access_token: accessToken,
+        refresh_token: newRefreshToken,
+        token_type: 'Bearer',
+        expires_in: 3600
+      }
+    });
+  } catch (error) {
+    console.error('Refresh token error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to refresh token',
+      error: error.message
+    });
+  }
+};
+
+export const logout = async (req, res) => {
+  try {
+    // In a stateless JWT system, logout is typically handled client-side
+    // by removing the token. However, we can add token blacklisting here if needed.
+    // For now, we'll just return success.
+    
+    return res.json({
+      success: true,
+      message: 'Logged out successfully',
+      data: null
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Logout failed',
       error: error.message
     });
   }

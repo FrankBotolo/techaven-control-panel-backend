@@ -118,7 +118,7 @@ export const index = async (req, res) => {
           attributes: ['id', 'name', 'email']
         }
       ],
-      order: [[sequelize.literal('ShopInvitation.created_at'), 'DESC']]
+      order: [['id', 'DESC']]
     });
 
     // Add OTP to each invitation

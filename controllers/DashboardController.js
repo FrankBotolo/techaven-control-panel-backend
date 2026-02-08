@@ -17,8 +17,6 @@ export const getDashboard = async (req, res) => {
       specialProducts,
       totalCategories,
       pendingCategories,
-      approvedCategories,
-      rejectedCategories,
       totalUsers,
       adminUsers,
       sellerUsers,
@@ -41,11 +39,8 @@ export const getDashboard = async (req, res) => {
       Product.count({ where: { is_hot: true } }),
       Product.count({ where: { is_special: true } }),
       
-      // Categories
+      // Categories (all are automatically approved)
       Category.count(),
-      Category.count({ where: { status: 'pending' } }),
-      Category.count({ where: { status: 'approved' } }),
-      Category.count({ where: { status: 'rejected' } }),
       
       // Users
       User.count(),
@@ -132,10 +127,7 @@ export const getDashboard = async (req, res) => {
           special: specialProducts
         },
         categories: {
-          total: totalCategories,
-          pending: pendingCategories,
-          approved: approvedCategories,
-          rejected: rejectedCategories
+          total: totalCategories
         },
         users: {
           total: totalUsers,
@@ -175,7 +167,7 @@ export const getDashboard = async (req, res) => {
             role: activity.actor.role
           } : null,
           metadata: activity.metadata,
-          created_at: activity.createdAt
+          created_at: activity.createdAt || activity.created_at || new Date()
         })),
         shops: recentShops,
         products: recentProducts.map(product => ({
@@ -193,7 +185,7 @@ export const getDashboard = async (req, res) => {
             id: product.category.id,
             name: product.category.name
           } : null,
-          created_at: product.createdAt
+          created_at: product.createdAt || product.created_at || new Date()
         }))
       }
     };

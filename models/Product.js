@@ -75,9 +75,20 @@ const Product = sequelize.define('Product', {
     type: DataTypes.BOOLEAN,
     defaultValue: false
   },
+  // Temporarily commented out until migration is run
+  // Uncomment after running: database/migrations/add_is_new_arrival_to_products.sql
+  // is_new_arrival: {
+  //   type: DataTypes.BOOLEAN,
+  //   defaultValue: false
+  // },
   vendor: {
     type: DataTypes.STRING,
     allowNull: true
+  },
+  specifications: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    defaultValue: null
   }
 }, {
   tableName: 'products',

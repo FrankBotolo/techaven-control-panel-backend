@@ -9,6 +9,7 @@
     "dev": "nodemon server.js",
     "create-db": "node scripts/create-db.js",
     "migrate": "node scripts/migrate.js",
+    "add-specifications": "node scripts/add-specifications-column.js",
     "fix-invitations": "node scripts/fix-invitations-timestamps.js",
     "seed": "node scripts/seed.js",
     "setup": "npm run create-db && npm run migrate && npm run seed"

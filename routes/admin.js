@@ -21,6 +21,7 @@ router.get('/categories/pending', AdminCategoryController.listPending);
 router.get('/categories/rejected', AdminCategoryController.listRejected);
 router.get('/categories/approved', AdminCategoryController.listApproved);
 router.post('/categories/:categoryId/approve', AdminCategoryController.approveCategory);
+router.post('/categories/:categoryId/reject', AdminCategoryController.rejectCategory);
 
 // Dashboard
 router.get('/dashboard', DashboardController.getDashboard);

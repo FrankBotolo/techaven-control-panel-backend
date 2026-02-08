@@ -165,12 +165,13 @@ export const listApproved = async (req, res) => {
 export const approveCategory = async (req, res) => {
   try {
     const { categoryId } = req.params;
-    const { approved } = req.body;
 
     const category = await Category.findByPk(categoryId);
-    if (!category) return res.status(404).json({ success: false, message: 'Category not found' });
+    if (!category) {
+      return res.status(404).json({ success: false, message: 'Category not found' });
+    }
 
-    category.status = approved ? 'approved' : 'rejected';
+    category.status = 'approved';
     await category.save();
 
     await logAudit({
@@ -178,14 +179,57 @@ export const approveCategory = async (req, res) => {
       actor_user_id: req.user.id,
       target_type: 'category',
       target_id: category.id,
-      metadata: { approved: !!approved },
+      metadata: { status: 'approved' },
       ip_address: req.ip
     });
 
-    return res.json({ success: true, message: 'Category approved successfully' });
+    return res.json({ 
+      success: true, 
+      message: 'Category approved successfully',
+      data: {
+        category_id: category.id,
+        status: category.status
+      }
+    });
   } catch (error) {
     console.error('Admin approve category error:', error);
     return res.status(500).json({ success: false, message: 'Failed to approve category', error: error.message });
+  }
+};
+
+export const rejectCategory = async (req, res) => {
+  try {
+    const { categoryId } = req.params;
+    const { reason } = req.body; // Optional rejection reason
+
+    const category = await Category.findByPk(categoryId);
+    if (!category) {
+      return res.status(404).json({ success: false, message: 'Category not found' });
+    }
+
+    category.status = 'rejected';
+    await category.save();
+
+    await logAudit({
+      action: 'admin.category.reject',
+      actor_user_id: req.user.id,
+      target_type: 'category',
+      target_id: category.id,
+      metadata: { status: 'rejected', reason: reason || null },
+      ip_address: req.ip
+    });
+
+    return res.json({ 
+      success: true, 
+      message: 'Category rejected successfully',
+      data: {
+        category_id: category.id,
+        status: category.status
+      }
+    });
+  } catch (error) {
+    console.error('Admin reject category error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to reject category', error: error.message });
   }
 };
 

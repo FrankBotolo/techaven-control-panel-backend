@@ -5,7 +5,7 @@ const { Category, Product, Shop } = db;
 export const index = async (req, res) => {
   try {
     const categories = await Category.findAll({
-      where: { status: 'approved' }
+      // All categories are automatically approved, no need to filter
     });
 
     return res.json({

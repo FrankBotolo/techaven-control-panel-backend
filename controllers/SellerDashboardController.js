@@ -43,9 +43,6 @@ export const getDashboard = async (req, res) => {
       specialProducts,
       lowStockProducts,
       totalCategories,
-      pendingCategories,
-      approvedCategories,
-      rejectedCategories,
       totalNotifications,
       unreadNotifications
     ] = await Promise.all([
@@ -56,11 +53,8 @@ export const getDashboard = async (req, res) => {
       Product.count({ where: { shop_id: seller.shop_id, is_special: true } }),
       Product.count({ where: { shop_id: seller.shop_id, stock: { [Op.lt]: 10 } } }),
       
-      // Categories
+      // Categories (all are automatically approved)
       Category.count({ where: { shop_id: seller.shop_id } }),
-      Category.count({ where: { shop_id: seller.shop_id, status: 'pending' } }),
-      Category.count({ where: { shop_id: seller.shop_id, status: 'approved' } }),
-      Category.count({ where: { shop_id: seller.shop_id, status: 'rejected' } }),
       
       // Notifications
       Notification.count({ where: { user_id: seller.id } }),
@@ -112,7 +106,7 @@ export const getDashboard = async (req, res) => {
     const recentNotifications = await Notification.findAll({
       where: { user_id: seller.id },
       attributes: ['id', 'title', 'message', 'type', 'read'],
-      order: [[sequelize.literal('Notification.created_at'), 'DESC']],
+      order: [['id', 'DESC']],
       limit: 5
     });
 
@@ -136,10 +130,7 @@ export const getDashboard = async (req, res) => {
           total_value: totalProductsValue
         },
         categories: {
-          total: totalCategories,
-          pending: pendingCategories,
-          approved: approvedCategories,
-          rejected: rejectedCategories
+          total: totalCategories
         },
         notifications: {
           total: totalNotifications,
@@ -161,7 +152,7 @@ export const getDashboard = async (req, res) => {
             name: product.category.name,
             status: product.category.status
           } : null,
-          created_at: product.createdAt
+          created_at: product.createdAt || product.created_at || new Date()
         })),
         categories: recentCategories,
         notifications: recentNotifications
@@ -173,11 +164,7 @@ export const getDashboard = async (req, res) => {
           image: product.image,
           stock: product.stock,
           price: product.price
-        })),
-        pending_categories: pendingCategories > 0 ? {
-          count: pendingCategories,
-          message: `You have ${pendingCategories} pending categor${pendingCategories > 1 ? 'ies' : 'y'} awaiting approval`
-        } : null
+        }))
       }
     };
 

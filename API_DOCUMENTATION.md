@@ -1,187 +1,519 @@
-# Chiwaya API Documentation
+# Techaven API Documentation
 
-## Overview
-This document provides comprehensive API documentation for the Chiwaya e-commerce platform.
+**Base URL:** `https://api.techaven.mw`
 
-## Base URL
-```
-http://localhost:8000/api
-```
+**Content-Type:** `application/json`
 
-## Authentication
-Most endpoints require authentication using Bearer tokens. After logging in, you'll receive an `access_token` that should be included in the Authorization header:
+---
 
-```
-Authorization: Bearer <access_token>
-```
+## API Organization
 
-## Importing to Postman
+This API is organized into two main categories:
 
-1. Open Postman
-2. Click **Import** button (top left)
-3. Select the `Chiwaya_API.postman_collection.json` file
-4. The collection will be imported with all endpoints organized by category
+1. **Mobile App (Customer APIs)** - All customer-facing endpoints for mobile application
+2. **Web (Admin & Seller APIs)** - Admin dashboard and seller dashboard endpoints for web application
 
-## Environment Variables
+---
 
-Set up environment variables in Postman:
-- `base_url`: `http://localhost:8000` (or your server URL)
-- `access_token`: Your JWT token (will be set automatically after login)
+## Table of Contents
 
-## API Endpoints
+### Mobile App (Customer APIs)
+1. [Authentication](#1-authentication-mobile)
+2. [User Management](#2-user-management-mobile)
+3. [Products](#3-products-mobile)
+4. [Categories](#4-categories-mobile)
+5. [Cart](#5-cart-mobile)
+6. [Orders](#6-orders-mobile)
+7. [Wishlist / Liked Items](#7-wishlist--liked-items-mobile)
+8. [Wallet](#8-wallet-mobile)
+9. [Shipping Addresses](#9-shipping-addresses-mobile)
+10. [Payment Methods](#10-payment-methods-mobile)
+11. [Notifications](#11-notifications-mobile)
+12. [Shops / Vendors](#12-shops--vendors-mobile)
+13. [Search](#13-search-mobile)
+14. [Help & Support](#14-help--support-mobile)
+15. [App Info](#15-app-info-mobile)
 
-### Authentication (`/api/auth`)
-All authentication endpoints are public (no auth required).
+### Web (Admin & Seller APIs)
+16. [Admin APIs](#16-admin-apis-web)
+17. [Seller APIs](#17-seller-apis-web)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/auth/register` | Register a new user (customer self-registration or seller with invite) |
-| POST | `/api/auth/login` | Login and get access token |
-| POST | `/api/auth/verify-otp` | Verify OTP code |
-| POST | `/api/auth/resend-otp` | Resend OTP code |
-| POST | `/api/auth/forgot-password` | Request password reset OTP |
-| POST | `/api/auth/reset-password` | Reset password with OTP |
+---
 
-**Customer Self-Registration Request Body:**
+## Mobile App (Customer APIs)
+
+### 1. Authentication (Mobile)
+
+All authentication endpoints are for customer mobile app registration and login.
+
+#### 1.1 Register (Sign Up)
+**Endpoint:** `POST /api/auth/register`
+
+**Request Body (Raw JSON):**
 ```json
 {
   "full_name": "John Doe",
-  "email": "john.doe@example.com",
-  "phone_number": "+265 999 123 456",
-  "password": "password123"
-}
-```
-*Note: Do NOT include `invite_token` for customer registration. User will be registered with role 'customer'.*
-
-**Seller Registration Request Body (with invite token):**
-```json
-{
-  "full_name": "Jane Seller",
-  "email": "jane.seller@example.com",
-  "phone_number": "+265 999 123 456",
-  "password": "password123",
-  "invite_token": "your_invite_token_here"
-}
-```
-*Note: Include `invite_token` to register as seller. Email/phone must match the invitation.*
-
-**Login Request Body:**
-```json
-{
-  "email": "john.doe@example.com",
-  "phone_number": "+265 999 123 456",
-  "password": "password123"
+  "email": "john@example.com",
+  "phone_number": "+265991234567",
+  "password": "securePassword123"
 }
 ```
 
-**Login Response:**
+#### 1.2 Login (Sign In)
+**Endpoint:** `POST /api/auth/login`
+
+**Request Body (Raw JSON):**
 ```json
 {
-  "success": true,
-  "message": "Login successful",
-  "data": {
-    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "token_type": "Bearer",
-    "user": { ... }
-  }
+  "email": "john@example.com",
+  "password": "securePassword123"
 }
 ```
 
-### User (`/api/user`)
-All user endpoints require authentication.
+#### 1.3 Verify OTP
+**Endpoint:** `POST /api/auth/verify-otp`
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/user/profile` | Get user profile |
-| PUT | `/api/user/profile` | Update user profile |
-| POST | `/api/user/avatar` | Upload avatar (multipart/form-data) |
-| POST | `/api/user/change-password` | Change password |
-
-**Update Profile Request Body:**
+**Request Body (Raw JSON):**
 ```json
 {
-  "name": "John Doe Updated",
-  "email": "newemail@example.com",
-  "phone_number": "+265 999 999 999",
-  "date_of_birth": "1990-01-01",
+  "email": "john@example.com",
+  "otp": "123456",
+  "type": "signup"
+}
+```
+
+#### 1.4 Resend OTP
+**Endpoint:** `POST /api/auth/resend-otp`
+
+**Request Body (Raw JSON):**
+```json
+{
+  "email": "john@example.com",
+  "type": "signup"
+}
+```
+
+#### 1.5 Forgot Password
+**Endpoint:** `POST /api/auth/forgot-password`
+
+**Request Body (Raw JSON):**
+```json
+{
+  "email": "john@example.com"
+}
+```
+
+#### 1.6 Reset Password
+**Endpoint:** `POST /api/auth/reset-password`
+
+**Request Body (Raw JSON):**
+```json
+{
+  "email": "john@example.com",
+  "reset_token": "rst_abc123xyz",
+  "new_password": "newSecurePassword456"
+}
+```
+
+#### 1.7 Refresh Token
+**Endpoint:** `POST /api/auth/refresh-token`
+
+**Request Body (Raw JSON):**
+```json
+{
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+#### 1.8 Logout
+**Endpoint:** `POST /api/auth/logout`
+
+**Request Body:** None (empty raw JSON: `{}`)
+
+---
+
+### 2. User Management (Mobile)
+
+#### 2.1 Get User Profile
+**Endpoint:** `GET /api/user/profile`
+
+#### 2.2 Update User Profile
+**Endpoint:** `PUT /api/user/profile`
+
+**Request Body (Raw JSON):**
+```json
+{
+  "full_name": "John Smith",
+  "phone": "+265991234567",
+  "date_of_birth": "1990-05-15",
   "gender": "male"
 }
 ```
 
-### Products (`/api/products`)
-Product endpoints are mostly public (no auth required).
+#### 2.3 Upload Avatar
+**Endpoint:** `POST /api/user/avatar`
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/products` | Get all products |
-| GET | `/api/products/featured` | Get featured products |
-| GET | `/api/products/hot-sales` | Get hot sale products |
-| GET | `/api/products/special-offers` | Get special offer products |
-| GET | `/api/products/search?q=query` | Search products |
-| GET | `/api/products/category/:id` | Get products by category |
-| GET | `/api/products/:id` | Get product by ID |
-| GET | `/api/products/:id/images` | Get product images |
-| POST | `/api/products/:id/images` | Add product images |
-| PUT | `/api/products/:id/images` | Replace product images |
-| DELETE | `/api/products/:id/images` | Delete all product images |
-| PUT | `/api/products/:id/images/:index` | Update product image |
-| DELETE | `/api/products/:id/images/:index` | Delete product image |
+**Request Body:** Form-data with `avatar` file
 
-### Categories (`/api/categories`)
-Category endpoints are public.
+#### 2.4 Change Password
+**Endpoint:** `PUT /api/user/password`
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/categories` | Get all categories |
-| GET | `/api/categories/:id/products` | Get products by category |
+**Request Body (Raw JSON):**
+```json
+{
+  "current_password": "oldPassword123",
+  "new_password": "newPassword456"
+}
+```
 
-### Shops (`/api/shops`)
-Most shop endpoints are public.
+#### 2.5 Delete Account
+**Endpoint:** `DELETE /api/user/account`
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/shops` | Get all shops |
-| GET | `/api/shops/owner/:ownerId` | Get shop by owner ID |
-| GET | `/api/shops/:id` | Get shop by ID |
-| GET | `/api/shops/:id/products` | Get shop products |
-| PATCH | `/api/shops/:id` | Update shop (auth required) |
+**Request Body (Raw JSON):**
+```json
+{
+  "password": "currentPassword123",
+  "reason": "No longer using the app"
+}
+```
 
-### Banners (`/api/banners`)
-Banner endpoints are public.
+---
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/banners` | Get all banners |
+### 3. Products (Mobile)
 
-### Notifications (`/api/notifications`)
-All notification endpoints require authentication.
+All product browsing endpoints for mobile app.
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/notifications` | Get all notifications |
-| GET | `/api/notifications/unread-count` | Get unread count |
-| POST | `/api/notifications/mark-all-read` | Mark all as read |
-| POST | `/api/notifications/:id/read` | Mark as read |
-| DELETE | `/api/notifications/:id` | Delete notification |
+#### 3.1 Get All Products
+**Endpoint:** `GET /api/products?page=1&limit=20&sort=name&order=asc`
 
-### Admin (`/api/admin`)
-All admin endpoints require admin role.
+#### 3.2 Get Single Product
+**Endpoint:** `GET /api/products/{product_id}`
 
-#### Dashboard
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/admin/dashboard` | Get admin dashboard |
+#### 3.3 Get Featured Products
+**Endpoint:** `GET /api/products/featured?limit=10`
 
-#### Shops Management
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/admin/shops` | List all shops |
-| POST | `/api/admin/shops` | Create shop |
-| PATCH | `/api/admin/shops/:shopId` | Update shop |
-| DELETE | `/api/admin/shops/:shopId` | Delete shop |
-| POST | `/api/admin/shops/:shopId/invite-owner` | Invite shop owner |
+#### 3.4 Get Hot Sales
+**Endpoint:** `GET /api/products/hot-sales?limit=10`
 
-**Create Shop Request Body:**
+#### 3.5 Get Special Offers
+**Endpoint:** `GET /api/products/special-offers?limit=10`
+
+#### 3.6 Get New Arrivals
+**Endpoint:** `GET /api/products/new-arrivals?limit=10`
+
+#### 3.7 Get Product Reviews
+**Endpoint:** `GET /api/products/{product_id}/reviews?page=1&limit=10`
+
+#### 3.8 Add Product Review
+**Endpoint:** `POST /api/products/{product_id}/reviews`
+
+**Request Body (Raw JSON):**
+```json
+{
+  "rating": 5,
+  "title": "Amazing phone!",
+  "comment": "Best phone I've ever owned.",
+  "images": ["base64_encoded_image_1", "base64_encoded_image_2"]
+}
+```
+
+---
+
+### 4. Categories (Mobile)
+
+#### 4.1 Get All Categories
+**Endpoint:** `GET /api/categories`
+
+#### 4.2 Get Category Products
+**Endpoint:** `GET /api/categories/{category_id}/products`
+
+---
+
+### 5. Cart (Mobile)
+
+#### 5.1 Get Cart
+**Endpoint:** `GET /api/cart`
+
+#### 5.2 Add to Cart
+**Endpoint:** `POST /api/cart/items`
+
+**Request Body (Raw JSON):**
+```json
+{
+  "product_id": 1,
+  "quantity": 1
+}
+```
+
+#### 5.3 Update Cart Item
+**Endpoint:** `PUT /api/cart/items/{item_id}`
+
+**Request Body (Raw JSON):**
+```json
+{
+  "quantity": 2
+}
+```
+
+#### 5.4 Remove from Cart
+**Endpoint:** `DELETE /api/cart/items/{item_id}`
+
+#### 5.5 Clear Cart
+**Endpoint:** `DELETE /api/cart`
+
+---
+
+### 6. Orders (Mobile)
+
+#### 6.1 Create Order
+**Endpoint:** `POST /api/orders`
+
+**Request Body (Raw JSON):**
+```json
+{
+  "shipping_address_id": "addr_123",
+  "payment_method_id": "pm_456",
+  "notes": "Please call before delivery",
+  "coupon_code": "SAVE10"
+}
+```
+
+#### 6.2 Get Orders
+**Endpoint:** `GET /api/orders?page=1&limit=20&status=pending`
+
+#### 6.3 Get Single Order
+**Endpoint:** `GET /api/orders/{order_id}`
+
+#### 6.4 Cancel Order
+**Endpoint:** `POST /api/orders/{order_id}/cancel`
+
+**Request Body (Raw JSON):**
+```json
+{
+  "reason": "Changed my mind"
+}
+```
+
+---
+
+### 7. Wishlist / Liked Items (Mobile)
+
+#### 7.1 Get Wishlist
+**Endpoint:** `GET /api/wishlist`
+
+#### 7.2 Add to Wishlist
+**Endpoint:** `POST /api/wishlist`
+
+**Request Body (Raw JSON):**
+```json
+{
+  "product_id": 1
+}
+```
+
+#### 7.3 Remove from Wishlist
+**Endpoint:** `DELETE /api/wishlist/{product_id}`
+
+---
+
+### 8. Wallet (Mobile)
+
+#### 8.1 Get Wallet Balance
+**Endpoint:** `GET /api/wallet`
+
+#### 8.2 Get Wallet Transactions
+**Endpoint:** `GET /api/wallet/transactions?page=1&limit=20&type=credit`
+
+#### 8.3 Top Up Wallet
+**Endpoint:** `POST /api/wallet/topup`
+
+**Request Body (Raw JSON):**
+```json
+{
+  "amount": 10000,
+  "payment_method": "mobile_money",
+  "phone_number": "+265991234567"
+}
+```
+
+---
+
+### 9. Shipping Addresses (Mobile)
+
+#### 9.1 Get Addresses
+**Endpoint:** `GET /api/addresses`
+
+#### 9.2 Add Address
+**Endpoint:** `POST /api/addresses`
+
+**Request Body (Raw JSON):**
+```json
+{
+  "label": "Office",
+  "full_name": "John Doe",
+  "phone": "+265991234567",
+  "address_line_1": "456 Business Park",
+  "address_line_2": "City Center",
+  "city": "Blantyre",
+  "state": "Southern Region",
+  "postal_code": "",
+  "country": "Malawi",
+  "is_default": false
+}
+```
+
+#### 9.3 Update Address
+**Endpoint:** `PUT /api/addresses/{address_id}`
+
+**Request Body (Raw JSON):**
+```json
+{
+  "label": "Home",
+  "full_name": "John Doe",
+  "phone": "+265991234567",
+  "address_line_1": "123 Main Street",
+  "address_line_2": "Area 47",
+  "city": "Lilongwe",
+  "state": "Central Region",
+  "postal_code": "",
+  "country": "Malawi",
+  "is_default": true
+}
+```
+
+#### 9.4 Delete Address
+**Endpoint:** `DELETE /api/addresses/{address_id}`
+
+#### 9.5 Set Default Address
+**Endpoint:** `POST /api/addresses/{address_id}/default`
+
+**Request Body:** None (empty raw JSON: `{}`)
+
+---
+
+### 10. Payment Methods (Mobile)
+
+#### 10.1 Get Payment Methods
+**Endpoint:** `GET /api/payment-methods`
+
+#### 10.2 Add Payment Method
+**Endpoint:** `POST /api/payment-methods`
+
+**Request Body (Raw JSON):**
+```json
+{
+  "type": "mobile_money",
+  "provider": "Airtel Money",
+  "phone_number": "+265991234567",
+  "is_default": true
+}
+```
+
+#### 10.3 Delete Payment Method
+**Endpoint:** `DELETE /api/payment-methods/{payment_method_id}`
+
+---
+
+### 11. Notifications (Mobile)
+
+#### 11.1 Get Notifications
+**Endpoint:** `GET /api/notifications?page=1&limit=20&unread_only=false`
+
+#### 11.2 Mark Notification as Read
+**Endpoint:** `POST /api/notifications/{notification_id}/read`
+
+**Request Body:** None (empty raw JSON: `{}`)
+
+#### 11.3 Mark All as Read
+**Endpoint:** `POST /api/notifications/read-all`
+
+**Request Body:** None (empty raw JSON: `{}`)
+
+#### 11.4 Register Device for Push Notifications
+**Endpoint:** `POST /api/notifications/register-device`
+
+**Request Body (Raw JSON):**
+```json
+{
+  "device_token": "fcm_token_abc123",
+  "platform": "android"
+}
+```
+
+---
+
+### 12. Shops / Vendors (Mobile)
+
+#### 12.1 Get All Shops
+**Endpoint:** `GET /api/shops?page=1&limit=20`
+
+#### 12.2 Get Shop Details
+**Endpoint:** `GET /api/shops/{shop_id}`
+
+#### 12.3 Get Shop Products
+**Endpoint:** `GET /api/shops/{shop_id}/products`
+
+---
+
+### 13. Search (Mobile)
+
+#### 13.1 Search Products
+**Endpoint:** `GET /api/search?q=iphone&page=1&limit=20&sort=relevance`
+
+#### 13.2 Search Suggestions (Autocomplete)
+**Endpoint:** `GET /api/search/suggestions?q=iph`
+
+---
+
+### 14. Help & Support (Mobile)
+
+#### 14.1 Get Help Topics
+**Endpoint:** `GET /api/help/topics`
+
+#### 14.2 Get FAQs
+**Endpoint:** `GET /api/help/faqs`
+
+#### 14.3 Submit Support Ticket
+**Endpoint:** `POST /api/help/tickets`
+
+**Request Body (Raw JSON):**
+```json
+{
+  "subject": "Issue with my order",
+  "category": "orders",
+  "message": "I received a damaged product...",
+  "order_id": "ord_789",
+  "attachments": ["base64_image_1"]
+}
+```
+
+---
+
+### 15. App Info (Mobile)
+
+#### 15.1 Get App Info
+**Endpoint:** `GET /api/app/info`
+
+---
+
+## Web (Admin & Seller APIs)
+
+### 16. Admin APIs (Web)
+
+All admin endpoints require admin role authentication.
+
+#### 16.1 Dashboard
+**Endpoint:** `GET /api/admin/dashboard`
+
+#### 16.2 Shops Management
+
+##### List All Shops
+**Endpoint:** `GET /api/admin/shops`
+
+##### Create Shop
+**Endpoint:** `POST /api/admin/shops`
+
+**Request Body (Raw JSON):**
 ```json
 {
   "shop_name": "New Shop",
@@ -193,29 +525,71 @@ All admin endpoints require admin role.
 }
 ```
 
-#### Categories Management
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/admin/categories/pending` | List pending categories |
-| GET | `/api/admin/categories/rejected` | List rejected categories |
-| GET | `/api/admin/categories/approved` | List approved categories |
-| POST | `/api/admin/categories/:categoryId/approve` | Approve category |
+##### Update Shop
+**Endpoint:** `PATCH /api/admin/shops/{shopId}`
 
-### Sellers (`/api/sellers`)
-All seller endpoints require seller role and shop ownership.
+**Request Body (Raw JSON):**
+```json
+{
+  "shop_name": "Updated Shop Name",
+  "location": "Blantyre",
+  "address": "456 New Street",
+  "phone": "+265 999 999 999",
+  "email": "newemail@example.com",
+  "status": "active",
+  "logo_url": "https://example.com/new-logo.png"
+}
+```
 
-#### Dashboard
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/sellers/dashboard` | Get seller dashboard |
+##### Delete Shop
+**Endpoint:** `DELETE /api/admin/shops/{shopId}`
 
-#### Categories
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/sellers/:shopId/categories` | List shop categories |
-| POST | `/api/sellers/:shopId/categories` | Create category |
+##### Invite Shop Owner
+**Endpoint:** `POST /api/admin/shops/{shopId}/invite-owner`
 
-**Create Category Request Body:**
+**Request Body (Raw JSON):**
+```json
+{
+  "owner_name": "John Doe",
+  "owner_email": "john.doe@example.com",
+  "owner_phone": "+265 999 123 456"
+}
+```
+
+#### 16.3 Categories Management
+
+##### List Pending Categories
+**Endpoint:** `GET /api/admin/categories/pending`
+
+##### List Rejected Categories
+**Endpoint:** `GET /api/admin/categories/rejected`
+
+##### List Approved Categories
+**Endpoint:** `GET /api/admin/categories/approved`
+
+##### Approve Category
+**Endpoint:** `POST /api/admin/categories/{categoryId}/approve`
+
+**Request Body:** None (empty raw JSON: `{}`)
+
+---
+
+### 17. Seller APIs (Web)
+
+All seller endpoints require seller role authentication and shop ownership.
+
+#### 17.1 Dashboard
+**Endpoint:** `GET /api/sellers/dashboard`
+
+#### 17.2 Categories
+
+##### List Shop Categories
+**Endpoint:** `GET /api/sellers/{shopId}/categories`
+
+##### Create Category
+**Endpoint:** `POST /api/sellers/{shopId}/categories`
+
+**Request Body (Raw JSON):**
 ```json
 {
   "name": "New Category",
@@ -223,22 +597,22 @@ All seller endpoints require seller role and shop ownership.
 }
 ```
 
-#### Products
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/sellers/:shopId/products` | List shop products |
-| POST | `/api/sellers/:shopId/products` | Create product |
-| PATCH | `/api/sellers/:shopId/products/:productId` | Update product |
-| DELETE | `/api/sellers/:shopId/products/:productId` | Delete product |
+#### 17.3 Products
 
-**Create Product Request Body:**
+##### List Shop Products
+**Endpoint:** `GET /api/sellers/{shopId}/products`
+
+##### Create Product
+**Endpoint:** `POST /api/sellers/{shopId}/products`
+
+**Request Body (Raw JSON):**
 ```json
 {
   "name": "New Product",
   "category_id": 1,
   "price": 50000,
   "image_url": "https://example.com/product-image.jpg",
-  "images_urls": ["https://example.com/image1.jpg"],
+  "images_urls": ["https://example.com/image1.jpg", "https://example.com/image2.jpg"],
   "description": "Product description",
   "stock": 100,
   "original_price": 60000,
@@ -250,20 +624,36 @@ All seller endpoints require seller role and shop ownership.
 }
 ```
 
-### Invitations (`/api/invitations`)
-All invitation endpoints require authentication.
+##### Update Product
+**Endpoint:** `PATCH /api/sellers/{shopId}/products/{productId}`
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/invitations` | Get all invitations |
-| GET | `/api/invitations/:id` | Get invitation by ID |
+**Request Body (Raw JSON):**
+```json
+{
+  "name": "Updated Product Name",
+  "category_id": 2,
+  "price": 55000,
+  "image_url": "https://example.com/new-image.jpg",
+  "images_urls": ["https://example.com/new-image1.jpg"],
+  "description": "Updated description",
+  "stock": 150,
+  "original_price": 65000,
+  "discount": 15,
+  "vendor": "Updated Shop Name",
+  "is_featured": true,
+  "is_hot": false,
+  "is_special": true
+}
+```
 
-### Health Check
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/health` | Check server status |
+##### Delete Product
+**Endpoint:** `DELETE /api/sellers/{shopId}/products/{productId}`
+
+---
 
 ## Response Format
+
+All API responses follow this standard format:
 
 ### Success Response
 ```json
@@ -278,41 +668,40 @@ All invitation endpoints require authentication.
 ```json
 {
   "success": false,
-  "message": "Error message",
-  "error": "Detailed error message"
+  "message": "Error message describing what went wrong",
+  "errors": {
+    "field_name": ["Validation error 1", "Validation error 2"]
+  }
 }
 ```
 
-## Status Codes
+---
 
-- `200` - Success
-- `201` - Created
-- `400` - Bad Request
-- `401` - Unauthorized
-- `403` - Forbidden
-- `404` - Not Found
-- `500` - Internal Server Error
+## Authentication
 
-## User Roles
+1. **Access Token** - Short-lived (1 hour), used for API requests
+2. **Refresh Token** - Long-lived (30 days), used to get new access tokens
+3. All authenticated endpoints require: `Authorization: Bearer <access_token>`
+4. When access token expires, use refresh token to get a new one
+5. If refresh token is invalid, user must login again
 
-- `customer` - Regular customer
-- `seller` - Shop owner/seller
-- `admin` - System administrator
+---
 
-## Testing Workflow
+## Important Notes
 
-1. **Register/Login**: Start by registering a new user or logging in
-2. **Save Token**: Copy the `access_token` from login response and set it as `access_token` variable in Postman
-3. **Test Endpoints**: Use the imported collection to test various endpoints
-4. **Admin Endpoints**: Use admin credentials to test admin endpoints
-5. **Seller Endpoints**: Register as seller (using invite token) to test seller endpoints
+1. **All POST requests must include `Content-Type: application/json` header**
+2. **All POST request bodies must be in Raw JSON format** (as shown in examples above)
+3. **Mobile App APIs** are for customer-facing mobile application
+4. **Web APIs** are for admin dashboard and seller dashboard web applications
+5. All monetary values are in **Malawian Kwacha (MWK)** and represented as integers (no decimals)
+6. Example: `1299000` = MK 1,299,000
 
-## Notes
+---
 
-- All prices are in the local currency (Malawian Kwacha)
-- Phone numbers should follow the format: `+265 XXX XXX XXX`
-- Dates should be in ISO format: `YYYY-MM-DD`
-- Image URLs should be publicly accessible URLs
-- OTP codes expire after 12 hours
-- JWT tokens expire after 7 days (configurable)
+## Postman Collection
 
+Import the `Techaven_API.postman_collection.json` file into Postman to access all endpoints with pre-configured requests and examples.
+
+The collection is organized into:
+- **Mobile App (Customer APIs)** folder - Contains all customer-facing endpoints
+- **Web (Admin & Seller APIs)** folder - Contains all admin and seller dashboard endpoints

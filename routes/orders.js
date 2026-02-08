@@ -7,13 +7,18 @@ const router = express.Router();
 // All routes require authentication
 router.use(authenticate);
 
-router.post('/checkout', OrderController.checkout);
+router.post('/', OrderController.createOrder);
 router.get('/', OrderController.getOrders);
-router.get('/:id', OrderController.getOrder);
-router.patch('/:id/status', OrderController.updateOrderStatus);
-router.post('/:id/cancel', OrderController.cancelOrder);
+router.get('/:order_id', OrderController.getOrder);
+router.post('/:order_id/cancel', OrderController.cancelOrder);
 
 export default router;
+
+
+
+
+
+
 
 
 
