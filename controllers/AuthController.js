@@ -52,6 +52,42 @@ export const register = async (req, res) => {
   try {
     const { full_name, email, phone_number, password, invite_token } = req.body;
 
+    // Validate invitation token FIRST if provided (only checked during registration)
+    let invite = null;
+    if (invite_token) {
+      // Token validation - only happens in register endpoint
+      invite = await ShopInvitation.findOne({
+        where: {
+          token: invite_token,
+          status: 'pending',
+          [Op.or]: [
+            { expires_at: null },
+            { expires_at: { [Op.gt]: new Date() } }
+          ]
+        }
+      });
+
+      if (!invite) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid or expired invitation token'
+        });
+      }
+
+      // If invitation has specific email/phone, validate it matches registration data
+      const emailMatches = !!(email && invite.owner_email && invite.owner_email.toLowerCase() === email.toLowerCase());
+      const phoneMatches = !!(phone_number && invite.owner_phone && invite.owner_phone === phone_number);
+
+      // If invite specifies contact details, require the registering user to match at least one
+      if ((invite.owner_email || invite.owner_phone) && !(emailMatches || phoneMatches)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invitation token does not match provided email/phone'
+        });
+      }
+    }
+
+    // Standard registration validation
     if (!full_name || !password) {
       return res.status(400).json({
         success: false,
@@ -76,38 +112,6 @@ export const register = async (req, res) => {
         success: false,
         message: 'User already exists with this email or phone number'
       });
-    }
-
-    let invite = null;
-    if (invite_token) {
-      invite = await ShopInvitation.findOne({
-        where: {
-          token: invite_token,
-          status: 'pending',
-          [Op.or]: [
-            { expires_at: null },
-            { expires_at: { [Op.gt]: new Date() } }
-          ]
-        }
-      });
-
-      if (!invite) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid or expired invitation token'
-        });
-      }
-
-      const emailMatches = !!(email && invite.owner_email && invite.owner_email.toLowerCase() === email.toLowerCase());
-      const phoneMatches = !!(phone_number && invite.owner_phone && invite.owner_phone === phone_number);
-
-      // If invite specifies contact details, require the registering user to match at least one.
-      if ((invite.owner_email || invite.owner_phone) && !(emailMatches || phoneMatches)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invitation token does not match provided email/phone'
-        });
-      }
     }
 
     const user = await User.create({
