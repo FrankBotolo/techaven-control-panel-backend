@@ -51,6 +51,39 @@ const Order = sequelize.define('Order', {
     allowNull: false,
     defaultValue: 'pending'
   },
+  courier_service: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  courier_tracking_number: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  seller_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'users',
+      key: 'id'
+    }
+  },
+  escrow_status: {
+    type: DataTypes.ENUM('pending', 'held', 'released', 'refunded'),
+    allowNull: false,
+    defaultValue: 'pending'
+  },
+  escrow_amount: {
+    type: DataTypes.DECIMAL(12, 2),
+    allowNull: true
+  },
+  delivery_confirmed_at: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  funds_released_at: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
   notes: {
     type: DataTypes.TEXT,
     allowNull: true

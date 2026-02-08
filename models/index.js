@@ -15,6 +15,7 @@ import Favorite from './Favorite.js';
 import Wallet from './Wallet.js';
 import WalletTransaction from './WalletTransaction.js';
 import Review from './Review.js';
+import Escrow from './Escrow.js';
 
 // Define associations
 Product.belongsTo(Category, { foreignKey: 'category_id', as: 'category' });
@@ -23,7 +24,9 @@ Category.hasMany(Product, { foreignKey: 'category_id', as: 'products' });
 Shop.hasMany(Product, { foreignKey: 'shop_id', as: 'products' });
 Banner.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
 Notification.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+Notification.belongsTo(Order, { foreignKey: 'order_id', as: 'order' });
 User.hasMany(Notification, { foreignKey: 'user_id', as: 'notifications' });
+Order.hasMany(Notification, { foreignKey: 'order_id', as: 'notifications' });
 
 // Shop ownership / seller assignment
 User.belongsTo(Shop, { foreignKey: 'shop_id', as: 'shop' });
@@ -81,6 +84,13 @@ Review.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 Product.hasMany(Review, { foreignKey: 'product_id', as: 'reviews' });
 User.hasMany(Review, { foreignKey: 'user_id', as: 'reviews' });
 
+// Escrow associations
+Escrow.belongsTo(Order, { foreignKey: 'order_id', as: 'order' });
+Escrow.belongsTo(User, { foreignKey: 'seller_id', as: 'seller' });
+Order.hasMany(Escrow, { foreignKey: 'order_id', as: 'escrows' });
+User.hasMany(Escrow, { foreignKey: 'seller_id', as: 'escrows' });
+Order.belongsTo(User, { foreignKey: 'seller_id', as: 'seller' });
+
 const db = {
   sequelize,
   Sequelize: sequelize.Sequelize,
@@ -99,7 +109,8 @@ const db = {
   Favorite,
   Wallet,
   WalletTransaction,
-  Review
+  Review,
+  Escrow
 };
 
 export default db;

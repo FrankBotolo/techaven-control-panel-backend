@@ -10,6 +10,10 @@
     "create-db": "node scripts/create-db.js",
     "migrate": "node scripts/migrate.js",
     "add-specifications": "node scripts/add-specifications-column.js",
+    "add-escrow": "node scripts/add-escrow-to-orders.js",
+    "test-email": "node scripts/test-email.js",
+    "test-notification-email": "node scripts/test-notification-email.js",
+    "test-single-notification": "node scripts/test-single-notification.js",
     "fix-invitations": "node scripts/fix-invitations-timestamps.js",
     "seed": "node scripts/seed.js",
     "setup": "npm run create-db && npm run migrate && npm run seed"

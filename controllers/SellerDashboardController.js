@@ -78,7 +78,7 @@ export const getDashboard = async (req, res) => {
           required: false
         }
       ],
-      attributes: ['id', 'name', 'image', 'price', 'stock', 'createdAt'],
+      attributes: ['id', 'name', 'image', 'price', 'stock', 'specifications', 'createdAt'],
       order: [['createdAt', 'DESC']],
       limit: 5
     });
@@ -97,7 +97,7 @@ export const getDashboard = async (req, res) => {
         shop_id: seller.shop_id,
         stock: { [Op.lt]: 10 }
       },
-      attributes: ['id', 'name', 'image', 'stock', 'price'],
+      attributes: ['id', 'name', 'image', 'stock', 'price', 'specifications'],
       order: [['stock', 'ASC']],
       limit: 10
     });

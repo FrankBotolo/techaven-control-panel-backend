@@ -688,14 +688,14 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"shipping_address_id\": \"addr_123\",\n  \"payment_method_id\": \"pm_456\",\n  \"notes\": \"Please call before delivery\",\n  \"coupon_code\": \"SAVE10\"\n}"
+									"raw": "{\n  \"shipping_address_id\": \"addr_123\",\n  \"payment_method_id\": \"pm_456\",\n  \"courier_service\": \"DHL Express\",\n  \"notes\": \"Please call before delivery\",\n  \"coupon_code\": \"SAVE10\"\n}"
 								},
 								"url": {
 									"raw": "{{base_url}}/api/orders",
 									"host": ["{{base_url}}"],
 									"path": ["api", "orders"]
 								},
-								"description": "Create a new order from cart items."
+								"description": "Create a new order from cart items. Requires courier_service selection. Shipping details are automatically shared with the selected courier."
 							},
 							"response": []
 						},
@@ -761,6 +761,75 @@
 									"path": ["api", "orders", "ord_789", "cancel"]
 								},
 								"description": "Cancel an order."
+							},
+							"response": []
+						},
+						{
+							"name": "Complete Payment",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"payment_reference\": \"TXN123456\",\n  \"payment_proof\": \"https://example.com/payment-proof.jpg\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/orders/ord_789/payment/complete",
+									"host": ["{{base_url}}"],
+									"path": ["api", "orders", "ord_789", "payment", "complete"]
+								},
+								"description": "Complete payment for an order. Funds are held in escrow by admin until delivery confirmation. Automatically notifies admin and seller."
+							},
+							"response": []
+						},
+						{
+							"name": "Confirm Delivery",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{base_url}}/api/orders/ord_789/delivery/confirm",
+									"host": ["{{base_url}}"],
+									"path": ["api", "orders", "ord_789", "delivery", "confirm"]
+								},
+								"description": "Customer confirms delivery. This releases escrow funds to the seller. Order must be marked as 'delivered' first. Only the customer who placed the order can confirm delivery."
+							},
+							"response": []
+						},
+						{
+							"name": "Update Order Status",
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"status\": \"shipped\",\n  \"courier_tracking_number\": \"TRACK123456\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/orders/ord_789/status",
+									"host": ["{{base_url}}"],
+									"path": ["api", "orders", "ord_789", "status"]
+								},
+								"description": "Update order status. Available to sellers and admin. Can update status (pending, processing, shipped, delivered, cancelled) and add courier tracking number."
 							},
 							"response": []
 						}
@@ -1496,6 +1565,139 @@
 							]
 						},
 						{
+							"name": "Orders Management",
+							"item": [
+								{
+									"name": "Get All Orders",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/orders",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "orders"]
+										},
+										"description": "Get all orders with full details including courier information, escrow status, and seller details. Requires admin role."
+									},
+									"response": []
+								},
+								{
+									"name": "Update Order Status",
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"status\": \"shipped\",\n  \"courier_tracking_number\": \"TRACK123456\",\n  \"payment_status\": \"paid\"\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/api/admin/orders/1/status",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "orders", "1", "status"]
+										},
+										"description": "Update order status and courier tracking. Admin can manage delivery based on shipping address. Requires admin role."
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Notifications Management",
+							"item": [
+								{
+									"name": "Get Admin Notifications",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/notifications?category=orders&type=payment&read=false&page=1&limit=20",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "notifications"],
+											"query": [
+												{
+													"key": "category",
+													"value": "orders",
+													"description": "Filter by category: orders, shops, categories, system"
+												},
+												{
+													"key": "type",
+													"value": "payment",
+													"description": "Filter by notification type"
+												},
+												{
+													"key": "read",
+													"value": "false",
+													"description": "Filter by read status"
+												},
+												{
+													"key": "page",
+													"value": "1"
+												},
+												{
+													"key": "limit",
+													"value": "20"
+												},
+												{
+													"key": "priority",
+													"value": "high",
+													"description": "Sort by priority"
+												}
+											]
+										},
+										"description": "Get admin notifications with advanced filtering by category, type, read status, and date range."
+									},
+									"response": []
+								},
+								{
+									"name": "Get Admin Notification Statistics",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/notifications/stats",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "notifications", "stats"]
+										},
+										"description": "Get comprehensive admin notification statistics dashboard including counts by type, category, urgent notifications, and pending actions."
+									},
+									"response": []
+								},
+								{
+									"name": "Get Notifications by Category",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/notifications/category/orders",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "notifications", "category", "orders"]
+										},
+										"description": "Get unread notifications filtered by category: orders, shops, categories, or system."
+									},
+									"response": []
+								},
+								{
+									"name": "Get Urgent Notifications",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/notifications/urgent",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "notifications", "urgent"]
+										},
+										"description": "Get all urgent/priority notifications (unread payment, order, and system alerts)."
+									},
+									"response": []
+								}
+							]
+						},
+						{
 							"name": "Categories Management",
 							"item": [
 								{
@@ -1626,6 +1828,92 @@
 											"path": ["api", "sellers", "1", "categories"]
 										},
 										"description": "Create a new category for a shop. Requires seller role and shop ownership."
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Notifications",
+							"item": [
+								{
+									"name": "Get Seller Notifications",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/sellers/notifications?type=order&read=false&page=1&limit=20&priority=high",
+											"host": ["{{base_url}}"],
+											"path": ["api", "sellers", "notifications"],
+											"query": [
+												{
+													"key": "type",
+													"value": "order",
+													"description": "Filter by type: order, payment, product, review, system"
+												},
+												{
+													"key": "read",
+													"value": "false",
+													"description": "Filter by read status: true/false"
+												},
+												{
+													"key": "page",
+													"value": "1"
+												},
+												{
+													"key": "limit",
+													"value": "20"
+												},
+												{
+													"key": "priority",
+													"value": "high",
+													"description": "Sort by priority: high"
+												}
+											]
+										},
+										"description": "Get seller notifications with advanced filtering. Supports filtering by type, read status, date range, and priority sorting."
+									},
+									"response": []
+								},
+								{
+									"name": "Get Seller Notification Statistics",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/sellers/notifications/stats",
+											"host": ["{{base_url}}"],
+											"path": ["api", "sellers", "notifications", "stats"]
+										},
+										"description": "Get comprehensive notification statistics for seller including counts by type, urgent notifications, and today's notifications."
+									},
+									"response": []
+								},
+								{
+									"name": "Get Seller Order Notifications",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/sellers/notifications/orders",
+											"host": ["{{base_url}}"],
+											"path": ["api", "sellers", "notifications", "orders"]
+										},
+										"description": "Get all unread order-related notifications for the seller with order details."
+									},
+									"response": []
+								},
+								{
+									"name": "Get Seller Payment Notifications",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/sellers/notifications/payments",
+											"host": ["{{base_url}}"],
+											"path": ["api", "sellers", "notifications", "payments"]
+										},
+										"description": "Get all payment-related notifications including escrow information."
 									},
 									"response": []
 								}

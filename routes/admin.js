@@ -3,6 +3,7 @@ import { authenticate, authorizeRoles } from '../middleware/auth.js';
 import * as AdminShopController from '../controllers/AdminShopController.js';
 import * as AdminCategoryController from '../controllers/AdminCategoryController.js';
 import * as DashboardController from '../controllers/DashboardController.js';
+import * as OrderController from '../controllers/OrderController.js';
 
 const router = express.Router();
 
@@ -25,6 +26,10 @@ router.post('/categories/:categoryId/reject', AdminCategoryController.rejectCate
 
 // Dashboard
 router.get('/dashboard', DashboardController.getDashboard);
+
+// Orders - Admin can view all orders and manage delivery
+router.get('/orders', OrderController.getAllOrdersAdmin);
+router.patch('/orders/:id/status', OrderController.updateOrderStatus);
 
 export default router;
 

@@ -37,7 +37,7 @@ const sendOtp = async (user, type) => {
 
   if (user.email) {
     try {
-      await sendOtpEmail(user.email, code);
+      await sendOtpEmail(user.email, code, type);
     } catch (error) {
       console.error('Mail error:', error.message);
     }

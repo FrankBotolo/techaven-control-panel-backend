@@ -25,7 +25,7 @@ export const listPending = async (req, res) => {
         {
           model: Product,
           as: 'products',
-          attributes: ['id', 'name', 'image', 'images', 'price', 'original_price', 'discount', 'stock', 'rating', 'total_reviews', 'description', 'is_featured', 'is_hot', 'is_special', 'vendor'],
+          attributes: ['id', 'name', 'image', 'images', 'price', 'original_price', 'discount', 'stock', 'rating', 'total_reviews', 'description', 'is_featured', 'is_hot', 'is_special', 'vendor', 'specifications'],
           required: false
         }
       ],
@@ -78,7 +78,7 @@ export const listRejected = async (req, res) => {
         {
           model: Product,
           as: 'products',
-          attributes: ['id', 'name', 'image', 'images', 'price', 'original_price', 'discount', 'stock', 'rating', 'total_reviews', 'description', 'is_featured', 'is_hot', 'is_special', 'vendor'],
+          attributes: ['id', 'name', 'image', 'images', 'price', 'original_price', 'discount', 'stock', 'rating', 'total_reviews', 'description', 'is_featured', 'is_hot', 'is_special', 'vendor', 'specifications'],
           required: false
         }
       ],
@@ -131,7 +131,7 @@ export const listApproved = async (req, res) => {
         {
           model: Product,
           as: 'products',
-          attributes: ['id', 'name', 'image', 'images', 'price', 'original_price', 'discount', 'stock', 'rating', 'total_reviews', 'description', 'is_featured', 'is_hot', 'is_special', 'vendor'],
+          attributes: ['id', 'name', 'image', 'images', 'price', 'original_price', 'discount', 'stock', 'rating', 'total_reviews', 'description', 'is_featured', 'is_hot', 'is_special', 'vendor', 'specifications'],
           required: false
         }
       ],
