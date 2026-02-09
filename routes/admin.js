@@ -2,6 +2,7 @@ import express from 'express';
 import { authenticate, authorizeRoles } from '../middleware/auth.js';
 import * as AdminShopController from '../controllers/AdminShopController.js';
 import * as AdminCategoryController from '../controllers/AdminCategoryController.js';
+import * as AdminProductController from '../controllers/AdminProductController.js';
 import * as DashboardController from '../controllers/DashboardController.js';
 import * as OrderController from '../controllers/OrderController.js';
 
@@ -23,6 +24,10 @@ router.get('/categories/rejected', AdminCategoryController.listRejected);
 router.get('/categories/approved', AdminCategoryController.listApproved);
 router.post('/categories/:categoryId/approve', AdminCategoryController.approveCategory);
 router.post('/categories/:categoryId/reject', AdminCategoryController.rejectCategory);
+router.delete('/categories/:categoryId', AdminCategoryController.deleteCategory);
+
+// Products
+router.delete('/products/:productId', AdminProductController.deleteProduct);
 
 // Dashboard
 router.get('/dashboard', DashboardController.getDashboard);

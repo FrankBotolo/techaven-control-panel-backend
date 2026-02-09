@@ -233,4 +233,50 @@ export const rejectCategory = async (req, res) => {
   }
 };
 
+export const deleteCategory = async (req, res) => {
+  try {
+    const { categoryId } = req.params;
+
+    const category = await Category.findByPk(categoryId);
+    if (!category) {
+      return res.status(404).json({ success: false, message: 'Category not found' });
+    }
+
+    // Check if category has products
+    const productCount = await Product.count({
+      where: { category_id: categoryId }
+    });
+
+    if (productCount > 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: `Cannot delete category. It has ${productCount} product(s) associated with it. Please remove or reassign products first.` 
+      });
+    }
+
+    const categoryIdForAudit = category.id;
+    const categoryName = category.name;
+
+    // Hard delete - permanently remove the category from database
+    await category.destroy({ force: true });
+
+    await logAudit({
+      action: 'admin.category.delete',
+      actor_user_id: req.user.id,
+      target_type: 'category',
+      target_id: categoryIdForAudit,
+      metadata: { hard_delete: true, category_name: categoryName },
+      ip_address: req.ip
+    });
+
+    return res.json({ 
+      success: true, 
+      message: 'Category deleted successfully' 
+    });
+  } catch (error) {
+    console.error('Admin delete category error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to delete category', error: error.message });
+  }
+};
+
 
