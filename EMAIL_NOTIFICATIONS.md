@@ -8,10 +8,14 @@ The Techaven platform now includes a comprehensive email notification system usi
 
 ### Brevo SMTP Setup
 
-The system is configured to use Brevo SMTP by default. Update your `.env` file:
+The system uses Brevo SMTP. Add to your `.env` file (get credentials from [Brevo](https://app.brevo.com) → SMTP & API):
 
 ```env
-
+SMTP_HOST=smtp-relay.brevo.com
+SMTP_PORT=587
+SMTP_USER=your-login@smtp-brevo.com
+SMTP_PASS=your-smtp-password-or-api-key
+SMTP_FROM_EMAIL=noreply@yourdomain.com
 ```
 
 ### Alternative SMTP Providers

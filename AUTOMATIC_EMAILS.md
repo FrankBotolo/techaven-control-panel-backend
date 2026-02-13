@@ -142,9 +142,14 @@ All emails use beautiful, responsive HTML templates:
 ## Configuration
 
 ### Brevo SMTP (Production)
-The system uses Brevo (formerly Sendinblue) SMTP for email delivery. Update your `.env` file:
+The system uses Brevo (formerly Sendinblue) SMTP for email delivery. Add to your `.env` file (get credentials from [Brevo](https://app.brevo.com) → SMTP & API):
 ```env
-
+SMTP_HOST=smtp-relay.brevo.com
+SMTP_PORT=587
+SMTP_USER=your-login@smtp-brevo.com
+SMTP_PASS=your-smtp-password-or-api-key
+SMTP_FROM_EMAIL=noreply@yourdomain.com
+```
 
 ### Alternative SMTP Providers
 If you need to use a different SMTP provider, update `.env` with your SMTP settings:

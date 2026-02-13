@@ -16,7 +16,7 @@ const testSMTPConnection = async () => {
   console.log(`SMTP Configuration:`);
   console.log(`  Host: ${host}`);
   console.log(`  Port: ${port}`);
-  console.log(`  User: ${process.env.SMTP_USER || 'a2310c001@smtp-brevo.com'}`);
+  console.log(`  User: ${process.env.SMTP_USER ? '(set)' : '(not set)'}`);
   console.log(`  Secure: ${port === '465' ? 'Yes (SSL)' : 'No (STARTTLS)'}\n`);
 
   try {
