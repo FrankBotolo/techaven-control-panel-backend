@@ -1,7 +1,7 @@
 // Allowed origins (comma-separated in CORS_ORIGINS env, or default below)
 const allowedOrigins = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(',').map((o) => o.trim())
-  : ['http://72.61.16.221', 'http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5173'];
+  : ['http://72.61.16.221',  'http://localhost:3000', 'http://72.61.16.221:8082', 'http://localhost:5173'];
 
 export const corsMiddleware = (req, res, next) => {
   const origin = req.headers.origin;
