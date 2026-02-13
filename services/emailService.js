@@ -13,20 +13,48 @@ import {
 
 dotenv.config();
 
-// Configure Mailtrap transporter
+// Configure Brevo (Sendinblue) SMTP transporter
+const smtpPort = parseInt(process.env.SMTP_PORT) || 587;
+const smtpSecure = smtpPort === 465; // Use SSL for port 465, STARTTLS for port 587
+
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'sandbox.smtp.mailtrap.io',
-  port: parseInt(process.env.SMTP_PORT) || 2525,
-  secure: false,
+  host: process.env.SMTP_HOST || 'smtp-relay.brevo.com',
+  port: smtpPort,
+  secure: smtpSecure, // true for 465, false for 587 (STARTTLS)
   auth: {
-    user: process.env.SMTP_USER || '9530d3ec9a5b92',
-    pass: process.env.SMTP_PASS || '823e2e606002eb'
+    user: process.env.SMTP_USER || 'a2310c001@smtp-brevo.com',
+    pass: process.env.SMTP_PASS || 'xsmtpsib-7c14744dd50ba0c16b9e510924f2c44bd56b70641d3245c8ad0e6c39fad43997-xaCb2MbERjRZZuDz'
   },
+  // Connection timeout settings
+  connectionTimeout: 60000, // 60 seconds
+  greetingTimeout: 30000, // 30 seconds
+  socketTimeout: 60000, // 60 seconds
   // Additional options for better compatibility
   tls: {
     rejectUnauthorized: false
-  }
+  },
+  // Debug mode (set to true for troubleshooting)
+  debug: process.env.SMTP_DEBUG === 'true',
+  logger: process.env.SMTP_DEBUG === 'true'
 });
+
+/**
+ * Verify SMTP connection
+ */
+export const verifySMTPConnection = async () => {
+  try {
+    await transporter.verify();
+    console.log('✅ SMTP connection verified successfully');
+    return true;
+  } catch (error) {
+    console.error('❌ SMTP connection verification failed:', error.message);
+    if (error.code === 'ETIMEDOUT' || error.code === 'ESOCKET') {
+      console.error('   Connection timeout - Check firewall settings and network connectivity');
+      console.error('   Try using port 465 with SSL instead of port 587');
+    }
+    return false;
+  }
+};
 
 /**
  * Send OTP email with beautiful template
@@ -49,7 +77,16 @@ export const sendOtpEmail = async (email, otpCode, type = 'verification') => {
     console.log('✅ OTP email sent:', info.messageId);
     return true;
   } catch (error) {
-    console.error('❌ OTP email error:', error);
+    console.error('❌ OTP email error:', error.message);
+    if (error.code === 'ETIMEDOUT' || error.code === 'ESOCKET') {
+      console.error('   Connection timeout detected. Possible solutions:');
+      console.error('   1. Check firewall settings - port 587 may be blocked');
+      console.error('   2. Try port 465 with SSL: Set SMTP_PORT=465 in .env');
+      console.error('   3. Check network connectivity to smtp-relay.brevo.com');
+      console.error('   4. Verify SMTP credentials are correct');
+    } else if (error.code === 'EAUTH') {
+      console.error('   Authentication failed - Check SMTP_USER and SMTP_PASS in .env');
+    }
     return false;
   }
 };

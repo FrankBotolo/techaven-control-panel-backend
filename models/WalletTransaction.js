@@ -45,7 +45,7 @@ const WalletTransaction = sequelize.define('WalletTransaction', {
     allowNull: true
   },
   status: {
-    type: DataTypes.ENUM('pending', 'completed', 'failed', 'cancelled'),
+    type: DataTypes.ENUM('pending', 'processing', 'completed', 'failed', 'cancelled'),
     allowNull: false,
     defaultValue: 'pending'
   },

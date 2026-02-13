@@ -1,7 +1,7 @@
 import db from '../models/index.js';
 import { Op } from 'sequelize';
 
-const { Shop, Product, Category, User, Notification, sequelize } = db;
+const { Shop, Product, Category, User, Notification, Order, Wallet } = db;
 
 export const getDashboard = async (req, res) => {
   try {
@@ -110,6 +110,21 @@ export const getDashboard = async (req, res) => {
       limit: 5
     });
 
+    // Seller balance: available (released from escrow) vs pending in escrow
+    let wallet = await Wallet.findOne({ where: { user_id: seller.id } });
+    if (!wallet) {
+      wallet = { balance: 0, currency: 'MWK' };
+    }
+    const availableBalance = parseFloat(wallet.balance) || 0;
+    const pendingEscrowSum = await Order.sum('escrow_amount', {
+      where: {
+        seller_id: seller.id,
+        escrow_status: 'held',
+        payment_status: 'paid'
+      }
+    });
+    const pendingEscrow = parseFloat(pendingEscrowSum) || 0;
+
     // Format shop data
     const shopData = shop.toJSON();
     if (shopData.users) {
@@ -138,6 +153,13 @@ export const getDashboard = async (req, res) => {
         },
         sales: {
           total: shop.total_sales || 0
+        },
+        balance: {
+          available_balance: availableBalance,
+          pending_escrow: pendingEscrow,
+          formatted_available: `MK ${availableBalance.toLocaleString()}`,
+          formatted_pending_escrow: `MK ${pendingEscrow.toLocaleString()}`,
+          can_withdraw: availableBalance > 0
         }
       },
       recent: {

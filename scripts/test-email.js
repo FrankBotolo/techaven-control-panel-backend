@@ -9,7 +9,7 @@ const testEmails = async () => {
   try {
     // Test OTP email
     console.log('1. Testing OTP email...');
-    const otpResult = await sendOtpEmail('test@example.com', '123456', 'signup');
+    const otpResult = await sendOtpEmail('frank78botolo@gmail.com', '123456', 'signup');
     console.log(otpResult ? '✅ OTP email sent successfully' : '❌ OTP email failed');
     console.log('');
 
@@ -30,13 +30,14 @@ const testEmails = async () => {
       order: orderData
     };
     
-    const orderResult = await sendOrderNotificationEmail('test@example.com', orderNotification);
+    const orderResult = await sendOrderNotificationEmail('frank78botolo@gmail.com', orderNotification);
     console.log(orderResult ? '✅ Order notification email sent successfully' : '❌ Order notification email failed');
     console.log('');
 
     console.log('✅ Email testing completed!');
-    console.log('📧 Check your Mailtrap inbox at https://mailtrap.io');
-    console.log('   Inbox: sandbox.smtp.mailtrap.io');
+    console.log('📧 Emails have been sent via Brevo SMTP');
+    console.log('   Check the recipient inbox (including spam folder)');
+    console.log('   Monitor delivery status at https://app.brevo.com');
     
     process.exit(0);
   } catch (error) {

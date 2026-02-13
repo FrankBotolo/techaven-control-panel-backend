@@ -16,6 +16,7 @@ import Wallet from './Wallet.js';
 import WalletTransaction from './WalletTransaction.js';
 import Review from './Review.js';
 import Escrow from './Escrow.js';
+import WithdrawalRequest from './WithdrawalRequest.js';
 
 // Define associations
 Product.belongsTo(Category, { foreignKey: 'category_id', as: 'category' });
@@ -91,6 +92,11 @@ Order.hasMany(Escrow, { foreignKey: 'order_id', as: 'escrows' });
 User.hasMany(Escrow, { foreignKey: 'seller_id', as: 'escrows' });
 Order.belongsTo(User, { foreignKey: 'seller_id', as: 'seller' });
 
+// Withdrawal requests (sellers withdraw available balance only)
+WithdrawalRequest.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+WithdrawalRequest.belongsTo(User, { foreignKey: 'processed_by', as: 'processedBy' });
+User.hasMany(WithdrawalRequest, { foreignKey: 'user_id', as: 'withdrawal_requests' });
+
 const db = {
   sequelize,
   Sequelize: sequelize.Sequelize,
@@ -110,7 +116,8 @@ const db = {
   Wallet,
   WalletTransaction,
   Review,
-  Escrow
+  Escrow,
+  WithdrawalRequest
 };
 
 export default db;

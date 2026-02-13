@@ -2,30 +2,32 @@
 
 ## Overview
 
-The Techaven platform now includes a comprehensive email notification system using Mailtrap for testing and development. All notifications are sent with beautiful, responsive HTML email templates.
+The Techaven platform now includes a comprehensive email notification system using Brevo (formerly Sendinblue) SMTP for email delivery. All notifications are sent with beautiful, responsive HTML email templates.
 
 ## Configuration
 
-### Mailtrap Setup (Development/Testing)
+### Brevo SMTP Setup
 
-The system is configured to use Mailtrap by default. Update your `.env` file:
+The system is configured to use Brevo SMTP by default. Update your `.env` file:
 
 ```env
-SMTP_HOST=sandbox.smtp.mailtrap.io
-SMTP_PORT=2525
-SMTP_USER=9530d3ec9a5b92
-SMTP_PASS=823e2e606002eb
+SMTP_HOST=smtp-relay.brevo.com
+SMTP_PORT=587
+SMTP_USER=a2310c001@smtp-brevo.com
+SMTP_PASS=xsmtpsib-7c14744dd50ba0c16b9e510924f2c44bd56b70641d3245c8ad0e6c39fad43997-xaCb2MbERjRZZuDz
+SMTP_FROM_EMAIL=noreply@techaven.mw
 ```
 
-### Production Setup
+### Alternative SMTP Providers
 
-For production, update your `.env` file with your production SMTP settings:
+If you need to use a different SMTP provider, update your `.env` file with your SMTP settings:
 
 ```env
 SMTP_HOST=smtp.your-provider.com
 SMTP_PORT=587
 SMTP_USER=your-email@techaven.mw
 SMTP_PASS=your-secure-password
+SMTP_FROM_EMAIL=noreply@techaven.mw
 ```
 
 ## Email Templates
@@ -137,14 +139,20 @@ SMTP_PASS=your-secure-password
 - OTP verification (signup, login, password reset)
 - Shop invitations
 
-## Testing with Mailtrap
+## Testing Email Functionality
 
-1. **View Emails**: Go to https://mailtrap.io and check your inbox
+1. **Test Email Sending**: Use the test scripts:
+   - `npm run test-email` - Test OTP and order emails
+   - `npm run test-notification-email` - Test all notification types
 2. **Test Different Scenarios**:
    - Place an order (customer email)
    - Complete payment (payment emails)
    - Update order status (shipped/delivered emails)
    - Confirm delivery (payment release emails)
+3. **Check Email Delivery**: 
+   - Emails will be sent to the actual recipient addresses
+   - Check your Brevo dashboard for delivery status
+   - Monitor email logs in the console
 
 ## Production Deployment
 

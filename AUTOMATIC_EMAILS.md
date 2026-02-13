@@ -141,41 +141,47 @@ All emails use beautiful, responsive HTML templates:
 
 ## Configuration
 
-### Mailtrap (Development/Testing)
+### Brevo SMTP (Production)
+The system uses Brevo (formerly Sendinblue) SMTP for email delivery. Update your `.env` file:
 ```env
-SMTP_HOST=sandbox.smtp.mailtrap.io
-SMTP_PORT=2525
-SMTP_USER=9530d3ec9a5b92
-SMTP_PASS=823e2e606002eb
+SMTP_HOST=smtp-relay.brevo.com
+SMTP_PORT=587
+SMTP_USER=a2310c001@smtp-brevo.com
+SMTP_PASS=xsmtpsib-7c14744dd50ba0c16b9e510924f2c44bd56b70641d3245c8ad0e6c39fad43997-xaCb2MbERjRZZuDz
+SMTP_FROM_EMAIL=noreply@techaven.mw
 ```
 
-### Production
-Update `.env` with your production SMTP settings:
+### Alternative SMTP Providers
+If you need to use a different SMTP provider, update `.env` with your SMTP settings:
 ```env
 SMTP_HOST=smtp.your-provider.com
 SMTP_PORT=587
 SMTP_USER=your-email@techaven.mw
 SMTP_PASS=your-password
+SMTP_FROM_EMAIL=noreply@techaven.mw
 ```
 
 ## Testing
 
 ### Test Registration Email
 1. Register a new user with an email address
-2. Check Mailtrap inbox for OTP email
+2. Check the recipient's email inbox for OTP email
+3. Check console logs for email sending confirmation
 
 ### Test Order Notifications
 1. Place an order
-2. Check Mailtrap inbox for:
+2. Check recipient email inboxes for:
    - Order confirmation (customer)
    - New order notification (seller)
    - Order alert (admin)
+3. Check console logs for email sending confirmations
 
 ### Test Payment Notifications
 1. Complete payment for an order
-2. Check Mailtrap inbox for payment emails
+2. Check recipient email inboxes for payment emails
 3. Confirm delivery
-4. Check Mailtrap inbox for payment release emails
+4. Check recipient email inboxes for payment release emails
+5. Monitor Brevo dashboard for delivery status
 
 ## Important Notes
 
@@ -188,14 +194,16 @@ SMTP_PASS=your-password
 
 ## Viewing Emails
 
-### Development/Testing
-- Go to https://mailtrap.io
-- Log in to your account
-- Check your inbox for all sent emails
+### Email Delivery
+- Emails are sent to actual recipient email addresses
+- Check recipient inboxes (including spam/junk folders)
+- Monitor email delivery through Brevo dashboard at https://app.brevo.com
+- Check console logs for email sending confirmations and errors
 
-### Production
-- Emails will be sent to actual user email addresses
-- Monitor email delivery through your SMTP provider dashboard
+### Email Testing Scripts
+- Run `npm run test-email` to test OTP and order emails
+- Run `npm run test-notification-email` to test all notification types
+- Run `npm run test-single-notification` to test a specific notification
 
 ## Summary
 

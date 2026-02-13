@@ -695,7 +695,7 @@
 									"host": ["{{base_url}}"],
 									"path": ["api", "orders"]
 								},
-								"description": "Create a new order from cart items. Requires courier_service selection. Shipping details are automatically shared with the selected courier."
+								"description": "Create a new order from cart items. Requires courier_service selection. Shipping details are automatically shared with the selected courier. **Seller Impact:** Seller immediately sees a 'pending' transaction in their wallet (order amount, status: pending). No payment taken yet - customer pays externally (card/mobile money)."
 							},
 							"response": []
 						},
@@ -783,7 +783,7 @@
 									"host": ["{{base_url}}"],
 									"path": ["api", "orders", "ord_789", "payment", "complete"]
 								},
-								"description": "Complete payment for an order. Funds are held in escrow by admin until delivery confirmation. Automatically notifies admin and seller."
+								"description": "Mark payment as complete (call after payment gateway confirms or admin verifies payment). Funds are held in escrow. **Seller Impact:** Seller's transaction status changes from 'pending' to 'processing' (payment received, held in escrow). Money will be released to seller wallet when admin marks order as 'delivered'. Automatically notifies admin and seller."
 							},
 							"response": []
 						},
@@ -806,7 +806,7 @@
 									"host": ["{{base_url}}"],
 									"path": ["api", "orders", "ord_789", "delivery", "confirm"]
 								},
-								"description": "Customer confirms delivery. This releases escrow funds to the seller. Order must be marked as 'delivered' first. Only the customer who placed the order can confirm delivery."
+								"description": "[Optional/Legacy] Customer confirms delivery. **Note:** Escrow is automatically released when admin marks order as 'delivered' - this endpoint is optional. Only the customer who placed the order can confirm delivery."
 							},
 							"response": []
 						},
@@ -829,7 +829,7 @@
 									"host": ["{{base_url}}"],
 									"path": ["api", "orders", "ord_789", "status"]
 								},
-								"description": "Update order status. Available to sellers and admin. Can update status (pending, processing, shipped, delivered, cancelled) and add courier tracking number."
+								"description": "Update order status. Available to sellers and admin. Can update status (pending, processing, shipped, delivered, cancelled) and add courier tracking number. **Note:** Only admin can mark as 'delivered' (which auto-releases escrow to seller)."
 							},
 							"response": []
 						}
@@ -892,77 +892,7 @@
 					]
 				},
 				{
-					"name": "8. Wallet",
-					"item": [
-						{
-							"name": "Get Wallet Balance",
-							"request": {
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{base_url}}/api/wallet",
-									"host": ["{{base_url}}"],
-									"path": ["api", "wallet"]
-								},
-								"description": "Get wallet balance for the authenticated user."
-							},
-							"response": []
-						},
-						{
-							"name": "Get Wallet Transactions",
-							"request": {
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{base_url}}/api/wallet/transactions?page=1&limit=20&type=credit",
-									"host": ["{{base_url}}"],
-									"path": ["api", "wallet", "transactions"],
-									"query": [
-										{
-											"key": "page",
-											"value": "1"
-										},
-										{
-											"key": "limit",
-											"value": "20"
-										},
-										{
-											"key": "type",
-											"value": "credit"
-										}
-									]
-								},
-								"description": "Get wallet transaction history."
-							},
-							"response": []
-						},
-						{
-							"name": "Top Up Wallet",
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"amount\": 10000,\n  \"payment_method\": \"mobile_money\",\n  \"phone_number\": \"+265991234567\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/api/wallet/topup",
-									"host": ["{{base_url}}"],
-									"path": ["api", "wallet", "topup"]
-								},
-								"description": "Top up wallet balance."
-							},
-							"response": []
-						}
-					]
-				},
-				{
-					"name": "9. Shipping Addresses",
+					"name": "8. Shipping Addresses",
 					"item": [
 						{
 							"name": "Get Addresses",
@@ -1064,7 +994,7 @@
 					]
 				},
 				{
-					"name": "10. Payment Methods",
+					"name": "9. Payment Methods",
 					"item": [
 						{
 							"name": "Get Payment Methods",
@@ -1120,7 +1050,7 @@
 					]
 				},
 				{
-					"name": "11. Notifications",
+					"name": "10. Notifications",
 					"item": [
 						{
 							"name": "Get Notifications",
@@ -1222,7 +1152,7 @@
 					]
 				},
 				{
-					"name": "12. Shops",
+					"name": "11. Shops",
 					"item": [
 						{
 							"name": "Get All Shops",
@@ -1288,7 +1218,7 @@
 					]
 				},
 				{
-					"name": "13. Search",
+					"name": "12. Search",
 					"item": [
 						{
 							"name": "Search Products",
@@ -1351,7 +1281,7 @@
 					]
 				},
 				{
-					"name": "14. Help & Support",
+					"name": "13. Help & Support",
 					"item": [
 						{
 							"name": "Get Help Topics",
@@ -1413,7 +1343,7 @@
 					]
 				},
 				{
-					"name": "15. App Info",
+					"name": "14. App Info",
 					"item": [
 						{
 							"name": "Get App Info",
@@ -1593,14 +1523,85 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n  \"status\": \"shipped\",\n  \"courier_tracking_number\": \"TRACK123456\",\n  \"payment_status\": \"paid\"\n}"
+											"raw": "{\n  \"status\": \"delivered\",\n  \"courier_tracking_number\": \"TRACK123456\"\n}"
 										},
 										"url": {
 											"raw": "{{base_url}}/api/admin/orders/1/status",
 											"host": ["{{base_url}}"],
 											"path": ["api", "admin", "orders", "1", "status"]
 										},
-										"description": "Update order status and courier tracking. Admin can manage delivery based on shipping address. Requires admin role."
+										"description": "Update order status and courier tracking. Admin can manage delivery based on shipping address. **Important:** When status is set to 'delivered', escrow funds are AUTOMATICALLY released to seller wallet and seller's transaction changes to 'completed'. No customer confirmation needed. Requires admin role."
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Withdrawals Management",
+							"item": [
+								{
+									"name": "Get All Withdrawals",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/withdrawals?status=pending&page=1&limit=20",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "withdrawals"],
+											"query": [
+												{
+													"key": "status",
+													"value": "pending",
+													"description": "Filter: pending, processing, completed, rejected"
+												},
+												{
+													"key": "page",
+													"value": "1"
+												},
+												{
+													"key": "limit",
+													"value": "20"
+												}
+											]
+										},
+										"description": "List all seller withdrawal requests. Use status=pending to see requests awaiting approval. Requires admin role."
+									},
+									"response": []
+								},
+								{
+									"name": "Get Withdrawal by ID",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/withdrawals/1",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "withdrawals", "1"]
+										},
+										"description": "Get a single withdrawal request with seller details. Requires admin role."
+									},
+									"response": []
+								},
+								{
+									"name": "Process Withdrawal",
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"status\": \"completed\",\n  \"admin_notes\": \"Paid via Airtel Money\"\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/api/admin/withdrawals/1",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "withdrawals", "1"]
+										},
+										"description": "Approve or reject a withdrawal. status: completed (debits seller wallet and marks paid) or rejected. Optionally set admin_notes. Requires admin role."
 									},
 									"response": []
 								}
@@ -1785,7 +1786,126 @@
 											"host": ["{{base_url}}"],
 											"path": ["api", "sellers", "dashboard"]
 										},
-										"description": "Get seller dashboard statistics. Requires seller role."
+										"description": "Get seller dashboard statistics. Includes overview.balance (available_balance, pending_escrow, can_withdraw). Requires seller role."
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Earnings & Withdrawals",
+							"item": [
+								{
+									"name": "Get Seller Earnings",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/sellers/earnings",
+											"host": ["{{base_url}}"],
+											"path": ["api", "sellers", "earnings"]
+										},
+										"description": "Get earnings summary: available_balance (withdrawable), pending_escrow (held until admin marks delivered), total_released, and orders_in_escrow. Transaction statuses: 'pending' (order placed, no payment), 'processing' (payment received, held in escrow), 'completed' (delivered, money in wallet). Sellers can only withdraw available balance. Requires seller role."
+									},
+									"response": []
+								},
+								{
+									"name": "Request Withdrawal",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"amount\": 50000,\n  \"withdrawal_method\": \"mobile_money\",\n  \"account_number\": \"+265991234567\",\n  \"account_name\": \"John Seller\"\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/api/sellers/withdraw",
+											"host": ["{{base_url}}"],
+											"path": ["api", "sellers", "withdraw"]
+										},
+										"description": "Submit withdrawal request. Only available balance (released from escrow) can be withdrawn. Min MK 1,000. withdrawal_method: mobile_money or bank_transfer. Admin must approve. Requires seller role."
+									},
+									"response": []
+								},
+								{
+									"name": "Get Seller Withdrawals",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/sellers/withdrawals?status=pending&page=1&limit=20",
+											"host": ["{{base_url}}"],
+											"path": ["api", "sellers", "withdrawals"],
+											"query": [
+												{
+													"key": "status",
+													"value": "pending",
+													"description": "Filter: pending, processing, completed, rejected"
+												},
+												{
+													"key": "page",
+													"value": "1"
+												},
+												{
+													"key": "limit",
+													"value": "20"
+												}
+											]
+										},
+										"description": "List authenticated seller's withdrawal requests. Requires seller role."
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Wallet",
+							"item": [
+								{
+									"name": "Get Wallet Balance",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/wallet",
+											"host": ["{{base_url}}"],
+											"path": ["api", "wallet"]
+										},
+										"description": "Get seller wallet balance. Returns available_balance (withdrawable), pending_escrow (held until delivery confirmation), can_withdraw. Wallet is for sellers only; customers pay at checkout via card/mobile money."
+									},
+									"response": []
+								},
+								{
+									"name": "Get Wallet Transactions",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/wallet/transactions?page=1&limit=20",
+											"host": ["{{base_url}}"],
+											"path": ["api", "wallet", "transactions"],
+											"query": [
+												{
+													"key": "page",
+													"value": "1"
+												},
+												{
+													"key": "limit",
+													"value": "20"
+												},
+												{
+													"key": "type",
+													"value": "credit",
+													"description": "Optional: credit or debit"
+												}
+											]
+										},
+										"description": "Get seller wallet transaction history. Transaction statuses: 'pending' (order placed, waiting payment), 'processing' (payment received, held in escrow), 'completed' (delivered, money in wallet). Includes credits from escrow releases and debits from withdrawals. Seller only."
 									},
 									"response": []
 								}

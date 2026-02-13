@@ -5,6 +5,7 @@ import * as AdminCategoryController from '../controllers/AdminCategoryController
 import * as AdminProductController from '../controllers/AdminProductController.js';
 import * as DashboardController from '../controllers/DashboardController.js';
 import * as OrderController from '../controllers/OrderController.js';
+import * as AdminWithdrawalController from '../controllers/AdminWithdrawalController.js';
 
 const router = express.Router();
 
@@ -35,6 +36,11 @@ router.get('/dashboard', DashboardController.getDashboard);
 // Orders - Admin can view all orders and manage delivery
 router.get('/orders', OrderController.getAllOrdersAdmin);
 router.patch('/orders/:id/status', OrderController.updateOrderStatus);
+
+// Withdrawals - Process seller withdrawal requests (approve/reject)
+router.get('/withdrawals', AdminWithdrawalController.listWithdrawals);
+router.get('/withdrawals/:id', AdminWithdrawalController.getWithdrawal);
+router.patch('/withdrawals/:id', AdminWithdrawalController.processWithdrawal);
 
 export default router;
 

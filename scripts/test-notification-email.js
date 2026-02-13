@@ -11,7 +11,7 @@ dotenv.config();
 const testNotificationEmails = async () => {
   console.log('🧪 Testing notification email functionality...\n');
 
-  const testEmail = 'test@example.com'; // Change this to your email
+    const testEmail = 'frank78botolo@gmail.com'; // Change this to your email
 
   try {
     // Test 1: Order Placed Notification
@@ -131,8 +131,10 @@ const testNotificationEmails = async () => {
     console.log('');
 
     console.log('✅ Notification email testing completed!');
-    console.log('📧 Check your Mailtrap inbox at https://mailtrap.io');
+    console.log('📧 Emails have been sent via Brevo SMTP');
+    console.log('   Check the recipient inbox (including spam folder)');
     console.log('   You should see 6 beautiful HTML emails with different templates.');
+    console.log('   Monitor delivery status at https://app.brevo.com');
     
     process.exit(0);
   } catch (error) {

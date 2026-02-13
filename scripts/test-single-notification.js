@@ -6,7 +6,7 @@ dotenv.config();
 const testSingleNotification = async () => {
   console.log('🧪 Testing single notification email...\n');
 
-  const testEmail = 'test@example.com'; // Change this to your email
+  const testEmail = 'frank78botolo@gmail.com'; // Change this to your email
 
   try {
     // Test Order Placed Notification with full details
@@ -31,7 +31,8 @@ const testSingleNotification = async () => {
     
     if (result) {
       console.log('✅ Notification email sent successfully!');
-      console.log('📧 Check your Mailtrap inbox at https://mailtrap.io');
+      console.log('📧 Email sent via Brevo SMTP');
+      console.log('   Check the recipient inbox (including spam folder)');
       console.log('   You should see a beautiful HTML email with:');
       console.log('   - Gradient header');
       console.log('   - Order details');

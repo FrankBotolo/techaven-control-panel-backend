@@ -1,34 +1,65 @@
 import db from '../models/index.js';
 import { Op } from 'sequelize';
 
-const { User, Wallet, WalletTransaction } = db;
+const { User, Wallet, WalletTransaction, Order } = db;
+
+// Wallet is for sellers only. Customers pay at checkout directly (card, mobile money, etc.).
+export const requireSeller = (req, res, next) => {
+  if (req.user.role !== 'seller' && req.user.role !== 'admin') {
+    return res.status(403).json({
+      success: false,
+      message: 'Wallet is for sellers only. Customers pay at checkout directly via card, mobile money, or other payment methods.'
+    });
+  }
+  next();
+};
 
 export const getWallet = async (req, res) => {
   try {
     const userId = req.user.id;
-    
-    // Get or create wallet for user
+    const userRole = req.user.role;
+
+    // Get or create wallet for user (sellers only - enforced by route)
     let wallet = await Wallet.findOne({ where: { user_id: userId } });
-    
+
     if (!wallet) {
-      // Create wallet if it doesn't exist
       wallet = await Wallet.create({
         user_id: userId,
         balance: 0.00,
         currency: 'MWK'
       });
     }
-    
+
     const balance = parseFloat(wallet.balance) || 0;
-    
+    const currency = wallet.currency || 'MWK';
+
+    const data = {
+      balance,
+      currency,
+      formatted_balance: `MK ${balance.toLocaleString()}`
+    };
+
+    // Sellers: show available (withdrawable) vs pending in escrow
+    if (userRole === 'seller') {
+      const pendingEscrowResult = await Order.sum('escrow_amount', {
+        where: {
+          seller_id: userId,
+          escrow_status: 'held',
+          payment_status: 'paid'
+        }
+      });
+      const pending_escrow = parseFloat(pendingEscrowResult) || 0;
+      data.available_balance = balance;
+      data.pending_escrow = pending_escrow;
+      data.formatted_available = `MK ${balance.toLocaleString()}`;
+      data.formatted_pending_escrow = `MK ${pending_escrow.toLocaleString()}`;
+      data.can_withdraw = balance > 0;
+    }
+
     return res.json({
       success: true,
       message: 'Wallet retrieved',
-      data: {
-        balance: balance,
-        currency: wallet.currency || 'MWK',
-        formatted_balance: `MK ${balance.toLocaleString()}`
-      }
+      data
     });
   } catch (error) {
     console.error('Get wallet error:', error);

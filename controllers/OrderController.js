@@ -1,4 +1,5 @@
 import db from '../models/index.js';
+import { Op } from 'sequelize';
 import { logAudit } from '../utils/audit.js';
 import { sendNotificationEmail } from '../utils/notificationHelper.js';
 
@@ -197,6 +198,39 @@ export const createOrder = async (req, res) => {
       where: { user_id: userId }
     });
 
+    // Create pending wallet transaction for seller (shows in seller's transaction list)
+    let sellerWallet = await Wallet.findOne({ where: { user_id: sellerId } });
+    if (!sellerWallet) {
+      sellerWallet = await Wallet.create({
+        user_id: sellerId,
+        balance: 0.00,
+        currency: 'MWK'
+      });
+    }
+
+    // Create pending transaction for seller - shows order amount as pending
+    await WalletTransaction.create({
+      wallet_id: sellerWallet.id,
+      user_id: sellerId,
+      type: 'credit',
+      amount: sellerAmount,
+      currency: 'MWK',
+      description: `Order ${orderNumber} - Payment pending`,
+      reference: `order_${order.id}`,
+      status: 'pending', // Will be updated to 'completed' when admin marks as delivered
+      balance_after: parseFloat(sellerWallet.balance) // Current balance (no change yet)
+    });
+
+    // Get order with items (needed for notifications)
+    const orderWithItems = await Order.findByPk(order.id, {
+      include: [
+        {
+          model: OrderItem,
+          as: 'items'
+        }
+      ]
+    });
+
     // Create notifications
     // Customer notification
     const customerNotification = await Notification.create({
@@ -246,16 +280,6 @@ export const createOrder = async (req, res) => {
       target_id: order.id,
       metadata: { order_number: orderNumber, total_amount: totalAmount },
       ip_address: req.ip
-    });
-
-    // Get order with items
-    const orderWithItems = await Order.findByPk(order.id, {
-      include: [
-        {
-          model: OrderItem,
-          as: 'items'
-        }
-      ]
     });
 
     return res.status(201).json({
@@ -464,12 +488,123 @@ export const updateOrderStatus = async (req, res) => {
 
     await order.save();
 
+    // When admin marks order as 'delivered', automatically release escrow to seller wallet
+    if (order.status === 'delivered' && order.escrow_status === 'held' && !order.delivery_confirmed_at) {
+      // Update order escrow status
+      order.delivery_confirmed_at = new Date();
+      order.escrow_status = 'released';
+      order.funds_released_at = new Date();
+      await order.save();
+
+      // Update escrow record
+      const escrow = await Escrow.findOne({ where: { order_id: order.id } });
+      if (escrow) {
+        escrow.status = 'released';
+        escrow.released_at = new Date();
+        await escrow.save();
+      }
+
+      // Get or create seller wallet
+      let sellerWallet = await Wallet.findOne({ where: { user_id: order.seller_id } });
+      if (!sellerWallet) {
+        sellerWallet = await Wallet.create({
+          user_id: order.seller_id,
+          balance: 0.00,
+          currency: 'MWK'
+        });
+      }
+
+      // Transfer funds from admin escrow to seller
+      const adminUsersForWallet = await User.findAll({ where: { role: 'admin' }, limit: 1 });
+      if (adminUsersForWallet.length > 0) {
+        const adminWallet = await Wallet.findOne({ where: { user_id: adminUsersForWallet[0].id } });
+        if (adminWallet) {
+          // Deduct from admin wallet
+          const adminNewBalance = parseFloat(adminWallet.balance) - parseFloat(order.escrow_amount);
+          adminWallet.balance = adminNewBalance;
+          await adminWallet.save();
+
+          // Create debit transaction for admin
+          await WalletTransaction.create({
+            wallet_id: adminWallet.id,
+            user_id: adminUsersForWallet[0].id,
+            type: 'debit',
+            amount: order.escrow_amount,
+            currency: 'MWK',
+            description: `Escrow release for order ${order.order_number} to seller`,
+            reference: `escrow_release_${order.id}`,
+            status: 'completed',
+            balance_after: adminNewBalance
+          });
+        }
+      }
+
+      // Add to seller wallet
+      const sellerNewBalance = parseFloat(sellerWallet.balance) + parseFloat(order.escrow_amount);
+      sellerWallet.balance = sellerNewBalance;
+      await sellerWallet.save();
+
+      // Update the pending/processing transaction to completed
+      const pendingTransaction = await WalletTransaction.findOne({
+        where: {
+          user_id: order.seller_id,
+          reference: `order_${order.id}`,
+          status: { [Op.in]: ['pending', 'processing'] } // Can be either pending or processing
+        }
+      });
+
+      if (pendingTransaction) {
+        pendingTransaction.status = 'completed';
+        pendingTransaction.balance_after = sellerNewBalance;
+        pendingTransaction.description = `Payment received for order ${order.order_number}`;
+        await pendingTransaction.save();
+      } else {
+        // If pending transaction not found, create completed one
+        await WalletTransaction.create({
+          wallet_id: sellerWallet.id,
+          user_id: order.seller_id,
+          type: 'credit',
+          amount: order.escrow_amount,
+          currency: 'MWK',
+          description: `Payment received for order ${order.order_number}`,
+          reference: `order_payment_${order.id}`,
+          status: 'completed',
+          balance_after: sellerNewBalance
+        });
+      }
+
+      // Notify seller
+      const sellerReleaseNotification = await Notification.create({
+        user_id: order.seller_id,
+        title: 'Payment Released',
+        message: `MWK ${order.escrow_amount} has been released to your wallet for order ${order.order_number}.`,
+        type: 'payment',
+        order_id: order.id,
+        read: false
+      });
+      sendNotificationEmail(sellerReleaseNotification, order);
+
+      // Notify admin
+      const allAdminUsers = await User.findAll({ where: { role: 'admin' } });
+      for (const admin of allAdminUsers) {
+        const adminReleaseNotification = await Notification.create({
+          user_id: admin.id,
+          title: 'Escrow Released',
+          message: `Escrow funds of MWK ${order.escrow_amount} have been released to seller for order ${order.order_number}.`,
+          type: 'payment',
+          order_id: order.id,
+          read: false
+        });
+        sendNotificationEmail(adminReleaseNotification, order);
+      }
+    }
+
     // Create notification for customer
     if (order.status === 'delivered') {
       const deliveredNotification = await Notification.create({
         user_id: order.user_id,
         title: 'Order Delivered',
-        message: `Your order ${order.order_number} has been delivered. Please confirm delivery to release payment to the seller.`,
+        message: `Your order ${order.order_number} has been delivered. Payment has been released to the seller.`,
         type: 'order',
         order_id: order.id,
         read: false
@@ -588,6 +723,21 @@ export const completePayment = async (req, res) => {
         status: 'completed',
         balance_after: newBalance
       });
+    }
+
+    // Update seller's pending transaction to "processing" (payment received, held in escrow)
+    const pendingTransaction = await WalletTransaction.findOne({
+      where: {
+        user_id: order.seller_id,
+        reference: `order_${order.id}`,
+        status: 'pending'
+      }
+    });
+
+    if (pendingTransaction) {
+      pendingTransaction.status = 'processing'; // Changed from pending to processing (held in escrow)
+      pendingTransaction.description = `Order ${order.order_number} - Payment received, held in escrow`;
+      await pendingTransaction.save();
     }
 
     // Notify customer
