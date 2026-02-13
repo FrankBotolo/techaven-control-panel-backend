@@ -22,8 +22,8 @@ const transporter = nodemailer.createTransport({
   port: smtpPort,
   secure: smtpSecure, // true for 465, false for 587 (STARTTLS)
   auth: {
-    user: process.env.SMTP_USER || 'a2310c001@smtp-brevo.com',
-    pass: process.env.SMTP_PASS || 'xsmtpsib-7c14744dd50ba0c16b9e510924f2c44bd56b70641d3245c8ad0e6c39fad43997-xaCb2MbERjRZZuDz'
+    user: process.env.SMTP_USER 
+    pass: process.env.SMTP_PASS 
   },
   // Connection timeout settings
   connectionTimeout: 60000, // 60 seconds
