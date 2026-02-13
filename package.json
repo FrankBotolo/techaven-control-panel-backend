@@ -9,6 +9,8 @@
     "dev": "nodemon server.js",
     "create-db": "node scripts/create-db.js",
     "migrate": "node scripts/migrate.js",
+    "migrate:fresh": "node scripts/migrate-fresh.js",
+    "migrate:fresh:seed": "node scripts/migrate-fresh.js && node scripts/seed.js",
     "add-specifications": "node scripts/add-specifications-column.js",
     "add-escrow": "node scripts/add-escrow-to-orders.js",
     "test-email": "node scripts/test-email.js",
