@@ -1,6 +1,7 @@
 import db from '../models/index.js';
 import jwt from 'jsonwebtoken';
 import { sendOtpEmail } from '../services/emailService.js';
+import { sendOtpSms, sendPasswordResetOtpSms } from '../services/smsService.js';
 import moment from 'moment';
 import { Op } from 'sequelize';
 import { logAudit } from '../utils/audit.js';
@@ -41,8 +42,17 @@ const sendOtp = async (user, type) => {
     } catch (error) {
       console.error('Mail error:', error.message);
     }
-  } else {
-    console.log(`SMS Mock: OTP for ${user.phone_number} is ${code}`);
+  }
+  if (user.phone_number) {
+    try {
+      if (type === 'password_reset') {
+        await sendPasswordResetOtpSms(user.phone_number, code);
+      } else {
+        await sendOtpSms(user.phone_number, code);
+      }
+    } catch (error) {
+      console.error('SMS error:', error.message);
+    }
   }
 
   return code;
@@ -492,6 +502,7 @@ export const resetPassword = async (req, res) => {
       });
     }
 
+    const identifier = decoded.identifier;
     const user = await User.findOne({
       where: {
         [Op.or]: [

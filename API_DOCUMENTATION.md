@@ -37,6 +37,7 @@ This API is organized into two main categories:
 ### Web (Admin & Seller APIs)
 16. [Admin APIs](#16-admin-apis-web)
 17. [Seller APIs](#17-seller-apis-web)
+18. [Shop Owner Registration](#18-shop-owner-registration-web)
 
 ---
 
@@ -49,7 +50,7 @@ All authentication endpoints are for customer mobile app registration and login.
 #### 1.1 Register (Sign Up)
 **Endpoint:** `POST /api/auth/register`
 
-**Request Body (Raw JSON):**
+**Request Body (Raw JSON) - Customer:**
 ```json
 {
   "full_name": "John Doe",
@@ -58,6 +59,18 @@ All authentication endpoints are for customer mobile app registration and login.
   "password": "securePassword123"
 }
 ```
+
+**Request Body (Raw JSON) - Shop Owner (invited):**
+Include `invite_token` from the registration link (`/register?invite_token=xxx`) to register as a seller linked to a shop. Email or phone must match the invitation.
+```json
+{
+  "full_name": "John Doe",
+  "email": "john.doe@example.com",
+  "password": "securePassword123",
+  "invite_token": "a1b2c3d4e5f6789012345678901234567890abcdef"
+}
+```
+**See:** [docs/OWNER_REGISTRATION.md](docs/OWNER_REGISTRATION.md) for full shop owner registration flow.
 
 #### 1.2 Login (Sign In)
 **Endpoint:** `POST /api/auth/login`
@@ -651,6 +664,48 @@ All seller endpoints require seller role authentication and shop ownership.
 
 ---
 
+### 18. Shop Owner Registration (Web)
+
+When an admin invites a shop owner, the invitee receives an email with a registration link. The shop owner must register with the `invite_token`, then verify OTP to activate their seller account.
+
+**Full documentation:** [docs/OWNER_REGISTRATION.md](docs/OWNER_REGISTRATION.md)
+
+#### Quick Reference
+
+| Step | Endpoint | Description |
+|------|----------|-------------|
+| 1 | Registration link | `/register?invite_token={token}` (from invitation email) |
+| 2 | `POST /api/auth/register` | Register with `invite_token` in body |
+| 3 | `POST /api/auth/verify-otp` | Verify OTP, receive access token |
+| 4 | Use access token | Access seller APIs |
+
+#### Owner Register
+**Endpoint:** `POST /api/auth/register`
+
+**Request Body (with invite_token):**
+```json
+{
+  "full_name": "John Doe",
+  "email": "john.doe@example.com",
+  "password": "securePassword123",
+  "invite_token": "token_from_registration_link"
+}
+```
+
+#### Owner Verify OTP
+**Endpoint:** `POST /api/auth/verify-otp`
+
+**Request Body:**
+```json
+{
+  "email": "john.doe@example.com",
+  "otp": "123456",
+  "type": "signup"
+}
+```
+
+---
+
 ## Response Format
 
 All API responses follow this standard format:
@@ -705,3 +760,11 @@ Import the `Techaven_API.postman_collection.json` file into Postman to access al
 The collection is organized into:
 - **Mobile App (Customer APIs)** folder - Contains all customer-facing endpoints
 - **Web (Admin & Seller APIs)** folder - Contains all admin and seller dashboard endpoints
+
+---
+
+## Additional Documentation (docs folder)
+
+| Document | Description |
+|----------|-------------|
+| [docs/OWNER_REGISTRATION.md](docs/OWNER_REGISTRATION.md) | Shop owner invitation and registration flow |

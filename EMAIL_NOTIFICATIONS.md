@@ -182,6 +182,30 @@ All email templates are in `services/emailTemplates.js`. You can customize:
 - Errors are logged to console
 - Failed emails can be retried manually if needed
 
+## SMS Notifications (Click Mobile)
+
+SMS is sent in addition to (or instead of) email when the user has a phone number.
+
+### Configuration
+
+Add to `.env` (Click Mobile SMS Gateway):
+
+```env
+SMS_API_URL=http://206.225.81.36:8989/api/messaging/sendsms
+SMS_BALANCE_URL=http://206.225.81.36/BalanceChecker/GetBalance.php
+SMS_BEARER_TOKEN=your-api-key
+SMS_SENDER_ID=TECHAVEN
+SMS_ORG_ID=657
+```
+
+### When SMS is sent
+
+- **OTP (signup / login)**: When the user has `phone_number`, the verification code is sent via SMS (and email if they have email).
+- **Password reset**: Reset code is sent via SMS when the user has a phone number.
+- **Order/payment notifications**: Same events that trigger email (Order Placed, Order Shipped, Order Delivered, New Order Received, Payment Received, Payment Released, etc.) also trigger a short SMS when the user has a phone number.
+
+Phone numbers are normalized to international format `265XXXXXXXXX` (Malawi). If SMS is not configured, sending is skipped without failing the request.
+
 ## Future Enhancements
 
 - Email preferences (opt-in/opt-out)

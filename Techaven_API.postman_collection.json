@@ -2119,6 +2119,90 @@
 							]
 						}
 					]
+				},
+				{
+					"name": "Shop Owner Registration",
+					"description": "APIs for invited shop owners to register and activate their seller account. Flow: 1) Admin invites owner → 2) Owner receives email with registration link → 3) Owner registers with invite_token → 4) Owner verifies OTP → 5) Owner accesses seller dashboard. See docs/OWNER_REGISTRATION.md for full flow.",
+					"item": [
+						{
+							"name": "Register (Shop Owner)",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"full_name\": \"John Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"securePassword123\",\n  \"invite_token\": \"{{invite_token}}\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/auth/register",
+									"host": ["{{base_url}}"],
+									"path": ["api", "auth", "register"]
+								},
+								"description": "Creates a seller account linked to the invited shop. Include invite_token from the registration link (/register?invite_token=xxx). Email or phone must match the invitation."
+							},
+							"response": []
+						},
+						{
+							"name": "Verify OTP (Shop Owner)",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"otp\": \"123456\",\n  \"type\": \"signup\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/auth/verify-otp",
+									"host": ["{{base_url}}"],
+									"path": ["api", "auth", "verify-otp"]
+								},
+								"description": "Verifies OTP after shop owner registration. Returns access_token and refresh_token. Use access_token for seller API calls."
+							},
+							"response": []
+						},
+						{
+							"name": "Resend OTP (Shop Owner)",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"type\": \"signup\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/auth/resend-otp",
+									"host": ["{{base_url}}"],
+									"path": ["api", "auth", "resend-otp"]
+								},
+								"description": "Resends OTP if shop owner did not receive it after registration."
+							},
+							"response": []
+						}
+					]
 				}
 			]
 		}
@@ -2131,6 +2215,11 @@
 		},
 		{
 			"key": "access_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "invite_token",
 			"value": "",
 			"type": "string"
 		}

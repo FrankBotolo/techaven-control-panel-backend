@@ -17,6 +17,7 @@
     "test-notification-email": "node scripts/test-notification-email.js",
     "test-single-notification": "node scripts/test-single-notification.js",
     "test-smtp": "node scripts/test-smtp-connection.js",
+    "test-sms": "node scripts/test-sms.js",
     "fix-invitations": "node scripts/fix-invitations-timestamps.js",
     "seed": "node scripts/seed.js",
     "setup": "npm run create-db && npm run migrate && npm run seed"
