@@ -557,7 +557,7 @@
 									"host": ["{{base_url}}"],
 									"path": ["api", "categories"]
 								},
-								"description": "Get all categories with subcategories."
+								"description": "Get all categories. Returns only admin-created global categories (approved). Used by storefront and by sellers to know which categories exist for product assignment."
 							},
 							"response": []
 						},
@@ -1700,7 +1700,68 @@
 						},
 						{
 							"name": "Categories Management",
+							"description": "Categories are created by admin only. Sellers select from these when adding products. Admin can create, update, list, approve/reject/delete.",
 							"item": [
+								{
+									"name": "List All Categories",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/categories",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "categories"]
+										},
+										"description": "Get all categories (global and legacy per-shop). Use this to manage categories. Requires admin role."
+									},
+									"response": []
+								},
+								{
+									"name": "Create Category",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"Electronics\",\n  \"description\": \"Phones, laptops, accessories\",\n  \"icon\": \"https://example.com/icon.png\"\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/api/admin/categories",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "categories"]
+										},
+										"description": "Create a new global category. Sellers will select from these when adding products. Body: name (required), description (optional), icon or icon_url (optional). Only icon URL is supported; no image. Requires admin role."
+									},
+									"response": []
+								},
+								{
+									"name": "Update Category",
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"Electronics & Gadgets\",\n  \"description\": \"Updated description\",\n  \"icon\": \"https://example.com/new-icon.png\"\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/api/admin/categories/1",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "categories", "1"]
+										},
+										"description": "Update a category (name, description, icon/icon_url). Only icon URL is supported; no image. Requires admin role."
+									},
+									"response": []
+								},
 								{
 									"name": "List Pending Categories",
 									"request": {
@@ -1763,6 +1824,43 @@
 											"path": ["api", "admin", "categories", "1", "approve"]
 										},
 										"description": "Approve a pending category. Requires admin role."
+									},
+									"response": []
+								},
+								{
+									"name": "Reject Category",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"reason\": \"Optional rejection reason\"\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/api/admin/categories/1/reject",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "categories", "1", "reject"]
+										},
+										"description": "Reject a pending category. Body may include reason. Requires admin role."
+									},
+									"response": []
+								},
+								{
+									"name": "Delete Category",
+									"request": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/categories/1",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "categories", "1"]
+										},
+										"description": "Delete a category. Fails if any products use this category. Requires admin role."
 									},
 									"response": []
 								}
@@ -1913,9 +2011,10 @@
 						},
 						{
 							"name": "Categories",
+							"description": "Categories are created by admin only. Sellers use this list to select a category when adding or editing products.",
 							"item": [
 								{
-									"name": "List Shop Categories",
+									"name": "List Categories (for product selection)",
 									"request": {
 										"method": "GET",
 										"header": [],
@@ -1924,30 +2023,7 @@
 											"host": ["{{base_url}}"],
 											"path": ["api", "sellers", "1", "categories"]
 										},
-										"description": "Get all categories for a shop. Requires seller role and shop ownership."
-									},
-									"response": []
-								},
-								{
-									"name": "Create Category",
-									"request": {
-										"method": "POST",
-										"header": [
-											{
-												"key": "Content-Type",
-												"value": "application/json"
-											}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": "{\n  \"name\": \"New Category\",\n  \"image\": \"https://example.com/category-image.jpg\"\n}"
-										},
-										"url": {
-											"raw": "{{base_url}}/api/sellers/1/categories",
-											"host": ["{{base_url}}"],
-											"path": ["api", "sellers", "1", "categories"]
-										},
-										"description": "Create a new category for a shop. Requires seller role and shop ownership."
+										"description": "Get all admin-created categories. Use these category IDs when creating or updating products (category_id). Sellers cannot create categories. Requires seller role; replace 1 with your shop ID."
 									},
 									"response": []
 								}
@@ -2075,7 +2151,7 @@
 											"host": ["{{base_url}}"],
 											"path": ["api", "sellers", "1", "products"]
 										},
-										"description": "Create a new product for a shop. Requires seller role and shop ownership."
+										"description": "Create a new product for a shop. category_id must be an ID from the admin-created categories list (GET .../sellers/:shopId/categories). Requires seller role and shop ownership."
 									},
 									"response": []
 								},
@@ -2098,7 +2174,7 @@
 											"host": ["{{base_url}}"],
 											"path": ["api", "sellers", "1", "products", "1"]
 										},
-										"description": "Update a product. Requires seller role and shop ownership."
+										"description": "Update a product. category_id (if sent) must be an ID from the admin-created categories list (GET .../sellers/:shopId/categories). Requires seller role and shop ownership."
 									},
 									"response": []
 								},

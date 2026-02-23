@@ -3,6 +3,93 @@ import { logAudit } from '../utils/audit.js';
 
 const { Category, Shop, User, Product } = db;
 
+/** List all categories (for admin management). Global categories have shop_id null. */
+export const listAll = async (req, res) => {
+  try {
+    const categories = await Category.findAll({
+      order: [['id', 'DESC']],
+      include: [
+        {
+          model: Shop,
+          as: 'shop',
+          attributes: ['id', 'name'],
+          required: false
+        }
+      ]
+    });
+    return res.json({ success: true, message: 'Categories retrieved', data: categories });
+  } catch (error) {
+    console.error('Admin list categories error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch categories', error: error.message });
+  }
+};
+
+/** Create a new global category (admin only). Sellers will select from these when adding products. Only icon URL is supported (no image). */
+export const createCategory = async (req, res) => {
+  try {
+    const { name, description, icon, icon_url } = req.body;
+    const categoryName = name || req.body.category_name;
+    if (!categoryName) {
+      return res.status(400).json({ success: false, message: 'name is required' });
+    }
+    const category = await Category.create({
+      shop_id: null,
+      name: categoryName,
+      description: description || null,
+      icon: icon || icon_url || null,
+      status: 'approved'
+    });
+    await logAudit({
+      action: 'admin.category.create',
+      actor_user_id: req.user.id,
+      target_type: 'category',
+      target_id: category.id,
+      metadata: { name: categoryName, description },
+      ip_address: req.ip
+    });
+    return res.json({
+      success: true,
+      message: 'Category created successfully',
+      data: { category_id: category.id, name: category.name }
+    });
+  } catch (error) {
+    console.error('Admin create category error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to create category', error: error.message });
+  }
+};
+
+/** Update a category (admin only). Only icon URL is supported (no image). */
+export const updateCategory = async (req, res) => {
+  try {
+    const { categoryId } = req.params;
+    const { name, description, icon, icon_url } = req.body;
+    const category = await Category.findByPk(categoryId);
+    if (!category) {
+      return res.status(404).json({ success: false, message: 'Category not found' });
+    }
+    if (name != null) category.name = name;
+    if (description !== undefined) category.description = description || null;
+    if (icon != null || icon_url != null) category.icon = icon || icon_url || category.icon;
+    await category.save();
+    await logAudit({
+      action: 'admin.category.update',
+      actor_user_id: req.user.id,
+      target_type: 'category',
+      target_id: category.id,
+      metadata: { name: category.name },
+      ip_address: req.ip
+    });
+    return res.json({
+      success: true,
+      message: 'Category updated successfully',
+      data: category
+    });
+  } catch (error) {
+    console.error('Admin update category error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to update category', error: error.message });
+  }
+};
+
 export const listPending = async (req, res) => {
   try {
     const categories = await Category.findAll({

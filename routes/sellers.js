@@ -18,9 +18,8 @@ router.get('/earnings', SellerEarningsController.getEarnings);
 router.post('/withdraw', SellerEarningsController.requestWithdrawal);
 router.get('/withdrawals', SellerEarningsController.getWithdrawals);
 
-// Category routes
+// Category routes (sellers only list admin-created categories to select when adding products)
 router.get('/:shopId/categories', SellerCategoryController.listForShop);
-router.post('/:shopId/categories', SellerCategoryController.create);
 
 // Product routes
 router.get('/:shopId/products', SellerProductController.listForShop);

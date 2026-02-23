@@ -43,10 +43,16 @@ export const create = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Shop not found' });
     }
 
-    // Verify category exists
+    // Verify category exists and is an admin-created category (sellers can only select from these)
     const category = await Category.findByPk(category_id);
     if (!category) {
       return res.status(404).json({ success: false, message: 'Category not found' });
+    }
+    if (category.shop_id !== null || category.status !== 'approved') {
+      return res.status(400).json({
+        success: false,
+        message: 'You can only assign products to categories created by the admin. Please select a category from your shop\'s category list.'
+      });
     }
 
     // Parse images array if provided
@@ -198,6 +204,12 @@ export const update = async (req, res) => {
       const category = await Category.findByPk(category_id);
       if (!category) {
         return res.status(404).json({ success: false, message: 'Category not found' });
+      }
+      if (category.shop_id !== null || category.status !== 'approved') {
+        return res.status(400).json({
+          success: false,
+          message: 'You can only assign products to categories created by the admin. Please select a category from your shop\'s category list.'
+        });
       }
       product.category_id = parseInt(category_id);
     }

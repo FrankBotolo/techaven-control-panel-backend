@@ -19,7 +19,10 @@ router.patch('/shops/:shopId', AdminShopController.updateShop);
 router.delete('/shops/:shopId', AdminShopController.deleteShop);
 router.post('/shops/:shopId/invite-owner', AdminShopController.inviteOwner);
 
-// Categories
+// Categories (admin creates and manages; sellers only select when adding products)
+router.get('/categories', AdminCategoryController.listAll);
+router.post('/categories', AdminCategoryController.createCategory);
+router.patch('/categories/:categoryId', AdminCategoryController.updateCategory);
 router.get('/categories/pending', AdminCategoryController.listPending);
 router.get('/categories/rejected', AdminCategoryController.listRejected);
 router.get('/categories/approved', AdminCategoryController.listApproved);
