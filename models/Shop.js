@@ -44,9 +44,22 @@ const Shop = sequelize.define('Shop', {
     type: DataTypes.STRING,
     allowNull: true
   },
+  application_status: {
+    type: DataTypes.ENUM('pending', 'approved', 'rejected'),
+    allowNull: false,
+    defaultValue: 'approved'
+  },
   is_verified: {
     type: DataTypes.BOOLEAN,
     defaultValue: false
+  },
+  business_license_url: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  verification_documents: {
+    type: DataTypes.JSON,
+    allowNull: true
   },
   joined_date: {
     type: DataTypes.STRING,

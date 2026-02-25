@@ -50,6 +50,32 @@
 							"response": []
 						},
 						{
+							"name": "Register Seller (Self Signup)",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"full_name\": \"John Seller\",\n  \"email\": \"seller@example.com\",\n  \"phone_number\": \"+265991234567\",\n  \"password\": \"securePassword123\",\n  \"shop_name\": \"My New Shop\",\n  \"location\": \"Lilongwe\",\n  \"address\": \"123 Main Street\",\n  \"logo_url\": \"https://example.com/logo.png\",\n  \"business_license_url\": \"https://example.com/business-license.pdf\",\n  \"id_document_urls\": [\n    \"https://example.com/id-front.png\",\n    \"https://example.com/id-back.png\"\n  ]\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/auth/register-seller",
+									"host": ["{{base_url}}"],
+									"path": ["api", "auth", "register-seller"]
+								},
+								"description": "Self signup for sellers. Creates a seller user and a shop with status 'inactive' and application_status 'pending'. For testing in Postman, send document URLs in JSON (logo_url, business_license_url, id_document_urls). In production, you can also upload files via multipart/form-data. Flow: 1) Call this endpoint 2) Verify OTP with /api/auth/verify-otp (type=signup) 3) Admin approves the shop application before seller can access seller dashboard."
+							},
+							"response": []
+						},
+						{
 							"name": "Login",
 							"request": {
 								"auth": {
@@ -1401,11 +1427,23 @@
 										"method": "GET",
 										"header": [],
 										"url": {
-											"raw": "{{base_url}}/api/admin/shops",
+											"raw": "{{base_url}}/api/admin/shops?status=active&application_status=pending",
 											"host": ["{{base_url}}"],
-											"path": ["api", "admin", "shops"]
+											"path": ["api", "admin", "shops"],
+											"query": [
+												{
+													"key": "status",
+													"value": "active",
+													"description": "Optional filter: active or inactive"
+												},
+												{
+													"key": "application_status",
+													"value": "pending",
+													"description": "Optional filter: pending, approved, or rejected"
+												}
+											]
 										},
-										"description": "Get all shops (admin view). Requires admin role."
+										"description": "Get all shops (admin view). Supports optional filters: status (active/inactive) and application_status (pending/approved/rejected). Requires admin role."
 									},
 									"response": []
 								},
@@ -1489,6 +1527,43 @@
 											"path": ["api", "admin", "shops", "1", "invite-owner"]
 										},
 										"description": "Send invitation to shop owner. Requires admin role."
+									},
+									"response": []
+								},
+								{
+									"name": "Approve Shop Application",
+									"request": {
+										"method": "POST",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/shops/1/approve",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "shops", "1", "approve"]
+										},
+										"description": "Approve a seller shop application created via self signup. Sets application_status to 'approved', status to 'active', and is_verified to true for the shop. Requires admin role."
+									},
+									"response": []
+								},
+								{
+									"name": "Reject Shop Application",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"reason\": \"Documents are not clear. Please re-upload.\" \n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/api/admin/shops/1/reject",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "shops", "1", "reject"]
+										},
+										"description": "Reject a seller shop application created via self signup. Sets application_status to 'rejected' and status to 'inactive'. Optionally include a reason. Requires admin role."
 									},
 									"response": []
 								}
@@ -1871,6 +1946,51 @@
 				{
 					"name": "Seller APIs",
 					"item": [
+						{
+							"name": "Onboarding",
+							"item": [
+								{
+									"name": "Register Seller (Self Signup)",
+									"request": {
+										"auth": {
+											"type": "noauth"
+										},
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"full_name\": \"John Seller\",\n  \"email\": \"seller@example.com\",\n  \"phone_number\": \"+265991234567\",\n  \"password\": \"securePassword123\",\n  \"shop_name\": \"My New Shop\",\n  \"location\": \"Lilongwe\",\n  \"address\": \"123 Main Street\",\n  \"logo_url\": \"https://example.com/logo.png\",\n  \"business_license_url\": \"https://example.com/business-license.pdf\",\n  \"id_document_urls\": [\n    \"https://example.com/id-front.png\",\n    \"https://example.com/id-back.png\"\n  ]\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/api/auth/register-seller",
+											"host": ["{{base_url}}"],
+											"path": ["api", "auth", "register-seller"]
+										},
+										"description": "Seller self signup endpoint used before accessing seller APIs. Creates a seller user and a shop with status 'inactive' and application_status 'pending'. After this, call /api/auth/verify-otp (type=signup), then an admin must approve the shop via /api/admin/shops/{shopId}/approve before the seller can access /api/sellers/* routes."
+									},
+									"response": []
+								},
+								{
+									"name": "Get Onboarding Status",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/sellers/status",
+											"host": ["{{base_url}}"],
+											"path": ["api", "sellers", "status"]
+										},
+										"description": "Get onboarding status for the authenticated seller. Returns whether the account is verified and whether the shop is pending approval, approved, rejected, or inactive. Use this on the seller page to show messages like 'Your shop is pending approval' and update automatically once approved. Requires seller auth, but works even if the shop is not yet approved."
+									},
+									"response": []
+								}
+							]
+						},
 						{
 							"name": "Dashboard",
 							"item": [

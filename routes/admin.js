@@ -18,6 +18,8 @@ router.post('/shops', AdminShopController.createShop);
 router.patch('/shops/:shopId', AdminShopController.updateShop);
 router.delete('/shops/:shopId', AdminShopController.deleteShop);
 router.post('/shops/:shopId/invite-owner', AdminShopController.inviteOwner);
+router.post('/shops/:shopId/approve', AdminShopController.approveShopApplication);
+router.post('/shops/:shopId/reject', AdminShopController.rejectShopApplication);
 
 // Categories (admin creates and manages; sellers only select when adding products)
 router.get('/categories', AdminCategoryController.listAll);

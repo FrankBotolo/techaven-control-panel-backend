@@ -1,14 +1,21 @@
 import express from 'express';
-import { authenticate, authorizeRoles } from '../middleware/auth.js';
+import { authenticate, authorizeRoles, requireApprovedSeller } from '../middleware/auth.js';
 import * as SellerCategoryController from '../controllers/SellerCategoryController.js';
 import * as SellerProductController from '../controllers/SellerProductController.js';
 import * as SellerDashboardController from '../controllers/SellerDashboardController.js';
 import * as SellerEarningsController from '../controllers/SellerEarningsController.js';
+import * as SellerOnboardingController from '../controllers/SellerOnboardingController.js';
 
 const router = express.Router();
 
 router.use(authenticate);
 router.use(authorizeRoles('seller'));
+
+// Onboarding status endpoint - accessible even while shop is pending approval
+router.get('/status', SellerOnboardingController.getStatus);
+
+// All routes below require approved shop
+router.use(requireApprovedSeller);
 
 // Dashboard
 router.get('/dashboard', SellerDashboardController.getDashboard);

@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import db from '../models/index.js';
 
-const { User } = db;
+const { User, Shop } = db;
 
 export const authenticate = async (req, res, next) => {
   try {
@@ -54,6 +54,62 @@ export const authorizeRoles = (...allowedRoles) => {
 
     return next();
   };
+};
+
+export const requireApprovedSeller = async (req, res, next) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized'
+      });
+    }
+
+    if (req.user.role !== 'seller') {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden'
+      });
+    }
+
+    if (!req.user.is_verified) {
+      return res.status(403).json({
+        success: false,
+        message: 'Please verify your account before accessing seller features'
+      });
+    }
+
+    if (!req.user.shop_id) {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not assigned to any shop'
+      });
+    }
+
+    const shop = await Shop.findByPk(req.user.shop_id);
+
+    if (!shop) {
+      return res.status(404).json({
+        success: false,
+        message: 'Shop not found'
+      });
+    }
+
+    if (shop.application_status !== 'approved' || shop.status !== 'active') {
+      return res.status(403).json({
+        success: false,
+        message: 'Your shop is pending admin approval'
+      });
+    }
+
+    return next();
+  } catch (error) {
+    console.error('requireApprovedSeller error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to validate seller approval status'
+    });
+  }
 };
 
 export const requireShopOwnerForShopParam = (shopParamKey = 'shopId') => {

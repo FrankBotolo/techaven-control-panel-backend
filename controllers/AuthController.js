@@ -6,7 +6,7 @@ import moment from 'moment';
 import { Op } from 'sequelize';
 import { logAudit } from '../utils/audit.js';
 
-const { User, Otp, ShopInvitation } = db;
+const { User, Otp, ShopInvitation, Shop } = db;
 
 const generateAccessToken = (user) => {
   return jwt.sign(
@@ -56,6 +56,149 @@ const sendOtp = async (user, type) => {
   }
 
   return code;
+};
+
+export const registerSeller = async (req, res) => {
+  try {
+    const {
+      full_name,
+      email,
+      phone_number,
+      password,
+      shop_name,
+      location,
+      address
+    } = req.body;
+
+    if (!full_name || !password || !shop_name) {
+      return res.status(400).json({
+        success: false,
+        message: 'full_name, password, and shop_name are required'
+      });
+    }
+
+    if (!email && !phone_number) {
+      return res.status(400).json({
+        success: false,
+        message: 'Either email or phone_number is required'
+      });
+    }
+
+    const existingUser = await User.findOne({
+      where: email ? { email } : { phone_number }
+    });
+
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'User already exists with this email or phone number'
+      });
+    }
+
+    const logoFile = req.files?.logo?.[0] || null;
+    const businessLicenseFile = req.files?.business_license?.[0] || null;
+    const idDocumentsFiles = req.files?.id_document || [];
+
+    const baseUrl = process.env.APP_URL || 'http://localhost:8000';
+    const fileUrl = (file) =>
+      file ? `${baseUrl}/uploads/${file.filename}` : null;
+
+    // Prefer uploaded files when present, otherwise allow direct URLs from JSON body
+    const logoUrl = logoFile ? fileUrl(logoFile) : (req.body.logo_url || null);
+    const businessLicenseUrl = businessLicenseFile
+      ? fileUrl(businessLicenseFile)
+      : (req.body.business_license_url || null);
+
+    let idDocumentUrls = [];
+    if (idDocumentsFiles.length > 0) {
+      idDocumentUrls = idDocumentsFiles.map((file) => fileUrl(file));
+    } else if (req.body.id_document_urls) {
+      if (Array.isArray(req.body.id_document_urls)) {
+        idDocumentUrls = req.body.id_document_urls;
+      } else {
+        // Support single string or comma-separated list
+        idDocumentUrls = String(req.body.id_document_urls)
+          .split(',')
+          .map((v) => v.trim())
+          .filter(Boolean);
+      }
+    }
+
+    if (!logoUrl || !businessLicenseUrl || idDocumentUrls.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Logo, business licence, and at least one ID document are required (either upload files or provide URLs).'
+      });
+    }
+
+    const shop = await Shop.create({
+      name: shop_name,
+      location: location || null,
+      address: address || null,
+      phone: phone_number || null,
+      email: email || null,
+      logo: logoUrl,
+      status: 'inactive',
+      application_status: 'pending',
+      is_verified: false,
+      business_license_url: businessLicenseUrl,
+      verification_documents: {
+        business_license_url: businessLicenseUrl,
+        id_documents: idDocumentUrls
+      }
+    });
+
+    const user = await User.create({
+      name: full_name,
+      email: email || null,
+      phone_number: phone_number || null,
+      password: password,
+      is_verified: false,
+      role: 'seller',
+      shop_id: shop.id
+    });
+
+    await logAudit({
+      action: 'seller.self_registration.request',
+      actor_user_id: user.id,
+      target_type: 'shop',
+      target_id: shop.id,
+      metadata: {
+        shop_name,
+        location,
+        address,
+        phone_number,
+        email
+      },
+      ip_address: req.ip
+    });
+
+    const otpCode = await sendOtp(user, 'signup');
+
+    const responseData = {
+      user_id: user.id,
+      email: user.email,
+      phone_number: user.phone_number,
+      shop_id: shop.id
+    };
+
+    if (user.phone_number && !user.email) {
+      responseData.otp = otpCode;
+    }
+
+    return res.json({
+      success: true,
+      message: 'Seller registration submitted. Please verify OTP and wait for admin approval.',
+      data: responseData
+    });
+  } catch (error) {
+    console.error('Register seller error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Seller registration failed',
+      error: error.message
+    });
+  }
 };
 
 export const register = async (req, res) => {

@@ -50,7 +50,20 @@ export const createShop = async (req, res) => {
 
 export const listShops = async (req, res) => {
   try {
-    const shops = await Shop.findAll({ order: [['id', 'DESC']] });
+    const { status, application_status } = req.query;
+
+    const where = {};
+    if (status) {
+      where.status = status;
+    }
+    if (application_status) {
+      where.application_status = application_status;
+    }
+
+    const shops = await Shop.findAll({
+      where,
+      order: [['id', 'DESC']]
+    });
     return res.json({ success: true, message: 'Shops retrieved', data: shops });
   } catch (error) {
     console.error('Admin list shops error:', error);
@@ -89,6 +102,85 @@ export const updateShop = async (req, res) => {
   } catch (error) {
     console.error('Admin update shop error:', error);
     return res.status(500).json({ success: false, message: 'Failed to update shop', error: error.message });
+  }
+};
+
+export const approveShopApplication = async (req, res) => {
+  try {
+    const { shopId } = req.params;
+    const shop = await Shop.findByPk(shopId);
+
+    if (!shop) {
+      return res.status(404).json({ success: false, message: 'Shop not found' });
+    }
+
+    shop.application_status = 'approved';
+    shop.status = 'active';
+    shop.is_verified = true;
+
+    await shop.save();
+
+    await logAudit({
+      action: 'admin.shop.application.approve',
+      actor_user_id: req.user.id,
+      target_type: 'shop',
+      target_id: shop.id,
+      metadata: { application_status: 'approved' },
+      ip_address: req.ip
+    });
+
+    return res.json({
+      success: true,
+      message: 'Shop application approved successfully',
+      data: shop
+    });
+  } catch (error) {
+    console.error('Admin approve shop application error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to approve shop application',
+      error: error.message
+    });
+  }
+};
+
+export const rejectShopApplication = async (req, res) => {
+  try {
+    const { shopId } = req.params;
+    const { reason } = req.body;
+
+    const shop = await Shop.findByPk(shopId);
+
+    if (!shop) {
+      return res.status(404).json({ success: false, message: 'Shop not found' });
+    }
+
+    shop.application_status = 'rejected';
+    shop.status = 'inactive';
+
+    await shop.save();
+
+    await logAudit({
+      action: 'admin.shop.application.reject',
+      actor_user_id: req.user.id,
+      target_type: 'shop',
+      target_id: shop.id,
+      metadata: { application_status: 'rejected', reason: reason || null },
+      ip_address: req.ip
+    });
+
+    return res.json({
+      success: true,
+      message: 'Shop application rejected successfully',
+      data: shop
+    });
+  } catch (error) {
+    console.error('Admin reject shop application error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to reject shop application',
+      error: error.message
+    });
   }
 };
 
