@@ -15,6 +15,7 @@ router.post(
   AuthController.registerSeller
 );
 router.post('/login', AuthController.login);
+router.post('/send-login-otp', AuthController.sendLoginOtp);
 router.post('/verify-otp', AuthController.verifyOtp);
 router.post('/resend-otp', AuthController.resendOtp);
 router.post('/forgot-password', AuthController.forgotPassword);

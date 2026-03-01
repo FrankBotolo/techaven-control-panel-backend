@@ -17,6 +17,7 @@ import WalletTransaction from './WalletTransaction.js';
 import Review from './Review.js';
 import Escrow from './Escrow.js';
 import WithdrawalRequest from './WithdrawalRequest.js';
+import ShippingAddress from './ShippingAddress.js';
 
 // Define associations
 Product.belongsTo(Category, { foreignKey: 'category_id', as: 'category' });
@@ -57,6 +58,7 @@ Product.hasMany(Cart, { foreignKey: 'product_id', as: 'carts' });
 
 // Order associations
 Order.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+Order.belongsTo(ShippingAddress, { foreignKey: 'shipping_address_id', as: 'shippingAddress' });
 Order.hasMany(OrderItem, { foreignKey: 'order_id', as: 'items' });
 User.hasMany(Order, { foreignKey: 'user_id', as: 'orders' });
 
@@ -97,6 +99,10 @@ WithdrawalRequest.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 WithdrawalRequest.belongsTo(User, { foreignKey: 'processed_by', as: 'processedBy' });
 User.hasMany(WithdrawalRequest, { foreignKey: 'user_id', as: 'withdrawal_requests' });
 
+// Shipping addresses (customer)
+ShippingAddress.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+User.hasMany(ShippingAddress, { foreignKey: 'user_id', as: 'shipping_addresses' });
+
 const db = {
   sequelize,
   Sequelize: sequelize.Sequelize,
@@ -117,7 +123,8 @@ const db = {
   WalletTransaction,
   Review,
   Escrow,
-  WithdrawalRequest
+  WithdrawalRequest,
+  ShippingAddress
 };
 
 export default db;

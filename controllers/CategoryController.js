@@ -9,15 +9,28 @@ export const index = async (req, res) => {
       order: [['name', 'ASC']]
     });
 
+    const withCount = await Promise.all(categories.map(async (c) => {
+      const product_count = await Product.count({ where: { category_id: c.id } });
+      return {
+        id: c.id,
+        name: c.name,
+        icon: c.icon || null,
+        color: c.color || null,
+        image: c.image || null,
+        product_count
+      };
+    }));
     return res.json({
-      status: 'success',
-      data: categories
+      success: true,
+      message: 'Categories retrieved',
+      data: withCount
     });
   } catch (error) {
     console.error('Categories index error:', error);
     return res.status(500).json({
-      status: 'error',
+      success: false,
       message: 'Failed to fetch categories',
+      data: null,
       error: error.message
     });
   }
@@ -31,8 +44,9 @@ export const getProductsByCategory = async (req, res) => {
     const category = await Category.findByPk(id);
     if (!category) {
       return res.status(404).json({
-        status: 'error',
-        message: 'Category not found'
+        success: false,
+        message: 'Category not found',
+        data: null
       });
     }
 
@@ -47,19 +61,16 @@ export const getProductsByCategory = async (req, res) => {
     });
 
     return res.json({
-      status: 'success',
-      data: products,
-      category: {
-        id: category.id,
-        name: category.name,
-        description: category.description
-      }
+      success: true,
+      message: 'Products retrieved',
+      data: products
     });
   } catch (error) {
     console.error('Get products by category error:', error);
     return res.status(500).json({
-      status: 'error',
+      success: false,
       message: 'Failed to fetch products by category',
+      data: null,
       error: error.message
     });
   }

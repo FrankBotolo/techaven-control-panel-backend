@@ -21,15 +21,30 @@ export const index = async (req, res) => {
       return shopData;
     });
 
+    const formatted = shopsWithCount.map((s) => ({
+      id: s.id,
+      name: s.name,
+      description: s.description || null,
+      logo: s.logo || null,
+      banner: s.banner || null,
+      rating: parseFloat(s.rating) || 0,
+      total_reviews: s.total_reviews || 0,
+      location: s.location || s.address || null,
+      phone: s.phone || null,
+      email: s.email || null,
+      is_verified: !!s.is_verified
+    }));
     return res.json({
-      status: 'success',
-      data: shopsWithCount
+      success: true,
+      message: 'Shops retrieved',
+      data: formatted
     });
   } catch (error) {
     console.error('Shops index error:', error);
     return res.status(500).json({
-      status: 'error',
+      success: false,
       message: 'Failed to fetch shops',
+      data: null,
       error: error.message
     });
   }
@@ -47,24 +62,37 @@ export const show = async (req, res) => {
 
     if (!shop) {
       return res.status(404).json({
-        status: 'error',
-        message: 'Shop not found'
+        success: false,
+        message: 'Shop not found',
+        data: null
       });
     }
 
-    const shopData = shop.toJSON();
-    shopData.product_ids = shop.products.map(p => p.id);
-    shopData.total_products = shop.products.length;
-
+    const s = shop.toJSON();
+    const shopData = {
+      id: s.id,
+      name: s.name,
+      description: s.description || null,
+      logo: s.logo || null,
+      banner: s.banner || null,
+      rating: parseFloat(s.rating) || 0,
+      total_reviews: s.total_reviews || 0,
+      location: s.location || s.address || null,
+      phone: s.phone || null,
+      email: s.email || null,
+      is_verified: !!s.is_verified
+    };
     return res.json({
-      status: 'success',
+      success: true,
+      message: 'Shop retrieved',
       data: shopData
     });
   } catch (error) {
     console.error('Shop show error:', error);
     return res.status(500).json({
-      status: 'error',
+      success: false,
       message: 'Failed to fetch shop',
+      data: null,
       error: error.message
     });
   }
@@ -77,8 +105,9 @@ export const products = async (req, res) => {
 
     if (!shop) {
       return res.status(404).json({
-        status: 'error',
-        message: 'Shop not found'
+        success: false,
+        message: 'Shop not found',
+        data: null
       });
     }
 
@@ -90,15 +119,36 @@ export const products = async (req, res) => {
       ]
     });
 
+    const formatted = (products || []).map((p) => ({
+      id: p.id,
+      name: p.name,
+      description: p.description,
+      price: parseFloat(p.price),
+      original_price: p.original_price != null ? parseFloat(p.original_price) : null,
+      discount: p.discount,
+      image: p.image,
+      rating: parseFloat(p.rating) || 0,
+      total_reviews: p.total_reviews || 0,
+      stock: p.stock || 0,
+      is_featured: !!p.is_featured,
+      is_hot: !!p.is_hot,
+      is_special: !!p.is_special,
+      category_id: p.category_id,
+      shop_id: p.shop_id,
+      vendor: p.vendor || (p.shop && p.shop.name) || null,
+      created_at: p.createdAt || p.created_at
+    }));
     return res.json({
-      status: 'success',
-      data: products
+      success: true,
+      message: 'Products retrieved',
+      data: formatted
     });
   } catch (error) {
     console.error('Shop products error:', error);
     return res.status(500).json({
-      status: 'error',
+      success: false,
       message: 'Failed to fetch shop products',
+      data: null,
       error: error.message
     });
   }

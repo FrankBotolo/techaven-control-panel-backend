@@ -6,6 +6,9 @@ import fs from 'fs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const memberSince = (createdAt) =>
+  createdAt ? new Date(createdAt).toLocaleString('en-US', { month: 'long', year: 'numeric' }) : 'Unknown';
+
 export const profile = async (req, res) => {
   try {
     const user = req.user;
@@ -13,15 +16,15 @@ export const profile = async (req, res) => {
       success: true,
       message: 'Profile retrieved',
       data: {
-        id: `usr_${user.id}`,
-        full_name: user.name,
+        id: user.id,
+        name: user.name,
         email: user.email,
-        phone: user.phone_number,
-        avatar_url: user.avatar_url,
-        date_of_birth: user.date_of_birth,
-        gender: user.gender,
-        created_at: user.createdAt || user.created_at || null,
-        updated_at: user.updatedAt || user.updated_at || null
+        phone_number: user.phone_number,
+        avatar: user.avatar_url || null,
+        is_verified: user.is_verified,
+        role: user.role,
+        member_since: memberSince(user.createdAt || user.created_at),
+        created_at: user.createdAt || user.created_at || null
       }
     });
   } catch (error) {
@@ -29,6 +32,7 @@ export const profile = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to retrieve profile',
+      data: null,
       error: error.message
     });
   }
@@ -36,31 +40,28 @@ export const profile = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const { full_name, phone, date_of_birth, gender } = req.body;
+    const { name, email, phone_number } = req.body;
     const user = req.user;
 
-    // Update user fields
-    if (full_name) user.name = full_name;
-    if (phone) user.phone_number = phone;
-    if (date_of_birth) user.date_of_birth = date_of_birth;
-    if (gender && ['male', 'female', 'other'].includes(gender)) {
-      user.gender = gender;
-    }
+    if (name) user.name = name;
+    if (email !== undefined) user.email = email;
+    if (phone_number !== undefined) user.phone_number = phone_number;
 
     await user.save();
 
     return res.json({
       success: true,
-      message: 'Profile updated successfully',
+      message: 'Profile updated',
       data: {
-        id: `usr_${user.id}`,
-        full_name: user.name,
+        id: user.id,
+        name: user.name,
         email: user.email,
-        phone: user.phone_number,
-        avatar_url: user.avatar_url,
-        date_of_birth: user.date_of_birth,
-        gender: user.gender,
-        updated_at: user.updatedAt || user.updated_at || null
+        phone_number: user.phone_number,
+        avatar: user.avatar_url || null,
+        is_verified: user.is_verified,
+        role: user.role,
+        member_since: memberSince(user.createdAt || user.created_at),
+        created_at: user.createdAt || user.created_at || null
       }
     });
   } catch (error) {
@@ -68,6 +69,7 @@ export const updateProfile = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to update profile',
+      data: null,
       error: error.message
     });
   }
@@ -90,8 +92,8 @@ export const uploadAvatar = async (req, res) => {
 
     return res.json({
       success: true,
-      message: 'Avatar uploaded successfully',
-      data: { avatar_url: fileUrl }
+      message: 'Avatar uploaded',
+      data: { avatar: fileUrl }
     });
   } catch (error) {
     console.error('Upload avatar error:', error);
@@ -105,19 +107,29 @@ export const uploadAvatar = async (req, res) => {
 
 export const changePassword = async (req, res) => {
   try {
-    const { current_password, new_password } = req.body;
+    const { current_password, new_password, new_password_confirmation } = req.body;
 
     if (!current_password || !new_password) {
       return res.status(400).json({
         success: false,
-        message: 'Current password and new password are required'
+        message: 'Current password and new password are required',
+        data: null
       });
     }
 
     if (new_password.length < 6) {
       return res.status(400).json({
         success: false,
-        message: 'New password must be at least 6 characters'
+        message: 'New password must be at least 6 characters',
+        data: null
+      });
+    }
+
+    if (new_password_confirmation !== undefined && new_password !== new_password_confirmation) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password confirmation does not match',
+        data: null
       });
     }
 

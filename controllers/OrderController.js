@@ -3,12 +3,38 @@ import { Op } from 'sequelize';
 import { logAudit } from '../utils/audit.js';
 import { sendNotificationEmail } from '../utils/notificationHelper.js';
 
-const { Order, OrderItem, Cart, Product, User, Notification, Shop, Escrow, Wallet, WalletTransaction } = db;
+const { Order, OrderItem, Cart, Product, User, Notification, Shop, Escrow, Wallet, WalletTransaction, ShippingAddress } = db;
 
 const generateOrderNumber = () => {
-  const year = new Date().getFullYear();
-  const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-  return `TH-${year}-${random}`;
+  const now = new Date();
+  const ymd = now.toISOString().slice(0, 10).replace(/-/g, '');
+  const seq = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+  return `ORD-${ymd}-${seq}`;
+};
+
+/** Format order for API doc response */
+const formatOrderForApi = (order) => {
+  const items = (order.items || []).map((i) => ({
+    id: i.id,
+    product_id: i.product_id,
+    product_name: i.product_name,
+    quantity: i.quantity,
+    price: parseFloat(i.price),
+    subtotal: parseFloat(i.subtotal)
+  }));
+  return {
+    id: order.id,
+    order_number: order.order_number,
+    status: order.status,
+    payment_status: order.payment_status === 'pending' ? 'unpaid' : order.payment_status,
+    payment_method: order.payment_method || null,
+    subtotal: order.subtotal != null ? parseFloat(order.subtotal) : parseFloat(order.total_amount) || 0,
+    shipping_fee: order.shipping_fee != null ? parseFloat(order.shipping_fee) : 0,
+    total: parseFloat(order.total_amount) || 0,
+    shipping_address_id: order.shipping_address_id || null,
+    items,
+    created_at: order.createdAt || order.created_at
+  };
 };
 
 export const createOrder = async (req, res) => {
@@ -16,6 +42,7 @@ export const createOrder = async (req, res) => {
     const userId = req.user.id;
     const {
       shipping_address_id,
+      items: bodyItems,
       payment_method_id,
       payment_method,
       courier_service,
@@ -23,50 +50,165 @@ export const createOrder = async (req, res) => {
       coupon_code
     } = req.body;
 
+    // API doc path: create from items array + shipping_address_id
+    if (bodyItems && Array.isArray(bodyItems) && bodyItems.length > 0) {
+      if (!shipping_address_id) {
+        return res.status(400).json({
+          success: false,
+          message: 'Shipping address ID is required',
+          data: null
+        });
+      }
+      const addr = await ShippingAddress.findOne({
+        where: { id: shipping_address_id, user_id: userId }
+      });
+      if (!addr) {
+        return res.status(400).json({
+          success: false,
+          message: 'Shipping address not found',
+          data: null
+        });
+      }
+      let subtotal = 0;
+      const orderItems = [];
+      let firstShopId = null;
+      let sellerId = null;
+      let sellerAmount = 0;
+
+      for (const row of bodyItems) {
+        const productId = row.product_id;
+        const qty = parseInt(row.quantity, 10) || 1;
+        if (!productId || qty < 1) continue;
+        const product = await Product.findByPk(productId, { include: [{ model: Shop, as: 'shop' }] });
+        if (!product) {
+          return res.status(400).json({
+            success: false,
+            message: `Product not found: ${productId}`,
+            data: null
+          });
+        }
+        if (product.stock < qty) {
+          return res.status(400).json({
+            success: false,
+            message: `Insufficient stock for ${product.name}. Only ${product.stock} available`,
+            data: null
+          });
+        }
+        const price = parseFloat(product.price);
+        const itemSubtotal = price * qty;
+        subtotal += itemSubtotal;
+        if (product.shop_id) {
+          if (!firstShopId) {
+            firstShopId = product.shop_id;
+            const seller = await User.findOne({ where: { shop_id: product.shop_id, role: 'seller' } });
+            sellerId = seller ? seller.id : null;
+          }
+          if (product.shop_id === firstShopId) sellerAmount += itemSubtotal;
+        }
+        orderItems.push({
+          product_id: product.id,
+          product_name: product.name,
+          product_image: product.image,
+          quantity: qty,
+          price,
+          subtotal: itemSubtotal
+        });
+      }
+
+      if (orderItems.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'No valid items to order',
+          data: null
+        });
+      }
+
+      const shippingFee = 0;
+      const total = subtotal + shippingFee;
+      const orderNumber = generateOrderNumber();
+      const order = await Order.create({
+        user_id: userId,
+        order_number: orderNumber,
+        status: 'pending',
+        payment_status: 'pending',
+        payment_method: null,
+        subtotal,
+        shipping_fee: shippingFee,
+        total_amount: total,
+        shipping_address_id: addr.id,
+        shipping_address: [addr.address, addr.city, addr.region].filter(Boolean).join(', '),
+        shipping_city: addr.city,
+        shipping_phone: addr.phone,
+        seller_id: sellerId,
+        escrow_status: 'pending',
+        escrow_amount: sellerAmount || total,
+        notes: notes || null
+      });
+
+      for (const item of orderItems) {
+        await OrderItem.create({
+          order_id: order.id,
+          product_id: item.product_id,
+          product_name: item.product_name,
+          product_image: item.product_image,
+          quantity: item.quantity,
+          price: item.price,
+          subtotal: item.subtotal
+        });
+        const product = await Product.findByPk(item.product_id);
+        if (product) {
+          product.stock -= item.quantity;
+          await product.save();
+        }
+      }
+
+      const orderWithItems = await Order.findByPk(order.id, { include: [{ model: OrderItem, as: 'items' }] });
+      return res.status(201).json({
+        success: true,
+        message: 'Order created successfully',
+        data: formatOrderForApi(orderWithItems)
+      });
+    }
+
+    // Legacy: create from cart
     if (!shipping_address_id) {
       return res.status(400).json({
         success: false,
-        message: 'Shipping address ID is required'
+        message: 'Shipping address ID is required',
+        data: null
       });
     }
 
-    if (!courier_service) {
-      return res.status(400).json({
-        success: false,
-        message: 'Courier service is required'
-      });
-    }
-
-    // Validate payment method - must be one of the ENUM values
-    const validPaymentMethods = ['cash_on_delivery', 'mobile_money', 'bank_transfer', 'card'];
+    const validPaymentMethods = ['cash_on_delivery', 'mobile_money', 'bank_transfer', 'card', 'wallet', 'onekhusa'];
     let paymentMethodValue = payment_method || payment_method_id || 'mobile_money';
-    
-    // If payment_method_id is provided but it's not a valid ENUM value, try to extract or default
     if (payment_method_id && !validPaymentMethods.includes(payment_method_id)) {
-      // If it's an ID like "pm_123", use default. Otherwise, use the provided value if it's valid
-      if (payment_method_id.startsWith('pm_')) {
-        paymentMethodValue = 'mobile_money'; // Default for payment method IDs
-      } else if (validPaymentMethods.includes(payment_method_id)) {
-        paymentMethodValue = payment_method_id;
-      } else {
-        paymentMethodValue = 'mobile_money'; // Default fallback
-      }
+      if (payment_method_id.startsWith('pm_')) paymentMethodValue = 'mobile_money';
+      else if (validPaymentMethods.includes(payment_method_id)) paymentMethodValue = payment_method_id;
+      else paymentMethodValue = 'mobile_money';
     }
-    
     if (!validPaymentMethods.includes(paymentMethodValue)) {
       return res.status(400).json({
         success: false,
-        message: `Invalid payment method. Must be one of: ${validPaymentMethods.join(', ')}`
+        message: `Invalid payment method. Must be one of: ${validPaymentMethods.join(', ')}`,
+        data: null
       });
     }
 
-    // TODO: Fetch shipping address from addresses table
-    // For now, we'll use a placeholder
-    const shippingAddress = {
-      address_line: 'Address from DB',
-      city: 'City from DB',
-      phone: 'Phone from DB'
-    };
+    let shippingAddress = { address_line: '', city: '', phone: '' };
+    const addr = await ShippingAddress.findOne({
+      where: { id: shipping_address_id, user_id: userId }
+    });
+    if (addr) {
+      shippingAddress = {
+        address_line: addr.address,
+        city: addr.city,
+        phone: addr.phone
+      };
+    }
+
+    if (courier_service) {
+      // optional when using items flow
+    }
 
     // Get cart items with products and shops
     const cartItems = await Cart.findAll({
@@ -156,22 +298,24 @@ export const createOrder = async (req, res) => {
     const tax = 0;
     const finalTotal = totalAmount + shipping - discount + tax;
 
-    // Create order with escrow fields
     const orderNumber = generateOrderNumber();
     const order = await Order.create({
       user_id: userId,
       order_number: orderNumber,
       status: 'pending',
+      subtotal: totalAmount,
+      shipping_fee: shipping,
       total_amount: finalTotal,
-      shipping_address: shippingAddress.address_line,
-      shipping_city: shippingAddress.city,
-      shipping_phone: shippingAddress.phone,
+      shipping_address_id: addr ? addr.id : null,
+      shipping_address: shippingAddress.address_line || '',
+      shipping_city: shippingAddress.city || '',
+      shipping_phone: shippingAddress.phone || '',
       payment_method: paymentMethodValue,
       payment_status: 'pending',
-      courier_service: courier_service,
+      courier_service: courier_service || null,
       seller_id: sellerId,
       escrow_status: 'pending',
-      escrow_amount: sellerAmount, // Amount to be held for seller
+      escrow_amount: sellerAmount,
       notes: notes || null
     });
 
@@ -284,16 +428,8 @@ export const createOrder = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: 'Order placed successfully',
-      data: {
-        order_id: `ord_${order.id}`,
-        order_number: orderNumber,
-        status: 'pending',
-        total: finalTotal,
-        currency: 'MWK',
-        payment_url: `https://payment.techaven.mw/pay/ord_${order.id}`,
-        created_at: order.createdAt || order.created_at || new Date()
-      }
+      message: 'Order created successfully',
+      data: formatOrderForApi(orderWithItems)
     });
   } catch (error) {
     console.error('Checkout error:', error);
@@ -348,10 +484,11 @@ export const getOrders = async (req, res) => {
       order: [['id', 'DESC']]
     });
 
+    const formatted = orders.map((o) => formatOrderForApi(o));
     return res.json({
       success: true,
-      message: 'Orders retrieved successfully',
-      data: orders
+      message: 'Orders retrieved',
+      data: formatted
     });
   } catch (error) {
     console.error('Get orders error:', error);
@@ -420,8 +557,8 @@ export const getOrder = async (req, res) => {
 
     return res.json({
       success: true,
-      message: 'Order retrieved successfully',
-      data: order
+      message: 'Order retrieved',
+      data: formatOrderForApi(order)
     });
   } catch (error) {
     console.error('Get order error:', error);
@@ -1082,10 +1219,12 @@ export const cancelOrder = async (req, res) => {
       });
     }
 
-    if (order.status === 'delivered' || order.status === 'cancelled') {
+    // API doc: can only cancel orders with status = 'pending'
+    if (order.status !== 'pending') {
       return res.status(400).json({
         success: false,
-        message: `Cannot cancel order with status: ${order.status}`
+        message: `Cannot cancel order with status: ${order.status}. Only pending orders can be cancelled.`,
+        data: null
       });
     }
 
@@ -1110,20 +1249,147 @@ export const cancelOrder = async (req, res) => {
       ip_address: req.ip
     });
 
+    const orderWithItems = await Order.findByPk(order.id, { include: [{ model: OrderItem, as: 'items' }] });
     return res.json({
       success: true,
-      message: 'Order cancelled successfully',
-      data: {
-        order_id: `ord_${order.id}`,
-        status: 'cancelled',
-        refund_status: 'processing'
-      }
+      message: 'Order cancelled',
+      data: formatOrderForApi(orderWithItems)
     });
   } catch (error) {
     console.error('Cancel order error:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to cancel order',
+      data: null,
+      error: error.message
+    });
+  }
+};
+
+/** Resolve order id from route param (supports :id or :order_id) */
+const resolveOrderId = (req) => {
+  const raw = req.params.order_id || req.params.id;
+  return raw ? String(raw).replace(/^ord_/, '') : null;
+};
+
+/** POST /api/orders/:id/pay/wallet — deduct order total from user wallet */
+export const payWithWallet = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const id = resolveOrderId(req);
+
+    const order = await Order.findByPk(id, { include: [{ model: OrderItem, as: 'items' }] });
+    if (!order || order.user_id !== userId) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found',
+        data: null
+      });
+    }
+    if (order.payment_status === 'paid') {
+      return res.status(400).json({
+        success: false,
+        message: 'Order is already paid',
+        data: null
+      });
+    }
+
+    const total = parseFloat(order.total_amount) || 0;
+    let wallet = await Wallet.findOne({ where: { user_id: userId } });
+    if (!wallet) {
+      wallet = await Wallet.create({ user_id: userId, balance: 0, currency: 'MWK' });
+    }
+    const balance = parseFloat(wallet.balance) || 0;
+    if (balance < total) {
+      return res.status(400).json({
+        success: false,
+        message: 'Insufficient wallet balance',
+        data: null
+      });
+    }
+
+    wallet.balance = balance - total;
+    await wallet.save();
+
+    order.payment_status = 'paid';
+    order.payment_method = 'wallet';
+    if (order.escrow_amount != null) order.escrow_status = 'held';
+    await order.save();
+
+    await WalletTransaction.create({
+      wallet_id: wallet.id,
+      user_id: userId,
+      type: 'debit',
+      amount: total,
+      currency: 'MWK',
+      description: `Order ${order.order_number}`,
+      reference: `order_${order.id}`,
+      status: 'completed',
+      balance_after: wallet.balance
+    });
+
+    const orderWithItems = await Order.findByPk(order.id, { include: [{ model: OrderItem, as: 'items' }] });
+    return res.json({
+      success: true,
+      message: 'Payment successful',
+      data: {
+        order: formatOrderForApi(orderWithItems),
+        wallet_balance: parseFloat(wallet.balance)
+      }
+    });
+  } catch (error) {
+    console.error('Pay with wallet error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Payment failed',
+      data: null,
+      error: error.message
+    });
+  }
+};
+
+/** POST /api/orders/:id/pay/onekhusa — initiate OneKhusa payment */
+export const payWithOnekhusa = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const id = resolveOrderId(req);
+
+    const order = await Order.findByPk(id);
+    if (!order || order.user_id !== userId) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found',
+        data: null
+      });
+    }
+    if (order.payment_status === 'paid') {
+      return res.status(400).json({
+        success: false,
+        message: 'Order is already paid',
+        data: null
+      });
+    }
+
+    const amount = parseFloat(order.total_amount) || 0;
+    const transactionId = `TXN-${Date.now()}-${order.id}`;
+    const baseUrl = process.env.ONEKHUSA_BASE_URL || 'https://api.onekhusa.com';
+    const paymentUrl = `${baseUrl}/pay?ref=ORDER-${order.id}&amount=${amount}&txn=${transactionId}`;
+
+    return res.json({
+      success: true,
+      message: 'Payment initiated',
+      data: {
+        payment_url: paymentUrl,
+        transaction_id: transactionId,
+        amount
+      }
+    });
+  } catch (error) {
+    console.error('Pay with OneKhusa error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Payment initiation failed',
+      data: null,
       error: error.message
     });
   }

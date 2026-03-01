@@ -20,6 +20,20 @@ const Order = sequelize.define('Order', {
     allowNull: false,
     unique: true
   },
+  shipping_address_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: { model: 'shipping_addresses', key: 'id' }
+  },
+  subtotal: {
+    type: DataTypes.DECIMAL(12, 2),
+    allowNull: true
+  },
+  shipping_fee: {
+    type: DataTypes.DECIMAL(12, 2),
+    allowNull: true,
+    defaultValue: 0
+  },
   status: {
     type: DataTypes.ENUM('pending', 'processing', 'shipped', 'delivered', 'cancelled'),
     allowNull: false,
@@ -42,9 +56,8 @@ const Order = sequelize.define('Order', {
     allowNull: false
   },
   payment_method: {
-    type: DataTypes.ENUM('cash_on_delivery', 'mobile_money', 'bank_transfer', 'card'),
-    allowNull: false,
-    defaultValue: 'cash_on_delivery'
+    type: DataTypes.STRING,
+    allowNull: true
   },
   payment_status: {
     type: DataTypes.ENUM('pending', 'paid', 'failed', 'refunded'),

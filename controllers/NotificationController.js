@@ -13,20 +13,29 @@ export const index = async (req, res) => {
     });
 
     const notificationsWithTime = notifications.map(notification => {
-      const notificationData = notification.toJSON();
-      notificationData.time = moment(notification.createdAt || notification.created_at || new Date()).fromNow();
-      return notificationData;
+      const n = notification.toJSON ? notification.toJSON() : notification;
+      return {
+        id: n.id,
+        title: n.title,
+        body: n.message,
+        type: n.type,
+        is_read: !!n.read,
+        time_ago: moment(n.createdAt || n.created_at || new Date()).fromNow(),
+        created_at: n.createdAt || n.created_at
+      };
     });
 
     return res.json({
-      status: 'success',
+      success: true,
+      message: 'Notifications retrieved',
       data: notificationsWithTime
     });
   } catch (error) {
     console.error('Notifications index error:', error);
     return res.status(500).json({
-      status: 'error',
+      success: false,
       message: 'Failed to fetch notifications',
+      data: null,
       error: error.message
     });
   }
@@ -34,17 +43,18 @@ export const index = async (req, res) => {
 
 export const markAsRead = async (req, res) => {
   try {
-    const { notification_id } = req.params;
+    const notificationId = req.params.notification_id || req.params.id;
     const userId = req.user ? req.user.id : 1;
 
     const notification = await Notification.findOne({
-      where: { id: notification_id, user_id: userId }
+      where: { id: notificationId, user_id: userId }
     });
 
     if (!notification) {
       return res.status(404).json({
         success: false,
-        message: 'Notification not found'
+        message: 'Notification not found',
+        data: null
       });
     }
 
@@ -58,9 +68,7 @@ export const markAsRead = async (req, res) => {
     return res.json({
       success: true,
       message: 'Notification marked as read',
-      data: {
-        unread_count: unreadCount
-      }
+      data: null
     });
   } catch (error) {
     console.error('Mark as read error:', error);
@@ -88,15 +96,14 @@ export const markAllAsRead = async (req, res) => {
     return res.json({
       success: true,
       message: 'All notifications marked as read',
-      data: {
-        unread_count: unreadCount
-      }
+      data: null
     });
   } catch (error) {
     console.error('Mark all as read error:', error);
     return res.status(500).json({
-      status: 'error',
+      success: false,
       message: 'Failed to mark all notifications as read',
+      data: null,
       error: error.message
     });
   }
@@ -127,8 +134,9 @@ export const destroy = async (req, res) => {
   } catch (error) {
     console.error('Delete notification error:', error);
     return res.status(500).json({
-      status: 'error',
+      success: false,
       message: 'Failed to delete notification',
+      data: null,
       error: error.message
     });
   }
@@ -148,7 +156,7 @@ export const unreadCount = async (req, res) => {
     return res.json({
       success: true,
       message: 'Unread count retrieved',
-      data: { unread_count: count }
+      data: { count }
     });
   } catch (error) {
     console.error('Unread count error:', error);

@@ -1,0 +1,36 @@
+-- Migration: Add shipping_addresses table (API doc Section 10)
+-- Run this script to add shipping address functionality.
+-- SQLite: use 0/1 for is_default. MySQL: use TINYINT(1) or BOOLEAN.
+
+-- For MySQL:
+-- CREATE TABLE IF NOT EXISTS shipping_addresses (
+--   id INT AUTO_INCREMENT PRIMARY KEY,
+--   user_id INT NOT NULL,
+--   label VARCHAR(100),
+--   name VARCHAR(255) NOT NULL,
+--   phone VARCHAR(50) NOT NULL,
+--   address VARCHAR(500) NOT NULL,
+--   city VARCHAR(100) NOT NULL,
+--   region VARCHAR(100),
+--   is_default TINYINT(1) NOT NULL DEFAULT 0,
+--   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+--   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+--   INDEX idx_user (user_id)
+-- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- For SQLite (create table manually or via Sequelize sync):
+-- CREATE TABLE IF NOT EXISTS shipping_addresses (
+--   id INTEGER PRIMARY KEY AUTOINCREMENT,
+--   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+--   label TEXT,
+--   name TEXT NOT NULL,
+--   phone TEXT NOT NULL,
+--   address TEXT NOT NULL,
+--   city TEXT NOT NULL,
+--   region TEXT,
+--   is_default INTEGER NOT NULL DEFAULT 0,
+--   created_at DATETIME,
+--   updated_at DATETIME
+-- );
+-- CREATE INDEX idx_shipping_addresses_user_id ON shipping_addresses(user_id);

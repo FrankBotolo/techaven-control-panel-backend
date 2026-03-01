@@ -1,56 +1,77 @@
-# Techaven API Documentation
+# TecHaven API Documentation — Mobile App Only
 
-**Base URL:** `https://api.techaven.mw`
-
-**Content-Type:** `application/json`
+API reference for **Mobile App (Customer)** endpoints only. Grouping matches the Postman collection.
 
 ---
 
-## API Organization
+## Base URL & conventions
 
-This API is organized into two main categories:
+| Item | Value |
+|------|--------|
+| **Base URL** | `http://localhost:8000` (dev) / `https://api.techaven.mw` (prod) |
+| **Prefix** | All endpoints under `/api` |
+| **Content-Type** | `application/json` |
+| **Auth** | Protected routes: `Authorization: Bearer <access_token>` |
 
-1. **Mobile App (Customer APIs)** - All customer-facing endpoints for mobile application
-2. **Web (Admin & Seller APIs)** - Admin dashboard and seller dashboard endpoints for web application
+### Response envelope
+
+Every response is JSON:
+
+```json
+{
+  "success": true,
+  "message": "Human-readable description",
+  "data": { ... }
+}
+```
+
+- **success** — `true` or `false`
+- **message** — string
+- **data** — object, array, or `null` (e.g. on error)
 
 ---
 
-## Table of Contents
+## Table of contents
 
-### Mobile App (Customer APIs)
-1. [Authentication](#1-authentication-mobile)
-2. [User Management](#2-user-management-mobile)
-3. [Products](#3-products-mobile)
-4. [Categories](#4-categories-mobile)
-5. [Cart](#5-cart-mobile)
-6. [Orders](#6-orders-mobile)
-7. [Wishlist / Liked Items](#7-wishlist--liked-items-mobile)
-8. [Wallet](#8-wallet-mobile)
-9. [Shipping Addresses](#9-shipping-addresses-mobile)
-10. [Payment Methods](#10-payment-methods-mobile)
-11. [Notifications](#11-notifications-mobile)
-12. [Shops / Vendors](#12-shops--vendors-mobile)
-13. [Search](#13-search-mobile)
-14. [Help & Support](#14-help--support-mobile)
-15. [App Info](#15-app-info-mobile)
-
-### Web (Admin & Seller APIs)
-16. [Admin APIs](#16-admin-apis-web)
-17. [Seller APIs](#17-seller-apis-web)
-18. [Shop Owner Registration](#18-shop-owner-registration-web)
+1. [Authentication](#1-authentication)
+2. [User Management](#2-user-management)
+3. [Products](#3-products)
+4. [Categories](#4-categories)
+5. [Cart](#5-cart)
+6. [Orders](#6-orders)
+7. [Wishlist](#7-wishlist)
+8. [Shipping Addresses](#8-shipping-addresses)
+9. [Wallet](#9-wallet)
+10. [Payment Methods](#10-payment-methods)
+11. [Notifications](#11-notifications)
+12. [Shops](#12-shops)
+13. [Search](#13-search)
+14. [Help & Support](#14-help--support)
+15. [App Info](#15-app-info)
+16. [SMS](#16-sms)
+17. [Webhooks](#17-webhooks)
 
 ---
 
 ## Mobile App (Customer APIs)
 
-### 1. Authentication (Mobile)
+### 1. Authentication
 
-All authentication endpoints are for customer mobile app registration and login.
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/api/auth/register` | No | Register customer (or seller with `invite_token`). Sends 4-digit OTP. |
+| POST | `/api/auth/register-seller` | No | Self signup seller + shop (pending approval). Sends OTP. |
+| POST | `/api/auth/login` | No | Login with email+password or phone_number+password. Returns `access_token`, `token_type`, `user` (includes `role`: customer \| seller \| admin). |
+| POST | `/api/auth/send-login-otp` | No | Send 4-digit OTP for OTP login (verified users only). |
+| POST | `/api/auth/verify-otp` | No | Verify OTP. `type`: `signup` \| `login` \| `password_reset`. Signup/login return token + user (includes `role`). |
+| POST | `/api/auth/resend-otp` | No | Resend OTP. Body: `email` or `phone_number`, `type`. |
+| POST | `/api/auth/forgot-password` | No | Send password-reset OTP. |
+| POST | `/api/auth/reset-password` | No | Reset password. Body: `email` or `phone_number`, `otp`, `new_password`. |
+| POST | `/api/auth/refresh-token` | No | New access token using `refresh_token`. |
+| POST | `/api/auth/logout` | 🔒 | Logout (invalidate token). |
 
-#### 1.1 Register (Sign Up)
-**Endpoint:** `POST /api/auth/register`
-
-**Request Body (Raw JSON) - Customer:**
+**Register (customer)**  
+`POST /api/auth/register`
 ```json
 {
   "full_name": "John Doe",
@@ -60,711 +81,677 @@ All authentication endpoints are for customer mobile app registration and login.
 }
 ```
 
-**Request Body (Raw JSON) - Shop Owner (invited):**
-Include `invite_token` from the registration link (`/register?invite_token=xxx`) to register as a seller linked to a shop. Email or phone must match the invitation.
+**Login**  
+`POST /api/auth/login`
 ```json
-{
-  "full_name": "John Doe",
-  "email": "john.doe@example.com",
-  "password": "securePassword123",
-  "invite_token": "a1b2c3d4e5f6789012345678901234567890abcdef"
-}
+{ "email": "john@example.com", "password": "securePassword123" }
 ```
-**See:** [docs/OWNER_REGISTRATION.md](docs/OWNER_REGISTRATION.md) for full shop owner registration flow.
+Or: `{ "phone_number": "+265991234567", "password": "securePassword123" }`
 
-#### 1.2 Login (Sign In)
-**Endpoint:** `POST /api/auth/login`
+**Response (200):** `data` contains `access_token`, `token_type` ("Bearer"), and `user` object with: id, name, email, phone_number, avatar, is_verified, **role** (customer | seller | admin), member_since, created_at.
 
-**Request Body (Raw JSON):**
+**Verify OTP** (4-digit)  
+`POST /api/auth/verify-otp`
 ```json
-{
-  "email": "john@example.com",
-  "password": "securePassword123"
-}
+{ "email": "john@example.com", "otp": "1234", "type": "signup" }
 ```
 
-#### 1.3 Verify OTP
-**Endpoint:** `POST /api/auth/verify-otp`
-
-**Request Body (Raw JSON):**
+**Reset Password**  
+`POST /api/auth/reset-password`
 ```json
-{
-  "email": "john@example.com",
-  "otp": "123456",
-  "type": "signup"
-}
+{ "email": "john@example.com", "otp": "1234", "new_password": "newSecurePassword456" }
 ```
-
-#### 1.4 Resend OTP
-**Endpoint:** `POST /api/auth/resend-otp`
-
-**Request Body (Raw JSON):**
-```json
-{
-  "email": "john@example.com",
-  "type": "signup"
-}
-```
-
-#### 1.5 Forgot Password
-**Endpoint:** `POST /api/auth/forgot-password`
-
-**Request Body (Raw JSON):**
-```json
-{
-  "email": "john@example.com"
-}
-```
-
-#### 1.6 Reset Password
-**Endpoint:** `POST /api/auth/reset-password`
-
-**Request Body (Raw JSON):**
-```json
-{
-  "email": "john@example.com",
-  "reset_token": "rst_abc123xyz",
-  "new_password": "newSecurePassword456"
-}
-```
-
-#### 1.7 Refresh Token
-**Endpoint:** `POST /api/auth/refresh-token`
-
-**Request Body (Raw JSON):**
-```json
-{
-  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-}
-```
-
-#### 1.8 Logout
-**Endpoint:** `POST /api/auth/logout`
-
-**Request Body:** None (empty raw JSON: `{}`)
 
 ---
 
-### 2. User Management (Mobile)
+### 2. User Management
 
-#### 2.1 Get User Profile
-**Endpoint:** `GET /api/user/profile`
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/user/profile` | 🔒 | Get profile. Data: id, name, email, phone_number, avatar, is_verified, role, member_since, created_at. |
+| PUT | `/api/user/profile` | 🔒 | Update profile. Body: name, email, phone_number (all optional). |
+| POST | `/api/user/avatar` | 🔒 | Upload avatar (multipart/form-data, field `avatar`). |
+| PUT | `/api/user/password` | 🔒 | Change password. |
+| POST | `/api/user/change-password` | 🔒 | Change password (same as above). |
+| DELETE | `/api/user/account` | 🔒 | Delete account. Body: password, reason. |
 
-#### 2.2 Update User Profile
-**Endpoint:** `PUT /api/user/profile`
-
-**Request Body (Raw JSON):**
+**Update Profile**  
+`PUT /api/user/profile`
 ```json
-{
-  "full_name": "John Smith",
-  "phone": "+265991234567",
-  "date_of_birth": "1990-05-15",
-  "gender": "male"
-}
+{ "name": "John Smith", "email": "john@example.com", "phone_number": "+265991234567" }
 ```
 
-#### 2.3 Upload Avatar
-**Endpoint:** `POST /api/user/avatar`
-
-**Request Body:** Form-data with `avatar` file
-
-#### 2.4 Change Password
-**Endpoint:** `PUT /api/user/password`
-
-**Request Body (Raw JSON):**
+**Change Password**  
+`POST /api/user/change-password`
 ```json
 {
   "current_password": "oldPassword123",
-  "new_password": "newPassword456"
+  "new_password": "newPassword456",
+  "new_password_confirmation": "newPassword456"
 }
 ```
 
-#### 2.5 Delete Account
-**Endpoint:** `DELETE /api/user/account`
+**Response format (GET)**
 
-**Request Body (Raw JSON):**
-```json
-{
-  "password": "currentPassword123",
-  "reason": "No longer using the app"
-}
-```
+| Endpoint | `data` shape |
+|----------|----------------|
+| `GET /api/user/profile` | User object |
 
----
-
-### 3. Products (Mobile)
-
-All product browsing endpoints for mobile app.
-
-#### 3.1 Get All Products
-**Endpoint:** `GET /api/products?page=1&limit=20&sort=name&order=asc`
-
-#### 3.2 Get Single Product
-**Endpoint:** `GET /api/products/{product_id}`
-
-#### 3.3 Get Featured Products
-**Endpoint:** `GET /api/products/featured?limit=10`
-
-#### 3.4 Get Hot Sales
-**Endpoint:** `GET /api/products/hot-sales?limit=10`
-
-#### 3.5 Get Special Offers
-**Endpoint:** `GET /api/products/special-offers?limit=10`
-
-#### 3.6 Get New Arrivals
-**Endpoint:** `GET /api/products/new-arrivals?limit=10`
-
-#### 3.7 Get Product Reviews
-**Endpoint:** `GET /api/products/{product_id}/reviews?page=1&limit=10`
-
-#### 3.8 Add Product Review
-**Endpoint:** `POST /api/products/{product_id}/reviews`
-
-**Request Body (Raw JSON):**
-```json
-{
-  "rating": 5,
-  "title": "Amazing phone!",
-  "comment": "Best phone I've ever owned.",
-  "images": ["base64_encoded_image_1", "base64_encoded_image_2"]
-}
-```
-
----
-
-### 4. Categories (Mobile)
-
-#### 4.1 Get All Categories
-**Endpoint:** `GET /api/categories`
-
-#### 4.2 Get Category Products
-**Endpoint:** `GET /api/categories/{category_id}/products`
-
----
-
-### 5. Cart (Mobile)
-
-#### 5.1 Get Cart
-**Endpoint:** `GET /api/cart`
-
-#### 5.2 Add to Cart
-**Endpoint:** `POST /api/cart/items`
-
-**Request Body (Raw JSON):**
-```json
-{
-  "product_id": 1,
-  "quantity": 1
-}
-```
-
-#### 5.3 Update Cart Item
-**Endpoint:** `PUT /api/cart/items/{item_id}`
-
-**Request Body (Raw JSON):**
-```json
-{
-  "quantity": 2
-}
-```
-
-#### 5.4 Remove from Cart
-**Endpoint:** `DELETE /api/cart/items/{item_id}`
-
-#### 5.5 Clear Cart
-**Endpoint:** `DELETE /api/cart`
-
----
-
-### 6. Orders (Mobile)
-
-#### 6.1 Create Order
-**Endpoint:** `POST /api/orders`
-
-**Request Body (Raw JSON):**
-```json
-{
-  "shipping_address_id": "addr_123",
-  "payment_method_id": "pm_456",
-  "notes": "Please call before delivery",
-  "coupon_code": "SAVE10"
-}
-```
-
-#### 6.2 Get Orders
-**Endpoint:** `GET /api/orders?page=1&limit=20&status=pending`
-
-#### 6.3 Get Single Order
-**Endpoint:** `GET /api/orders/{order_id}`
-
-#### 6.4 Cancel Order
-**Endpoint:** `POST /api/orders/{order_id}/cancel`
-
-**Request Body (Raw JSON):**
-```json
-{
-  "reason": "Changed my mind"
-}
-```
-
----
-
-### 7. Wishlist / Liked Items (Mobile)
-
-#### 7.1 Get Wishlist
-**Endpoint:** `GET /api/wishlist`
-
-#### 7.2 Add to Wishlist
-**Endpoint:** `POST /api/wishlist`
-
-**Request Body (Raw JSON):**
-```json
-{
-  "product_id": 1
-}
-```
-
-#### 7.3 Remove from Wishlist
-**Endpoint:** `DELETE /api/wishlist/{product_id}`
-
----
-
-### 8. Wallet (Mobile)
-
-#### 8.1 Get Wallet Balance
-**Endpoint:** `GET /api/wallet`
-
-#### 8.2 Get Wallet Transactions
-**Endpoint:** `GET /api/wallet/transactions?page=1&limit=20&type=credit`
-
-#### 8.3 Top Up Wallet
-**Endpoint:** `POST /api/wallet/topup`
-
-**Request Body (Raw JSON):**
-```json
-{
-  "amount": 10000,
-  "payment_method": "mobile_money",
-  "phone_number": "+265991234567"
-}
-```
-
----
-
-### 9. Shipping Addresses (Mobile)
-
-#### 9.1 Get Addresses
-**Endpoint:** `GET /api/addresses`
-
-#### 9.2 Add Address
-**Endpoint:** `POST /api/addresses`
-
-**Request Body (Raw JSON):**
-```json
-{
-  "label": "Office",
-  "full_name": "John Doe",
-  "phone": "+265991234567",
-  "address_line_1": "456 Business Park",
-  "address_line_2": "City Center",
-  "city": "Blantyre",
-  "state": "Southern Region",
-  "postal_code": "",
-  "country": "Malawi",
-  "is_default": false
-}
-```
-
-#### 9.3 Update Address
-**Endpoint:** `PUT /api/addresses/{address_id}`
-
-**Request Body (Raw JSON):**
-```json
-{
-  "label": "Home",
-  "full_name": "John Doe",
-  "phone": "+265991234567",
-  "address_line_1": "123 Main Street",
-  "address_line_2": "Area 47",
-  "city": "Lilongwe",
-  "state": "Central Region",
-  "postal_code": "",
-  "country": "Malawi",
-  "is_default": true
-}
-```
-
-#### 9.4 Delete Address
-**Endpoint:** `DELETE /api/addresses/{address_id}`
-
-#### 9.5 Set Default Address
-**Endpoint:** `POST /api/addresses/{address_id}/default`
-
-**Request Body:** None (empty raw JSON: `{}`)
-
----
-
-### 10. Payment Methods (Mobile)
-
-#### 10.1 Get Payment Methods
-**Endpoint:** `GET /api/payment-methods`
-
-#### 10.2 Add Payment Method
-**Endpoint:** `POST /api/payment-methods`
-
-**Request Body (Raw JSON):**
-```json
-{
-  "type": "mobile_money",
-  "provider": "Airtel Money",
-  "phone_number": "+265991234567",
-  "is_default": true
-}
-```
-
-#### 10.3 Delete Payment Method
-**Endpoint:** `DELETE /api/payment-methods/{payment_method_id}`
-
----
-
-### 11. Notifications (Mobile)
-
-#### 11.1 Get Notifications
-**Endpoint:** `GET /api/notifications?page=1&limit=20&unread_only=false`
-
-#### 11.2 Mark Notification as Read
-**Endpoint:** `POST /api/notifications/{notification_id}/read`
-
-**Request Body:** None (empty raw JSON: `{}`)
-
-#### 11.3 Mark All as Read
-**Endpoint:** `POST /api/notifications/read-all`
-
-**Request Body:** None (empty raw JSON: `{}`)
-
-#### 11.4 Register Device for Push Notifications
-**Endpoint:** `POST /api/notifications/register-device`
-
-**Request Body (Raw JSON):**
-```json
-{
-  "device_token": "fcm_token_abc123",
-  "platform": "android"
-}
-```
-
----
-
-### 12. Shops / Vendors (Mobile)
-
-#### 12.1 Get All Shops
-**Endpoint:** `GET /api/shops?page=1&limit=20`
-
-#### 12.2 Get Shop Details
-**Endpoint:** `GET /api/shops/{shop_id}`
-
-#### 12.3 Get Shop Products
-**Endpoint:** `GET /api/shops/{shop_id}/products`
-
----
-
-### 13. Search (Mobile)
-
-#### 13.1 Search Products
-**Endpoint:** `GET /api/search?q=iphone&page=1&limit=20&sort=relevance`
-
-#### 13.2 Search Suggestions (Autocomplete)
-**Endpoint:** `GET /api/search/suggestions?q=iph`
-
----
-
-### 14. Help & Support (Mobile)
-
-#### 14.1 Get Help Topics
-**Endpoint:** `GET /api/help/topics`
-
-#### 14.2 Get FAQs
-**Endpoint:** `GET /api/help/faqs`
-
-#### 14.3 Submit Support Ticket
-**Endpoint:** `POST /api/help/tickets`
-
-**Request Body (Raw JSON):**
-```json
-{
-  "subject": "Issue with my order",
-  "category": "orders",
-  "message": "I received a damaged product...",
-  "order_id": "ord_789",
-  "attachments": ["base64_image_1"]
-}
-```
-
----
-
-### 15. App Info (Mobile)
-
-#### 15.1 Get App Info
-**Endpoint:** `GET /api/app/info`
-
----
-
-## Web (Admin & Seller APIs)
-
-### 16. Admin APIs (Web)
-
-All admin endpoints require admin role authentication.
-
-#### 16.1 Dashboard
-**Endpoint:** `GET /api/admin/dashboard`
-
-#### 16.2 Shops Management
-
-##### List All Shops
-**Endpoint:** `GET /api/admin/shops`
-
-##### Create Shop
-**Endpoint:** `POST /api/admin/shops`
-
-**Request Body (Raw JSON):**
-```json
-{
-  "shop_name": "New Shop",
-  "location": "Lilongwe",
-  "address": "123 Main Street",
-  "phone": "+265 999 123 456",
-  "email": "shop@example.com",
-  "logo_url": "https://example.com/logo.png"
-}
-```
-
-##### Update Shop
-**Endpoint:** `PATCH /api/admin/shops/{shopId}`
-
-**Request Body (Raw JSON):**
-```json
-{
-  "shop_name": "Updated Shop Name",
-  "location": "Blantyre",
-  "address": "456 New Street",
-  "phone": "+265 999 999 999",
-  "email": "newemail@example.com",
-  "status": "active",
-  "logo_url": "https://example.com/new-logo.png"
-}
-```
-
-##### Delete Shop
-**Endpoint:** `DELETE /api/admin/shops/{shopId}`
-
-##### Invite Shop Owner
-**Endpoint:** `POST /api/admin/shops/{shopId}/invite-owner`
-
-**Request Body (Raw JSON):**
-```json
-{
-  "owner_name": "John Doe",
-  "owner_email": "john.doe@example.com",
-  "owner_phone": "+265 999 123 456"
-}
-```
-
-#### 16.3 Categories Management
-
-##### List Pending Categories
-**Endpoint:** `GET /api/admin/categories/pending`
-
-##### List Rejected Categories
-**Endpoint:** `GET /api/admin/categories/rejected`
-
-##### List Approved Categories
-**Endpoint:** `GET /api/admin/categories/approved`
-
-##### Approve Category
-**Endpoint:** `POST /api/admin/categories/{categoryId}/approve`
-
-**Request Body:** None (empty raw JSON: `{}`)
-
----
-
-### 17. Seller APIs (Web)
-
-All seller endpoints require seller role authentication and shop ownership.
-
-#### 17.1 Dashboard
-**Endpoint:** `GET /api/sellers/dashboard`
-
-#### 17.2 Categories
-
-##### List Shop Categories
-**Endpoint:** `GET /api/sellers/{shopId}/categories`
-
-##### Create Category
-**Endpoint:** `POST /api/sellers/{shopId}/categories`
-
-**Request Body (Raw JSON):**
-```json
-{
-  "name": "New Category",
-  "image": "https://example.com/category-image.jpg"
-}
-```
-
-#### 17.3 Products
-
-##### List Shop Products
-**Endpoint:** `GET /api/sellers/{shopId}/products`
-
-##### Create Product
-**Endpoint:** `POST /api/sellers/{shopId}/products`
-
-**Request Body (Raw JSON):**
-```json
-{
-  "name": "New Product",
-  "category_id": 1,
-  "price": 50000,
-  "image_url": "https://example.com/product-image.jpg",
-  "images_urls": ["https://example.com/image1.jpg", "https://example.com/image2.jpg"],
-  "description": "Product description",
-  "stock": 100,
-  "original_price": 60000,
-  "discount": 17,
-  "vendor": "Shop Name",
-  "is_featured": false,
-  "is_hot": false,
-  "is_special": false
-}
-```
-
-##### Update Product
-**Endpoint:** `PATCH /api/sellers/{shopId}/products/{productId}`
-
-**Request Body (Raw JSON):**
-```json
-{
-  "name": "Updated Product Name",
-  "category_id": 2,
-  "price": 55000,
-  "image_url": "https://example.com/new-image.jpg",
-  "images_urls": ["https://example.com/new-image1.jpg"],
-  "description": "Updated description",
-  "stock": 150,
-  "original_price": 65000,
-  "discount": 15,
-  "vendor": "Updated Shop Name",
-  "is_featured": true,
-  "is_hot": false,
-  "is_special": true
-}
-```
-
-##### Delete Product
-**Endpoint:** `DELETE /api/sellers/{shopId}/products/{productId}`
-
----
-
-### 18. Shop Owner Registration (Web)
-
-When an admin invites a shop owner, the invitee receives an email with a registration link. The shop owner must register with the `invite_token`, then verify OTP to activate their seller account.
-
-**Full documentation:** [docs/OWNER_REGISTRATION.md](docs/OWNER_REGISTRATION.md)
-
-#### Quick Reference
-
-| Step | Endpoint | Description |
-|------|----------|-------------|
-| 1 | Registration link | `/register?invite_token={token}` (from invitation email) |
-| 2 | `POST /api/auth/register` | Register with `invite_token` in body |
-| 3 | `POST /api/auth/verify-otp` | Verify OTP, receive access token |
-| 4 | Use access token | Access seller APIs |
-
-#### Owner Register
-**Endpoint:** `POST /api/auth/register`
-
-**Request Body (with invite_token):**
-```json
-{
-  "full_name": "John Doe",
-  "email": "john.doe@example.com",
-  "password": "securePassword123",
-  "invite_token": "token_from_registration_link"
-}
-```
-
-#### Owner Verify OTP
-**Endpoint:** `POST /api/auth/verify-otp`
-
-**Request Body:**
-```json
-{
-  "email": "john.doe@example.com",
-  "otp": "123456",
-  "type": "signup"
-}
-```
-
----
-
-## Response Format
-
-All API responses follow this standard format:
-
-### Success Response
 ```json
 {
   "success": true,
-  "message": "Operation successful",
-  "data": { ... }
-}
-```
-
-### Error Response
-```json
-{
-  "success": false,
-  "message": "Error message describing what went wrong",
-  "errors": {
-    "field_name": ["Validation error 1", "Validation error 2"]
+  "message": "Profile retrieved",
+  "data": {
+    "id": 1,
+    "name": "John Banda",
+    "email": "john@example.com",
+    "phone_number": "+265991234567",
+    "avatar": "https://example.com/avatar.jpg",
+    "is_verified": true,
+    "role": "customer",
+    "member_since": "January 2025",
+    "created_at": "2025-01-15T10:00:00.000Z"
   }
 }
 ```
 
 ---
 
-## Authentication
+### 3. Products
 
-1. **Access Token** - Short-lived (1 hour), used for API requests
-2. **Refresh Token** - Long-lived (30 days), used to get new access tokens
-3. All authenticated endpoints require: `Authorization: Bearer <access_token>`
-4. When access token expires, use refresh token to get a new one
-5. If refresh token is invalid, user must login again
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/products` | No | List products. Query: category_id, min_price, max_price, sort (price_asc \| price_desc \| newest \| rating), per_page. |
+| GET | `/api/products/:id` | No | Single product. |
+| GET | `/api/products/featured` | No | Featured products. |
+| GET | `/api/products/hot-sales` | No | Hot sales. |
+| GET | `/api/products/special-offers` | No | Special offers. |
+| GET | `/api/products/new-arrivals` | No | New arrivals. |
+| GET | `/api/products/:product_id/reviews` | No | Product reviews. |
+| POST | `/api/products/:product_id/reviews` | 🔒 | Add review. Body: rating, title, comment, images. |
+
+**Response format (GET)**
+
+All product list endpoints (`/api/products`, `/api/products/featured`, `/api/products/hot-sales`, `/api/products/special-offers`, `/api/products/new-arrivals`, `/api/products/category/:id`, `/api/shops/:id/products`, `/api/products/search`) return the same `data` shape: **array of product objects**.
+
+Single product (`GET /api/products/:id`) returns one product object in `data`.
+
+```json
+{
+  "success": true,
+  "message": "Products retrieved",
+  "data": [
+    {
+      "id": 1,
+      "name": "MacBook Pro M3",
+      "description": "Powerful laptop...",
+      "price": 1500000,
+      "original_price": 1800000,
+      "discount": 17,
+      "image": "https://...",
+      "rating": 4.8,
+      "total_reviews": 124,
+      "stock": 15,
+      "is_featured": true,
+      "is_hot": true,
+      "is_special": false,
+      "category_id": 1,
+      "shop_id": 1,
+      "vendor": "TechShop Lilongwe",
+      "created_at": "2025-01-01T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+Product reviews (`GET /api/products/:product_id/reviews`): `data` is an array of review objects (e.g. `id`, `rating`, `title`, `comment`, `user`, `created_at`).
 
 ---
 
-## Important Notes
+### 4. Categories
 
-1. **All POST requests must include `Content-Type: application/json` header**
-2. **All POST request bodies must be in Raw JSON format** (as shown in examples above)
-3. **Mobile App APIs** are for customer-facing mobile application
-4. **Web APIs** are for admin dashboard and seller dashboard web applications
-5. All monetary values are in **Malawian Kwacha (MWK)** and represented as integers (no decimals)
-6. Example: `1299000` = MK 1,299,000
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/categories` | No | All categories. Data includes product_count. |
+| GET | `/api/products/category/:id` | No | Products by category. |
+| GET | `/api/categories/:id/products` | No | Products by category (alternate). |
+
+**Response format (GET)**
+
+| Endpoint | `data` shape |
+|----------|----------------|
+| `GET /api/categories` | Array of category objects |
+| `GET /api/products/category/:id` | Array of product objects (same as Products) |
+
+```json
+{
+  "success": true,
+  "message": "Categories retrieved",
+  "data": [
+    {
+      "id": 1,
+      "name": "Laptops",
+      "icon": "laptop",
+      "color": "#4F46E5",
+      "image": "https://...",
+      "product_count": 12
+    }
+  ]
+}
+```
 
 ---
 
-## Postman Collection
+### 5. Cart
 
-Import the `Techaven_API.postman_collection.json` file into Postman to access all endpoints with pre-configured requests and examples.
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/cart` | 🔒 | Get cart. |
+| POST | `/api/cart/items` | 🔒 | Add item. Body: product_id, quantity. |
+| PUT | `/api/cart/items/:item_id` | 🔒 | Update quantity. |
+| DELETE | `/api/cart/items/:item_id` | 🔒 | Remove item. |
+| POST | `/api/cart/clear` | 🔒 | Clear cart. |
 
-The collection is organized into:
-- **Mobile App (Customer APIs)** folder - Contains all customer-facing endpoints
-- **Web (Admin & Seller APIs)** folder - Contains all admin and seller dashboard endpoints
+**Response format (GET)**
+
+| Endpoint | `data` shape |
+|----------|----------------|
+| `GET /api/cart` | Cart object with items array (e.g. items with product_id, quantity, product details) |
+
+```json
+{
+  "success": true,
+  "message": "Cart retrieved",
+  "data": {
+    "items": [
+      {
+        "id": 1,
+        "product_id": 3,
+        "quantity": 2,
+        "product": { "id": 3, "name": "...", "price": 150000, "image": "..." }
+      }
+    ],
+    "total": 300000
+  }
+}
+```
 
 ---
 
-## Additional Documentation (docs folder)
+### 6. Orders
 
-| Document | Description |
-|----------|-------------|
-| [docs/OWNER_REGISTRATION.md](docs/OWNER_REGISTRATION.md) | Shop owner invitation and registration flow |
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/api/orders` | 🔒 | Create order. Body: shipping_address_id, items[{ product_id, quantity }], notes. Or from cart (legacy). |
+| GET | `/api/orders` | 🔒 | List my orders. |
+| GET | `/api/orders/:order_id` | 🔒 | Single order. |
+| POST | `/api/orders/:id/pay/wallet` | 🔒 | Pay with wallet. No body. Returns order + wallet_balance. |
+| POST | `/api/orders/:id/pay/onekhusa` | 🔒 | Initiate OneKhusa payment. Returns payment_url, transaction_id, amount. |
+| POST | `/api/orders/:id/cancel` | 🔒 | Cancel order (only when status is pending). No body. |
+| POST | `/api/orders/:id/payment/complete` | 🔒 | Mark payment complete (escrow). Body: payment_reference, payment_proof. |
+| POST | `/api/orders/:id/delivery/confirm` | 🔒 | Customer confirm delivery. |
+| PATCH | `/api/orders/:id/status` | 🔒 Admin/Seller | Update status, payment_status, courier_tracking_number. |
+
+**Create Order (API doc format)**  
+`POST /api/orders`
+```json
+{
+  "shipping_address_id": 1,
+  "items": [
+    { "product_id": 3, "quantity": 2 },
+    { "product_id": 5, "quantity": 1 }
+  ],
+  "notes": "Please call before delivery"
+}
+```
+
+Response data shape: id, order_number, status, payment_status (unpaid/paid), payment_method, subtotal, shipping_fee, total, shipping_address_id, items[], created_at.
+
+**Response format (GET)**
+
+| Endpoint | `data` shape |
+|----------|----------------|
+| `GET /api/orders` | Array of order objects |
+| `GET /api/orders/:order_id` | Single order object |
+
+```json
+{
+  "success": true,
+  "message": "Orders retrieved",
+  "data": [
+    {
+      "id": 1,
+      "order_number": "ORD-20250115-0001",
+      "status": "pending",
+      "payment_status": "unpaid",
+      "payment_method": null,
+      "subtotal": 150000,
+      "shipping_fee": 5000,
+      "total": 155000,
+      "shipping_address_id": 1,
+      "items": [
+        {
+          "id": 1,
+          "product_id": 3,
+          "product_name": "Samsung Galaxy S24",
+          "quantity": 1,
+          "price": 150000,
+          "subtotal": 150000
+        }
+      ],
+      "created_at": "2025-01-15T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+---
+
+### 7. Wishlist
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/wishlist` | 🔒 | Get wishlist. |
+| POST | `/api/wishlist` | 🔒 | Add product. Body: product_id. |
+| DELETE | `/api/wishlist/:product_id` | 🔒 | Remove from wishlist. |
+
+**Response format (GET)**
+
+| Endpoint | `data` shape |
+|----------|----------------|
+| `GET /api/wishlist` | Array of wishlist/favorite items (e.g. product objects or { product_id, product } ) |
+
+```json
+{
+  "success": true,
+  "message": "Wishlist retrieved",
+  "data": [
+    {
+      "id": 1,
+      "product_id": 5,
+      "product": { "id": 5, "name": "...", "price": 80000, "image": "..." }
+    }
+  ]
+}
+```
+
+---
+
+### 8. Shipping Addresses
+
+All under `/api/shipping-addresses` (or `/api/addresses`). Data: id, label, name, phone, address, city, region, is_default.
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/shipping-addresses` | 🔒 | List addresses (data = array). |
+| POST | `/api/shipping-addresses` | 🔒 | Add address. |
+| PUT | `/api/shipping-addresses/:id` | 🔒 | Update address. |
+| DELETE | `/api/shipping-addresses/:id` | 🔒 | Delete address. |
+| POST | `/api/shipping-addresses/:id/set-default` | 🔒 | Set as default. |
+
+**Add Address**  
+`POST /api/shipping-addresses`
+```json
+{
+  "label": "Office",
+  "name": "John Banda",
+  "phone": "+265991234567",
+  "address": "Kamuzu Procession Road",
+  "city": "Blantyre",
+  "region": "Southern Region",
+  "is_default": false
+}
+```
+
+**Response format (GET)**
+
+| Endpoint | `data` shape |
+|----------|----------------|
+| `GET /api/shipping-addresses` | Array of address objects (direct array, not paginated) |
+
+```json
+{
+  "success": true,
+  "message": "Addresses retrieved",
+  "data": [
+    {
+      "id": 1,
+      "label": "Home",
+      "name": "John Banda",
+      "phone": "+265991234567",
+      "address": "Plot 23, Area 49",
+      "city": "Lilongwe",
+      "region": "Central Region",
+      "is_default": true
+    }
+  ]
+}
+```
+
+---
+
+### 9. Wallet
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/wallet` | 🔒 | Wallet summary (balance, etc.). |
+| GET | `/api/wallet/balance` | 🔒 | Balance only. Data: { balance, currency }. |
+| GET | `/api/wallet/transactions` | 🔒 | Transactions. Data: array of { id, type, amount, description, status, created_at }. |
+| POST | `/api/wallet/topup` | 🔒 | Initiate top-up. Body: { amount }. Returns payment_url, transaction_id, amount. |
+
+**Top Up**  
+`POST /api/wallet/topup`
+```json
+{ "amount": 100000 }
+```
+
+**Response format (GET)**
+
+| Endpoint | `data` shape |
+|----------|----------------|
+| `GET /api/wallet` | Wallet object (balance, currency, optional available_balance, pending_escrow for sellers) |
+| `GET /api/wallet/balance` | `{ balance, currency }` |
+| `GET /api/wallet/transactions` | Array of transaction objects |
+
+```json
+{
+  "success": true,
+  "message": "Balance retrieved",
+  "data": {
+    "balance": 500000,
+    "currency": "MWK"
+  }
+}
+```
+
+```json
+{
+  "success": true,
+  "message": "Transactions retrieved",
+  "data": [
+    {
+      "id": 1,
+      "type": "credit",
+      "amount": 100000,
+      "description": "Wallet top-up",
+      "status": "completed",
+      "created_at": "2025-01-15T10:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "type": "debit",
+      "amount": 155000,
+      "description": "Order ORD-20250115-0001",
+      "status": "completed",
+      "created_at": "2025-01-15T11:00:00.000Z"
+    }
+  ]
+}
+```
+
+---
+
+### 10. Payment Methods
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/payment-methods` | 🔒 | List payment methods. |
+| POST | `/api/payment-methods` | 🔒 | Add payment method. |
+| DELETE | `/api/payment-methods/:id` | 🔒 | Delete payment method. |
+
+**Response format (GET)**
+
+| Endpoint | `data` shape |
+|----------|----------------|
+| `GET /api/payment-methods` | Array of payment method objects (e.g. id, type, provider, phone_number, is_default) |
+
+```json
+{
+  "success": true,
+  "message": "Payment methods retrieved",
+  "data": [
+    {
+      "id": 1,
+      "type": "mobile_money",
+      "provider": "Airtel Money",
+      "phone_number": "+265991234567",
+      "is_default": true
+    }
+  ]
+}
+```
+
+---
+
+### 11. Notifications
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/notifications` | 🔒 | List notifications. Each: id, title, body, type, is_read, time_ago, created_at. |
+| GET | `/api/notifications/unread-count` | 🔒 | Unread count. Data: { count }. |
+| POST | `/api/notifications/:id/read` | 🔒 | Mark one as read. |
+| POST | `/api/notifications/mark-all-read` | 🔒 | Mark all as read. (Also: /read-all) |
+| DELETE | `/api/notifications/:id` | 🔒 | Delete notification. |
+| POST | `/api/notifications/register-device` | 🔒 | Register device for push. Body: device_token, platform. |
+
+**Response format (GET)**
+
+| Endpoint | `data` shape |
+|----------|----------------|
+| `GET /api/notifications` | Array of notification objects |
+| `GET /api/notifications/unread-count` | `{ count }` |
+
+```json
+{
+  "success": true,
+  "message": "Notifications retrieved",
+  "data": [
+    {
+      "id": 1,
+      "title": "Order Confirmed",
+      "body": "Your order ORD-001 has been confirmed.",
+      "type": "order",
+      "is_read": false,
+      "time_ago": "2 hours ago",
+      "created_at": "2025-01-15T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+```json
+{
+  "success": true,
+  "message": "Unread count retrieved",
+  "data": { "count": 3 }
+}
+```
+
+---
+
+### 12. Shops
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/shops` | No | List shops. |
+| GET | `/api/shops/:id` | No | Shop details. |
+| GET | `/api/shops/:id/products` | No | Shop products. |
+
+**Response format (GET)**
+
+| Endpoint | `data` shape |
+|----------|----------------|
+| `GET /api/shops` | Array of shop objects |
+| `GET /api/shops/:id` | Single shop object |
+| `GET /api/shops/:id/products` | Array of product objects (same as Products) |
+
+```json
+{
+  "success": true,
+  "message": "Shops retrieved",
+  "data": [
+    {
+      "id": 1,
+      "name": "TechShop Lilongwe",
+      "description": "Best tech store...",
+      "logo": "https://...",
+      "banner": "https://...",
+      "rating": 4.7,
+      "total_reviews": 89,
+      "location": "Area 3, Lilongwe",
+      "phone": "+265991234567",
+      "email": "techshop@example.com",
+      "is_verified": true
+    }
+  ]
+}
+```
+
+---
+
+### 13. Search
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/products/search?q=...&category_id=...` | No | Search products. `q` required. |
+| GET | `/api/search?q=...` | No | Search (alternate). |
+| GET | `/api/search/suggestions?q=...` | No | Search suggestions. |
+
+**Response format (GET)**
+
+| Endpoint | `data` shape |
+|----------|----------------|
+| `GET /api/products/search?q=...` | Array of product objects (same as Products) |
+| `GET /api/search?q=...` | Search results (products/list depending on implementation) |
+| `GET /api/search/suggestions?q=...` | Array of suggestion strings or objects |
+
+```json
+{
+  "success": true,
+  "message": "Products retrieved",
+  "data": [ /* product objects */ ]
+}
+```
+
+---
+
+### 14. Help & Support
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/help/topics` | No | Help topics. |
+| GET | `/api/help/faqs` | No | FAQs. |
+| POST | `/api/help/tickets` | 🔒 | Submit ticket. Body: subject, category, message, order_id, attachments. |
+
+**Response format (GET)**
+
+| Endpoint | `data` shape |
+|----------|----------------|
+| `GET /api/help/topics` | Array of help topic objects (e.g. id, title, slug, articles) |
+| `GET /api/help/faqs` | Array of FAQ objects (e.g. id, question, answer, category) |
+
+```json
+{
+  "success": true,
+  "message": "Help topics retrieved",
+  "data": [
+    { "id": 1, "title": "Orders", "slug": "orders", "articles": [] }
+  ]
+}
+```
+
+---
+
+### 15. App Info
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/app/info` | No | App info (version, terms, privacy, support). |
+
+**Response format (GET)**
+
+| Endpoint | `data` shape |
+|----------|----------------|
+| `GET /api/app/info` | App info object (version, terms_url, privacy_url, support_email, support_phone, etc.) |
+
+```json
+{
+  "success": true,
+  "message": "App info retrieved",
+  "data": {
+    "version": "1.0.0",
+    "terms_url": "https://...",
+    "privacy_url": "https://...",
+    "support_email": "support@techaven.mw",
+    "support_phone": "+265..."
+  }
+}
+```
+
+---
+
+### 16. SMS
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/api/sms/send` | 🔒 | Send SMS. Body: phone, message. |
+| GET | `/api/sms/balance` | 🔒 | SMS gateway balance. |
+
+**Send SMS**  
+`POST /api/sms/send`
+```json
+{ "phone": "+265991234567", "message": "Your OTP is 1234" }
+```
+
+**Response format (GET)**
+
+| Endpoint | `data` shape |
+|----------|----------------|
+| `GET /api/sms/balance` | `{ balance, currency }` (SMS gateway credits) |
+
+```json
+{
+  "success": true,
+  "message": "SMS balance retrieved",
+  "data": { "balance": 150, "currency": "credits" }
+}
+```
+
+---
+
+### 17. Webhooks
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/api/webhooks/onekhusa` | No | OneKhusa payment callback. Body: transaction_id, status, amount, reference (ORDER-{id} or TOPUP-{userId}). |
+
+**OneKhusa webhook payload**
+```json
+{
+  "transaction_id": "TXN-12345",
+  "status": "success",
+  "amount": 155000,
+  "reference": "ORDER-1"
+}
+```
+
+---
+
+## HTTP status codes
+
+| Code | Meaning |
+|------|---------|
+| 200 | Success |
+| 201 | Created |
+| 400 | Bad request / validation / invalid OTP |
+| 401 | Unauthenticated |
+| 403 | Forbidden / account not verified |
+| 404 | Not found |
+| 422 | Validation error |
+| 500 | Server error |
+
+---
+
+## Postman collection
+
+Import **Techaven_API.postman_collection.json** for the same grouping and example requests. Set `base_url` (e.g. `http://localhost:8000`) and `access_token` for protected routes.

@@ -3,6 +3,26 @@ import { Op } from 'sequelize';
 
 const { Product, Category, Shop, Review, User } = db;
 
+const toProductDto = (p) => ({
+  id: p.id,
+  name: p.name,
+  description: p.description,
+  price: parseFloat(p.price),
+  original_price: p.original_price != null ? parseFloat(p.original_price) : null,
+  discount: p.discount,
+  image: p.image,
+  rating: parseFloat(p.rating) || 0,
+  total_reviews: p.total_reviews || 0,
+  stock: p.stock || 0,
+  is_featured: !!p.is_featured,
+  is_hot: !!p.is_hot,
+  is_special: !!p.is_special,
+  category_id: p.category_id,
+  shop_id: p.shop_id,
+  vendor: p.vendor || (p.shop && p.shop.name) || null,
+  created_at: p.createdAt || p.created_at
+});
+
 // Helper function to update product rating and total reviews
 const updateProductRating = async (productId) => {
   try {
@@ -32,22 +52,43 @@ const updateProductRating = async (productId) => {
 
 export const index = async (req, res) => {
   try {
+    const { category_id, min_price, max_price, sort, per_page } = req.query;
+    const where = {};
+    if (category_id) where.category_id = category_id;
+    if (min_price != null || max_price != null) {
+      where.price = {};
+      if (min_price != null) where.price[Op.gte] = parseFloat(min_price);
+      if (max_price != null) where.price[Op.lte] = parseFloat(max_price);
+    }
+    const order = [];
+    if (sort === 'price_asc') order.push(['price', 'ASC']);
+    else if (sort === 'price_desc') order.push(['price', 'DESC']);
+    else if (sort === 'newest') order.push(['createdAt', 'DESC']);
+    else if (sort === 'rating') order.push(['rating', 'DESC']);
+    else order.push([['id', 'DESC']]);
+    const limit = Math.min(parseInt(per_page, 10) || 20, 100);
+
     const products = await Product.findAll({
+      where: Object.keys(where).length ? where : undefined,
       include: [
         { model: Category, as: 'category' },
         { model: Shop, as: 'shop' }
-      ]
+      ],
+      order,
+      limit
     });
 
     return res.json({
-      status: 'success',
-      data: products
+      success: true,
+      message: 'Products retrieved',
+      data: (products || []).map(toProductDto)
     });
   } catch (error) {
     console.error('Products index error:', error);
     return res.status(500).json({
-      status: 'error',
+      success: false,
       message: 'Failed to fetch products',
+      data: null,
       error: error.message
     });
   }
@@ -64,14 +105,16 @@ export const featured = async (req, res) => {
     });
 
     return res.json({
-      status: 'success',
-      data: products
+      success: true,
+      message: 'Products retrieved',
+      data: (products || []).map(toProductDto)
     });
   } catch (error) {
     console.error('Featured products error:', error);
     return res.status(500).json({
-      status: 'error',
+      success: false,
       message: 'Failed to fetch featured products',
+      data: null,
       error: error.message
     });
   }
@@ -88,14 +131,16 @@ export const hot = async (req, res) => {
     });
 
     return res.json({
-      status: 'success',
-      data: products
+      success: true,
+      message: 'Products retrieved',
+      data: (products || []).map(toProductDto)
     });
   } catch (error) {
     console.error('Hot products error:', error);
     return res.status(500).json({
-      status: 'error',
+      success: false,
       message: 'Failed to fetch hot products',
+      data: null,
       error: error.message
     });
   }
@@ -112,14 +157,16 @@ export const special = async (req, res) => {
     });
 
     return res.json({
-      status: 'success',
-      data: products
+      success: true,
+      message: 'Products retrieved',
+      data: (products || []).map(toProductDto)
     });
   } catch (error) {
     console.error('Special products error:', error);
     return res.status(500).json({
-      status: 'error',
+      success: false,
       message: 'Failed to fetch special products',
+      data: null,
       error: error.message
     });
   }
@@ -137,20 +184,23 @@ export const show = async (req, res) => {
 
     if (!product) {
       return res.status(404).json({
-        status: 'error',
-        message: 'Product not found'
+        success: false,
+        message: 'Product not found',
+        data: null
       });
     }
 
     return res.json({
-      status: 'success',
-      data: product
+      success: true,
+      message: 'Product retrieved',
+      data: toProductDto(product)
     });
   } catch (error) {
     console.error('Product show error:', error);
     return res.status(500).json({
-      status: 'error',
+      success: false,
       message: 'Failed to fetch product',
+      data: null,
       error: error.message
     });
   }
@@ -158,22 +208,26 @@ export const show = async (req, res) => {
 
 export const search = async (req, res) => {
   try {
-    const { q } = req.query;
+    const { q, category_id } = req.query;
 
     if (!q) {
       return res.status(400).json({
-        status: 'error',
-        message: 'Search query is required'
+        success: false,
+        message: 'Search query (q) is required',
+        data: null
       });
     }
 
+    const where = {
+      [Op.or]: [
+        { name: { [Op.like]: `%${q}%` } },
+        { description: { [Op.like]: `%${q}%` } }
+      ]
+    };
+    if (category_id) where.category_id = category_id;
+
     const products = await Product.findAll({
-      where: {
-        [Op.or]: [
-          { name: { [Op.like]: `%${q}%` } },
-          { description: { [Op.like]: `%${q}%` } }
-        ]
-      },
+      where,
       include: [
         { model: Category, as: 'category' },
         { model: Shop, as: 'shop' }
@@ -181,14 +235,16 @@ export const search = async (req, res) => {
     });
 
     return res.json({
-      status: 'success',
-      data: products
+      success: true,
+      message: 'Products retrieved',
+      data: (products || []).map(toProductDto)
     });
   } catch (error) {
     console.error('Product search error:', error);
     return res.status(500).json({
-      status: 'error',
+      success: false,
       message: 'Failed to search products',
+      data: null,
       error: error.message
     });
   }
@@ -442,14 +498,16 @@ export const byCategory = async (req, res) => {
     });
 
     return res.json({
-      status: 'success',
-      data: products
+      success: true,
+      message: 'Products retrieved',
+      data: (products || []).map(toProductDto)
     });
   } catch (error) {
     console.error('Products by category error:', error);
     return res.status(500).json({
-      status: 'error',
+      success: false,
       message: 'Failed to fetch products by category',
+      data: null,
       error: error.message
     });
   }

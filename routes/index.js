@@ -16,10 +16,13 @@ import orderRoutes from './orders.js';
 import favoriteRoutes from './favorites.js';
 import walletRoutes from './wallet.js';
 import addressRoutes from './addresses.js';
+import shippingAddressRoutes from './shipping-addresses.js';
 import paymentMethodRoutes from './payment-methods.js';
 import searchRoutes from './search.js';
 import helpRoutes from './help.js';
 import appRoutes from './app.js';
+import smsRoutes from './sms.js';
+import webhookRoutes from './webhooks.js';
 
 const router = express.Router();
 
@@ -40,10 +43,13 @@ router.use('/orders', orderRoutes);
 router.use('/wishlist', favoriteRoutes);
 router.use('/wallet', walletRoutes);
 router.use('/addresses', addressRoutes);
+router.use('/shipping-addresses', shippingAddressRoutes);
 router.use('/payment-methods', paymentMethodRoutes);
 router.use('/search', searchRoutes);
 router.use('/help', helpRoutes);
 router.use('/app', appRoutes);
+router.use('/sms', smsRoutes);
+router.use('/webhooks', webhookRoutes);
 
 export default router;
 

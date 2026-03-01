@@ -3,15 +3,31 @@ import { Op } from 'sequelize';
 
 const { User, Wallet, WalletTransaction, Order } = db;
 
-// Wallet is for sellers only. Customers pay at checkout directly (card, mobile money, etc.).
-export const requireSeller = (req, res, next) => {
-  if (req.user.role !== 'seller' && req.user.role !== 'admin') {
-    return res.status(403).json({
+/** GET /api/wallet/balance — API doc shape */
+export const getBalance = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    let wallet = await Wallet.findOne({ where: { user_id: userId } });
+    if (!wallet) {
+      wallet = await Wallet.create({ user_id: userId, balance: 0, currency: 'MWK' });
+    }
+    return res.json({
+      success: true,
+      message: 'Balance retrieved',
+      data: {
+        balance: parseFloat(wallet.balance) || 0,
+        currency: wallet.currency || 'MWK'
+      }
+    });
+  } catch (error) {
+    console.error('Get balance error:', error);
+    return res.status(500).json({
       success: false,
-      message: 'Wallet is for sellers only. Customers pay at checkout directly via card, mobile money, or other payment methods.'
+      message: 'Failed to retrieve balance',
+      data: null,
+      error: error.message
     });
   }
-  next();
 };
 
 export const getWallet = async (req, res) => {
@@ -100,28 +116,20 @@ export const getTransactions = async (req, res) => {
       order: [['id', 'DESC']]
     });
     
+    // API doc: data is direct array of { id, type, amount, description, status, created_at }
     const formattedTransactions = transactions.map(txn => ({
-      id: `txn_${txn.id}`,
+      id: txn.id,
       type: txn.type,
       amount: parseFloat(txn.amount) || 0,
-      currency: txn.currency || 'MWK',
-      description: txn.description,
-      reference: txn.reference,
-      balance_after: txn.balance_after ? parseFloat(txn.balance_after) : null,
+      description: txn.description || '',
+      status: txn.status,
       created_at: txn.createdAt || txn.created_at || new Date()
     }));
     
     return res.json({
       success: true,
       message: 'Transactions retrieved',
-      data: {
-        transactions: formattedTransactions,
-        pagination: {
-          current_page: parseInt(page),
-          total_pages: Math.ceil(count / parseInt(limit)),
-          total_items: count
-        }
-      }
+      data: formattedTransactions
     });
   } catch (error) {
     console.error('Get transactions error:', error);
@@ -133,15 +141,17 @@ export const getTransactions = async (req, res) => {
   }
 };
 
+/** POST /api/wallet/topup — API doc: initiates OneKhusa payment, returns payment_url */
 export const topUpWallet = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { amount, payment_method, phone_number } = req.body;
+    const { amount } = req.body;
     
-    if (!amount || !payment_method) {
+    if (!amount) {
       return res.status(400).json({
         success: false,
-        message: 'Amount and payment method are required'
+        message: 'Amount is required',
+        data: null
       });
     }
     
@@ -149,60 +159,30 @@ export const topUpWallet = async (req, res) => {
     if (isNaN(topUpAmount) || topUpAmount <= 0) {
       return res.status(400).json({
         success: false,
-        message: 'Amount must be a positive number'
+        message: 'Amount must be a positive number',
+        data: null
       });
     }
     
-    // Get or create wallet for user
-    let wallet = await Wallet.findOne({ where: { user_id: userId } });
-    
-    if (!wallet) {
-      wallet = await Wallet.create({
-        user_id: userId,
-        balance: 0.00,
-        currency: 'MWK'
-      });
-    }
-    
-    // Create transaction record
-    const transaction = await WalletTransaction.create({
-      wallet_id: wallet.id,
-      user_id: userId,
-      type: 'credit',
-      amount: topUpAmount,
-      currency: 'MWK',
-      description: `Top up via ${payment_method}`,
-      reference: `topup_${Date.now()}`,
-      status: 'pending' // Will be updated to 'completed' after payment confirmation
-    });
-    
-    // For now, we'll mark it as completed immediately (in production, wait for payment gateway confirmation)
-    // Update wallet balance
-    const newBalance = parseFloat(wallet.balance) + topUpAmount;
-    wallet.balance = newBalance;
-    await wallet.save();
-    
-    // Update transaction status and balance_after
-    transaction.status = 'completed';
-    transaction.balance_after = newBalance;
-    await transaction.save();
+    const transactionId = `TXN-${Date.now()}-topup`;
+    const baseUrl = process.env.ONEKHUSA_BASE_URL || 'https://api.onekhusa.com';
+    const paymentUrl = `${baseUrl}/pay?ref=TOPUP-${userId}&amount=${topUpAmount}&txn=${transactionId}`;
     
     return res.json({
       success: true,
-      message: 'Top up completed successfully',
+      message: 'Top-up initiated',
       data: {
-        transaction_id: `txn_${transaction.id}`,
-        amount: topUpAmount,
-        status: 'completed',
-        balance_after: newBalance,
-        currency: 'MWK'
+        payment_url: paymentUrl,
+        transaction_id: transactionId,
+        amount: topUpAmount
       }
     });
   } catch (error) {
     console.error('Top up error:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to process top up',
+      message: 'Failed to initiate top-up',
+      data: null,
       error: error.message
     });
   }

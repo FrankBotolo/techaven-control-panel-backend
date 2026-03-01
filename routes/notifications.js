@@ -10,7 +10,9 @@ router.use(authenticate);
 router.get('/', NotificationController.index);
 router.get('/unread-count', NotificationController.unreadCount);
 router.post('/read-all', NotificationController.markAllAsRead);
+router.post('/mark-all-read', NotificationController.markAllAsRead);
 router.post('/:notification_id/read', NotificationController.markAsRead);
+router.post('/:id/read', NotificationController.markAsRead);
 router.post('/register-device', NotificationController.registerDevice);
 router.delete('/:id', NotificationController.destroy);
 

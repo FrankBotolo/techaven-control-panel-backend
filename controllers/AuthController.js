@@ -25,8 +25,8 @@ const generateRefreshToken = (user) => {
 };
 
 const sendOtp = async (user, type) => {
-  // Generate a 6-digit OTP (always exactly 6 digits)
-  const code = Math.floor(100000 + Math.random() * 900000).toString().padStart(6, '0');
+  // Generate a 4-digit OTP (per API doc: always 4 digits, 12-hour expiry)
+  const code = Math.floor(1000 + Math.random() * 9000).toString();
   const identifier = user.email || user.phone_number;
 
   await Otp.create({
@@ -343,7 +343,16 @@ export const login = async (req, res) => {
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials'
+        message: 'Invalid credentials',
+        data: null
+      });
+    }
+
+    if (!user.is_verified) {
+      return res.status(403).json({
+        success: false,
+        message: 'Account not verified. Please verify your email or phone with OTP first.',
+        data: null
       });
     }
 
@@ -352,27 +361,33 @@ export const login = async (req, res) => {
     if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials'
+        message: 'Invalid credentials',
+        data: null
       });
     }
 
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
+    const memberSince = user.createdAt
+      ? new Date(user.createdAt).toLocaleString('en-US', { month: 'long', year: 'numeric' })
+      : 'Unknown';
+
     return res.json({
       success: true,
       message: 'Login successful',
       data: {
-        accessToken: accessToken,
-        refreshToken: refreshToken,
-        sessionId: `session_${user.id}_${Date.now()}`,
+        access_token: accessToken,
+        token_type: 'Bearer',
         user: {
-          id: `usr_${user.id}`,
-          username: user.name?.split(' ')[0] || user.email?.split('@')[0] || 'user',
+          id: user.id,
+          name: user.name,
           email: user.email,
           phone_number: user.phone_number,
+          avatar: user.avatar_url || null,
+          is_verified: user.is_verified,
           role: user.role,
-          shop_id: user.shop_id || null,
+          member_since: memberSince,
           created_at: user.createdAt || user.created_at || new Date()
         }
       }
@@ -382,6 +397,54 @@ export const login = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Login failed',
+      data: null,
+      error: error.message
+    });
+  }
+};
+
+/** Send OTP for OTP-based login (default login in app). Only for verified users. */
+export const sendLoginOtp = async (req, res) => {
+  try {
+    const { email, phone_number } = req.body;
+    if (!email && !phone_number) {
+      return res.status(400).json({
+        success: false,
+        message: 'Either email or phone number is required',
+        data: null
+      });
+    }
+    const whereClause = email ? { email } : { phone_number };
+    const user = await User.findOne({ where: whereClause });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+        data: null
+      });
+    }
+    if (!user.is_verified) {
+      return res.status(403).json({
+        success: false,
+        message: 'Account not verified. Please complete signup verification first.',
+        data: null
+      });
+    }
+    await sendOtp(user, 'login');
+    return res.json({
+      success: true,
+      message: 'OTP sent successfully',
+      data: {
+        email: user.email || null,
+        phone_number: user.phone_number || null
+      }
+    });
+  } catch (error) {
+    console.error('Send login OTP error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to send login OTP',
+      data: null,
       error: error.message
     });
   }
@@ -398,12 +461,13 @@ export const verifyOtp = async (req, res) => {
       });
     }
 
-    // Validate that OTP is exactly 6 digits
+    // Validate that OTP is exactly 4 digits (per API doc)
     const otpString = otp.toString().trim();
-    if (!/^\d{6}$/.test(otpString)) {
+    if (!/^\d{4}$/.test(otpString)) {
       return res.status(400).json({
         success: false,
-        message: 'OTP must be exactly 6 digits'
+        message: 'Invalid or expired OTP',
+        data: null
       });
     }
 
@@ -430,13 +494,31 @@ export const verifyOtp = async (req, res) => {
     if (!otpRecord) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid or expired OTP'
+        message: 'Invalid or expired OTP',
+        data: null
       });
     }
 
     if (type !== 'password_reset') {
       await otpRecord.destroy({ force: true });
     }
+
+    const formatUserForAuth = (u) => {
+      const memberSince = u.createdAt
+        ? new Date(u.createdAt).toLocaleString('en-US', { month: 'long', year: 'numeric' })
+        : 'Unknown';
+      return {
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        phone_number: u.phone_number,
+        avatar: u.avatar_url || null,
+        is_verified: u.is_verified,
+        role: u.role,
+        member_since: memberSince,
+        created_at: u.createdAt || u.created_at || new Date()
+      };
+    };
 
     if (type === 'signup') {
       const user = await User.findOne({
@@ -454,50 +536,53 @@ export const verifyOtp = async (req, res) => {
         await user.save();
 
         const accessToken = generateAccessToken(user);
-        const refreshToken = generateRefreshToken(user);
-
         return res.json({
           success: true,
-          message: 'Verification successful',
+          message: 'Login successful',
           data: {
-            user: {
-              id: `usr_${user.id}`,
-              full_name: user.name,
-              email: user.email,
-              phone_number: user.phone_number,
-              role: user.role,
-              shop_id: user.shop_id || null,
-              created_at: user.createdAt || user.created_at || new Date()
-            },
+            user: formatUserForAuth(user),
             access_token: accessToken,
-            refresh_token: refreshToken,
-            token_type: 'Bearer',
-            expires_in: 3600
+            token_type: 'Bearer'
+          }
+        });
+      }
+    }
+
+    if (type === 'login') {
+      const user = await User.findOne({
+        where: {
+          [Op.or]: [
+            { email: identifier },
+            { phone_number: identifier }
+          ]
+        }
+      });
+      if (user) {
+        const accessToken = generateAccessToken(user);
+        return res.json({
+          success: true,
+          message: 'Login successful',
+          data: {
+            user: formatUserForAuth(user),
+            access_token: accessToken,
+            token_type: 'Bearer'
           }
         });
       }
     }
 
     if (type === 'password_reset') {
-      // Generate reset token for password reset
-      const resetToken = jwt.sign(
-        { identifier, type: 'password_reset' },
-        process.env.JWT_SECRET || 'your-secret-key-change-this-in-production',
-        { expiresIn: '1h' }
-      );
-
       return res.json({
         success: true,
         message: 'OTP verified',
-        data: {
-          reset_token: resetToken
-        }
+        data: null
       });
     }
 
     return res.json({
       success: true,
-      message: 'OTP verified'
+      message: 'OTP verified',
+      data: null
     });
   } catch (error) {
     console.error('Verify OTP error:', error);
@@ -537,18 +622,15 @@ export const resendOtp = async (req, res) => {
       });
     }
 
-    const otpCode = await sendOtp(user, type || 'signup');
+    const validTypes = ['signup', 'login', 'password_reset'];
+    const otpType = validTypes.includes(type) ? type : 'signup';
+    await sendOtp(user, otpType);
 
-    const responseData = {
+    return res.json({
       success: true,
-      message: 'OTP sent successfully'
-    };
-
-    if (user.phone_number && !user.email) {
-      responseData.otp = otpCode;
-    }
-
-    return res.json(responseData);
+      message: 'OTP sent successfully',
+      data: null
+    });
   } catch (error) {
     console.error('Resend OTP error:', error);
     return res.status(500).json({
@@ -615,37 +697,51 @@ export const forgotPassword = async (req, res) => {
 
 export const resetPassword = async (req, res) => {
   try {
-    const { email, phone_number, reset_token, new_password } = req.body;
+    const { email, phone_number, otp, new_password } = req.body;
 
-    if (!reset_token || !new_password) {
+    if (!otp || !new_password) {
       return res.status(400).json({
         success: false,
-        message: 'Reset token and new password are required'
+        message: 'OTP and new password are required',
+        data: null
       });
     }
 
     if (!email && !phone_number) {
       return res.status(400).json({
         success: false,
-        message: 'Either email or phone number is required'
+        message: 'Either email or phone number is required',
+        data: null
       });
     }
 
-    // Verify reset token
-    let decoded;
-    try {
-      decoded = jwt.verify(reset_token, process.env.JWT_SECRET || 'your-secret-key-change-this-in-production');
-      if (decoded.type !== 'password_reset') {
-        throw new Error('Invalid token type');
-      }
-    } catch (error) {
+    const identifier = email || phone_number;
+    const otpString = otp.toString().trim();
+    if (!/^\d{4}$/.test(otpString)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid or expired reset token'
+        message: 'Invalid or expired OTP',
+        data: null
       });
     }
 
-    const identifier = decoded.identifier;
+    const otpRecord = await Otp.findOne({
+      where: {
+        identifier,
+        token: otpString,
+        type: 'password_reset',
+        expires_at: { [Op.gt]: new Date() }
+      }
+    });
+
+    if (!otpRecord) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired OTP',
+        data: null
+      });
+    }
+
     const user = await User.findOne({
       where: {
         [Op.or]: [
@@ -658,12 +754,14 @@ export const resetPassword = async (req, res) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'User not found'
+        message: 'User not found',
+        data: null
       });
     }
 
     user.password = new_password;
     await user.save();
+    await otpRecord.destroy({ force: true });
 
     return res.json({
       success: true,
@@ -675,6 +773,7 @@ export const resetPassword = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Password reset failed',
+      data: null,
       error: error.message
     });
   }
