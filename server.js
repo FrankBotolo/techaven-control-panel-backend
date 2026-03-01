@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import db from './models/index.js';
 import routes from './routes/index.js';
 import { corsMiddleware } from './middleware/cors.js';
+import { requestLogger } from './middleware/requestLogger.js';
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ const PORT = process.env.PORT || 8000;
 app.use(corsMiddleware);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(requestLogger);
 
 // Serve static files (uploads)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
