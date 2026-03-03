@@ -5,11 +5,18 @@ import dotenv from 'dotenv';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
-const apiUrl = process.env.SMS_API_URL || 'http://206.225.81.36:8989/api/messaging/sendsms';
-const balanceUrl = process.env.SMS_BALANCE_URL || 'http://206.225.81.36/BalanceChecker/GetBalance.php';
-const bearerToken = process.env.SMS_BEARER_TOKEN || '';
-const senderId = process.env.SMS_SENDER_ID || 'TECHAVEN';
-const orgId = process.env.SMS_ORG_ID || '657';
+// FDI Biz Messaging API configuration
+const fdiApiUrl = process.env.FDI_SMS_API_URL || 'https://messaging.efashe.com/mw/api/v1/mt/single';
+const fdiAuthUrl = process.env.FDI_SMS_AUTH_URL || 'https://messaging.efashe.com/mw/api/v1/auth';
+const fdiRefreshUrl = process.env.FDI_SMS_REFRESH_URL || 'https://messaging.efashe.com/mw/api/v1/auth/refresh';
+const fdiApiUsername = process.env.FDI_SMS_API_USERNAME || process.env.FDI_SMS_API_KEY || '';
+const fdiApiPassword = process.env.FDI_SMS_API_PASSWORD || process.env.FDI_SMS_API_SECRET || '';
+const senderId = process.env.FDI_SMS_SENDER_ID || process.env.SMS_SENDER_ID || 'TECHAVEN';
+
+// In-memory cached tokens
+let fdiAccessToken = null;
+let fdiAccessTokenExpiresAt = 0; // ms timestamp
+let fdiRefreshToken = null;
 
 /**
  * Format phone number to international format (265XXXXXXXXX)
@@ -27,22 +34,132 @@ export function formatPhoneNumber(phoneNumber) {
 }
 
 /**
- * Check if SMS is configured and enabled
+ * Check if SMS is configured and enabled (FDI API credentials present)
  */
 export function isSmsConfigured() {
-  return !!(apiUrl && bearerToken && senderId);
+  return !!(fdiApiUrl && fdiAuthUrl && fdiApiUsername && fdiApiPassword && senderId);
 }
 
 /**
- * Send raw SMS via Click Mobile API
- * @param {string} phoneNumber - Recipient (will be formatted to 265XXXXXXXXX)
+ * Get or refresh FDI access token.
+ * - Uses cached access_token until nearly expired
+ * - If expired and we have a refresh_token, call refresh endpoint
+ * - Otherwise fall back to full login with api_username/api_password
+ */
+async function getFdiAccessToken() {
+  const now = Date.now();
+  if (fdiAccessToken && fdiAccessTokenExpiresAt && now < fdiAccessTokenExpiresAt - 60_000) {
+    return { success: true, token: fdiAccessToken };
+  }
+
+  // Try refresh with refresh_token if available
+  if (fdiRefreshToken && fdiRefreshUrl) {
+    try {
+      const response = await fetch(fdiRefreshUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          refresh_token: fdiRefreshToken
+        })
+      });
+
+      const text = await response.text();
+      let data = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        data = { raw: text };
+      }
+
+      if (response.ok && data.access_token) {
+        fdiAccessToken = data.access_token;
+        if (data.refresh_token) {
+          fdiRefreshToken = data.refresh_token;
+        }
+        if (data.expires_at) {
+          const exp = Date.parse(data.expires_at);
+          fdiAccessTokenExpiresAt = Number.isNaN(exp) ? now + 50 * 60_000 : exp;
+        } else {
+          fdiAccessTokenExpiresAt = now + 50 * 60_000;
+        }
+        return { success: true, token: fdiAccessToken };
+      }
+
+      console.error('FDI token refresh failed:', response.status, data);
+      // fall through to full login
+    } catch (error) {
+      console.error('FDI token refresh error:', error.message);
+      // fall through to full login
+    }
+  }
+
+  // Full login with username/password
+  try {
+    const response = await fetch(fdiAuthUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        api_username: fdiApiUsername,
+        api_password: fdiApiPassword
+      })
+    });
+
+    const text = await response.text();
+    let data = {};
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch {
+      data = { raw: text };
+    }
+
+    if (!response.ok || !data.access_token) {
+      console.error('FDI auth failed:', response.status, data);
+      return {
+        success: false,
+        message: data.message || data.error || 'FDI auth failed',
+        data
+      };
+    }
+
+    fdiAccessToken = data.access_token;
+    if (data.refresh_token) {
+      fdiRefreshToken = data.refresh_token;
+    }
+
+    // expires_at: e.g. '2019-01-01T15:00:00Z'
+    if (data.expires_at) {
+      const exp = Date.parse(data.expires_at);
+      fdiAccessTokenExpiresAt = Number.isNaN(exp) ? now + 50 * 60_000 : exp;
+    } else {
+      // fallback: 50 minutes from now
+      fdiAccessTokenExpiresAt = now + 50 * 60_000;
+    }
+
+    return { success: true, token: fdiAccessToken };
+  } catch (error) {
+    console.error('FDI auth error:', error.message);
+    return {
+      success: false,
+      message: 'FDI auth error: ' + error.message,
+      data: null
+    };
+  }
+}
+
+/**
+ * Send raw SMS via FDI Biz Messaging API
+ * @param {string} phoneNumber - Recipient (will be formatted to +265XXXXXXXXX)
  * @param {string} message - SMS content (max 160 chars for single SMS)
  * @param {string} [refId] - Optional reference ID
  * @returns {{ success: boolean, message?: string, data?: object }}
  */
 export async function sendSms(phoneNumber, message, refId = null) {
   if (!isSmsConfigured()) {
-    console.warn('SMS not configured (missing SMS_API_URL, SMS_BEARER_TOKEN, or SMS_SENDER_ID). Skipping SMS.');
+    console.warn('SMS not configured (missing FDI SMS API URL/auth URL/credentials or sender ID). Skipping SMS.');
     return { success: false, message: 'SMS not configured' };
   }
 
@@ -52,38 +169,59 @@ export async function sendSms(phoneNumber, message, refId = null) {
     return { success: false, message: 'Invalid phone number' };
   }
 
+  // FDI expects MSISDN, we send in international format with leading +
+  const msisdn = to.startsWith('+') ? to : `+${to}`;
+
+  const msgRef = refId || `techaven-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+
+  const authResult = await getFdiAccessToken();
+  if (!authResult.success || !authResult.token) {
+    return {
+      success: false,
+      message: authResult.message || 'Failed to authenticate with FDI SMS API',
+      data: authResult.data || null
+    };
+  }
+
   try {
     const payload = {
-      from: senderId,
-      to,
-      message: message.substring(0, 160) // single SMS limit
+      msisdn,
+      message: message.substring(0, 160),
+      sender_id: senderId,
+      msgRef
     };
-    if (refId) payload.refId = refId;
 
-    const response = await fetch(apiUrl, {
+    const response = await fetch(fdiApiUrl, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${bearerToken}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        // FDI expects a Bearer token in the Authorization header.
+        Authorization: `Bearer ${authResult.token}`
       },
       body: JSON.stringify(payload)
     });
 
-    const data = await response.json().catch(() => ({}));
+    const text = await response.text();
+    let data = {};
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch {
+      data = { raw: text };
+    }
 
-    if (data.status === 'SUCCESS') {
-      console.log('SMS sent successfully to', to, 'msgId:', data.msgId);
+    if (response.ok) {
+      console.log('FDI SMS sent successfully to', msisdn, 'ref:', msgRef);
       return { success: true, message: 'SMS sent successfully', data };
     }
 
-    console.error('SMS failed:', data.desc || data.statusCode, data);
+    console.error('FDI SMS failed:', response.status, data);
     return {
       success: false,
-      message: data.desc || 'Failed to send SMS',
+      message: data.message || data.error || 'Failed to send SMS',
       data
     };
   } catch (error) {
-    console.error('SMS service error:', error.message);
+    console.error('FDI SMS service error:', error.message);
     return {
       success: false,
       message: 'SMS service error: ' + error.message,
@@ -115,28 +253,4 @@ export async function sendNotificationSms(phoneNumber, title, orderNumber = '') 
   const short = orderNumber ? ` ${orderNumber}` : '';
   const message = `Techaven: ${title}${short}. Check the app for details.`;
   return sendSms(phoneNumber, message.substring(0, 160));
-}
-
-/**
- * Check SMS balance (credits)
- * @returns {{ success: boolean, balance?: string, message?: string }}
- */
-export async function getSmsBalance() {
-  if (!balanceUrl || !orgId) {
-    return { success: false, message: 'SMS balance URL or ORG_ID not configured' };
-  }
-
-  try {
-    const url = `${balanceUrl}?org_id=${orgId}`;
-    const response = await fetch(url);
-    const data = await response.json().catch(() => ({}));
-
-    if (data.balance !== undefined) {
-      return { success: true, balance: data.balance, data };
-    }
-    return { success: false, message: 'Invalid balance response', data };
-  } catch (error) {
-    console.error('SMS balance check failed:', error.message);
-    return { success: false, message: 'Balance check error: ' + error.message, data: null };
-  }
 }

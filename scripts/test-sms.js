@@ -6,7 +6,7 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
-import { sendSms, sendOtpSms, sendPasswordResetOtpSms, getSmsBalance, isSmsConfigured } from '../services/smsService.js';
+import { sendSms, sendOtpSms, sendPasswordResetOtpSms, isSmsConfigured } from '../services/smsService.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
@@ -18,20 +18,20 @@ async function main() {
   console.log('Configured:', isSmsConfigured());
   if (!isSmsConfigured()) {
     console.log('SMS is not configured. Add these to your .env file (in the server folder):');
-    console.log('  SMS_API_URL=http://206.225.81.36:8989/api/messaging/sendsms');
-    console.log('  SMS_BALANCE_URL=http://206.225.81.36/BalanceChecker/GetBalance.php');
-    console.log('  SMS_BEARER_TOKEN=your-api-key');
-    console.log('  SMS_SENDER_ID=TECHAVEN');
-    console.log('  SMS_ORG_ID=657');
-    console.log('\nSee .env.example for the full list.');
+    console.log('  FDI_SMS_API_URL=https://messaging.fdibiz.com/api/v1/mt/single');
+    console.log('  FDI_SMS_AUTH_URL=https://messaging.efashe.com/mw/api/v1/auth');
+    console.log('  FDI_SMS_API_USERNAME=your-api-username');
+    console.log('  FDI_SMS_API_PASSWORD=your-api-password');
+    console.log('  FDI_SMS_SENDER_ID=TECHAVEN');
+    console.log('  FDI_SMS_DLR_URL=https://yourdomain.com/sms/dlr');
+    console.log('\nSee .env for the full list.');
     process.exit(1);
   }
 
   console.log('Test phone:', testPhone);
   console.log('');
 
-  const balance = await getSmsBalance();
-  console.log('Balance:', balance.success ? balance.balance : balance.message);
+  console.log('Balance check is not implemented for FDI gateway. Skipping.');
 
   console.log('\n1. Send OTP SMS...');
   const otpResult = await sendOtpSms(testPhone, '123456');

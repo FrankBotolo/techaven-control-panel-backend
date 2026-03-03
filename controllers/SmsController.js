@@ -1,4 +1,4 @@
-import { sendSms, getSmsBalance, isSmsConfigured } from '../services/smsService.js';
+import { sendSms, isSmsConfigured } from '../services/smsService.js';
 
 /** POST /api/sms/send — send SMS (auth required) */
 export const send = async (req, res) => {
@@ -45,11 +45,10 @@ export const balance = async (req, res) => {
         data: { balance: 0, currency: 'credits', configured: false }
       });
     }
-    const result = await getSmsBalance();
     return res.json({
       success: true,
-      message: 'SMS balance retrieved',
-      data: result && result.balance != null ? { balance: result.balance, currency: 'credits' } : { balance: 0, currency: 'credits' }
+      message: 'SMS balance not available for FDI gateway (not implemented)',
+      data: { balance: 0, currency: 'credits', configured: true }
     });
   } catch (error) {
     console.error('SMS balance error:', error);
