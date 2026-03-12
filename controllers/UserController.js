@@ -12,14 +12,18 @@ const memberSince = (createdAt) =>
 export const profile = async (req, res) => {
   try {
     const user = req.user;
+    const fullName = user.full_name || user.name || null;
+    const phone = user.phone || user.phone_number || null;
     return res.json({
       success: true,
       message: 'Profile retrieved',
       data: {
         id: user.id,
-        name: user.name,
+        full_name: fullName,
+        name: fullName,
         email: user.email,
         phone_number: user.phone_number,
+        phone,
         avatar: user.avatar_url || null,
         is_verified: user.is_verified,
         role: user.role,
@@ -40,20 +44,24 @@ export const profile = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const { name, email, phone_number } = req.body;
+    // Mobile API doc uses full_name + phone_number.
+    const { name, full_name, email, phone_number, phone } = req.body;
     const user = req.user;
 
-    if (name) user.name = name;
+    const nextName = full_name || name;
+    if (nextName) user.name = nextName;
     if (email !== undefined) user.email = email;
     if (phone_number !== undefined) user.phone_number = phone_number;
+    if (phone !== undefined && !phone_number) user.phone_number = phone;
 
     await user.save();
 
     return res.json({
       success: true,
-      message: 'Profile updated',
+      message: 'Profile updated successfully',
       data: {
         id: user.id,
+        full_name: user.name,
         name: user.name,
         email: user.email,
         phone_number: user.phone_number,
@@ -92,8 +100,8 @@ export const uploadAvatar = async (req, res) => {
 
     return res.json({
       success: true,
-      message: 'Avatar uploaded',
-      data: { avatar: fileUrl }
+      message: 'Avatar uploaded successfully',
+      data: { avatar_url: fileUrl }
     });
   } catch (error) {
     console.error('Upload avatar error:', error);

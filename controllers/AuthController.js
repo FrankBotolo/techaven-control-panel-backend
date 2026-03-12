@@ -406,14 +406,26 @@ export const login = async (req, res) => {
 /** Send OTP for OTP-based login (default login in app). Only for verified users. */
 export const sendLoginOtp = async (req, res) => {
   try {
-    const { email, phone_number } = req.body;
+    // Mobile API doc uses `identifier`; keep backwards-compatible support for email/phone_number too.
+    let { email, phone_number, identifier } = req.body;
+
+    if (identifier && (!email && !phone_number)) {
+      // simple heuristic: treat identifier with '@' as email, otherwise as phone
+      if (String(identifier).includes('@')) {
+        email = identifier;
+      } else {
+        phone_number = identifier;
+      }
+    }
+
     if (!email && !phone_number) {
       return res.status(400).json({
         success: false,
-        message: 'Either email or phone number is required',
+        message: 'Either email, phone_number or identifier is required',
         data: null
       });
     }
+
     const whereClause = email ? { email } : { phone_number };
     const user = await User.findOne({ where: whereClause });
     if (!user) {
@@ -430,13 +442,20 @@ export const sendLoginOtp = async (req, res) => {
         data: null
       });
     }
-    await sendOtp(user, 'login');
+    const otpCode = await sendOtp(user, 'login');
+
+    // For mobile clients following the doc, prefer identifier + expires_at.
+    const expiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000); // matches sendOtp 12h window
     return res.json({
       success: true,
       message: 'OTP sent successfully',
       data: {
+        identifier: identifier || email || phone_number || user.email || user.phone_number || null,
+        expires_at: expiresAt.toISOString(),
+        // keep legacy fields for existing clients
         email: user.email || null,
-        phone_number: user.phone_number || null
+        phone_number: user.phone_number || null,
+        otp: process.env.NODE_ENV === 'development' ? otpCode : undefined
       }
     });
   } catch (error) {
@@ -452,7 +471,8 @@ export const sendLoginOtp = async (req, res) => {
 
 export const verifyOtp = async (req, res) => {
   try {
-    const { email, phone_number, otp, type } = req.body;
+    // Mobile API doc uses `identifier`; fall back to email/phone_number for backwards compatibility.
+    let { email, phone_number, identifier, otp, type } = req.body;
 
     if (!otp || !type) {
       return res.status(400).json({
@@ -471,18 +491,26 @@ export const verifyOtp = async (req, res) => {
       });
     }
 
+    if (identifier && (!email && !phone_number)) {
+      if (String(identifier).includes('@')) {
+        email = identifier;
+      } else {
+        phone_number = identifier;
+      }
+    }
+
     if (!email && !phone_number) {
       return res.status(400).json({
         success: false,
-        message: 'Either email or phone number is required'
+        message: 'Either email, phone_number or identifier is required'
       });
     }
 
-    const identifier = email || phone_number;
+    const lookupIdentifier = email || phone_number;
 
     const otpRecord = await Otp.findOne({
       where: {
-        identifier: identifier,
+        identifier: lookupIdentifier,
         token: otpString,
         type: type,
         expires_at: {
@@ -524,8 +552,8 @@ export const verifyOtp = async (req, res) => {
       const user = await User.findOne({
         where: {
           [Op.or]: [
-            { email: identifier },
-            { phone_number: identifier }
+            { email: lookupIdentifier },
+            { phone_number: lookupIdentifier }
           ]
         }
       });
@@ -538,7 +566,7 @@ export const verifyOtp = async (req, res) => {
         const accessToken = generateAccessToken(user);
         return res.json({
           success: true,
-          message: 'Login successful',
+          message: 'OTP verified successfully',
           data: {
             user: formatUserForAuth(user),
             access_token: accessToken,
@@ -552,8 +580,8 @@ export const verifyOtp = async (req, res) => {
       const user = await User.findOne({
         where: {
           [Op.or]: [
-            { email: identifier },
-            { phone_number: identifier }
+            { email: lookupIdentifier },
+            { phone_number: lookupIdentifier }
           ]
         }
       });
@@ -561,7 +589,7 @@ export const verifyOtp = async (req, res) => {
         const accessToken = generateAccessToken(user);
         return res.json({
           success: true,
-          message: 'Login successful',
+          message: 'OTP verified successfully',
           data: {
             user: formatUserForAuth(user),
             access_token: accessToken,
@@ -596,21 +624,29 @@ export const verifyOtp = async (req, res) => {
 
 export const resendOtp = async (req, res) => {
   try {
-    const { email, phone_number, type } = req.body;
+    let { email, phone_number, identifier, type } = req.body;
+
+    if (identifier && (!email && !phone_number)) {
+      if (String(identifier).includes('@')) {
+        email = identifier;
+      } else {
+        phone_number = identifier;
+      }
+    }
 
     if (!email && !phone_number) {
       return res.status(400).json({
         success: false,
-        message: 'Either email or phone number is required'
+        message: 'Either email, phone_number or identifier is required'
       });
     }
 
-    const identifier = email || phone_number;
+    const lookupIdentifier = email || phone_number;
     const user = await User.findOne({
       where: {
         [Op.or]: [
-          { email: identifier },
-          { phone_number: identifier }
+          { email: lookupIdentifier },
+          { phone_number: lookupIdentifier }
         ]
       }
     });
@@ -628,7 +664,7 @@ export const resendOtp = async (req, res) => {
 
     return res.json({
       success: true,
-      message: 'OTP sent successfully',
+      message: 'OTP resent successfully',
       data: null
     });
   } catch (error) {
@@ -643,12 +679,13 @@ export const resendOtp = async (req, res) => {
 
 export const forgotPassword = async (req, res) => {
   try {
+    // API doc shows email-based flow; keep phone_number support for backwards compatibility.
     const { email, phone_number } = req.body;
 
     if (!email && !phone_number) {
       return res.status(400).json({
         success: false,
-        message: 'Either email or phone number is required'
+        message: 'Email is required'
       });
     }
 
@@ -671,20 +708,13 @@ export const forgotPassword = async (req, res) => {
 
     const otpCode = await sendOtp(user, 'password_reset');
 
-    const responseData = {
+    // For mobile API docs: behave like \"password reset link sent\" while still using OTP under the hood.
+    return res.json({
       success: true,
-      message: 'Password reset OTP sent',
-      data: {
-        email: user.email,
-        phone_number: user.phone_number
-      }
-    };
-
-    if (user.phone_number && !user.email) {
-      responseData.data.otp = otpCode;
-    }
-
-    return res.json(responseData);
+      message: 'Password reset link sent to your email',
+      // include OTP in development to simplify testing
+      data: process.env.NODE_ENV === 'development' ? { otp: otpCode } : undefined
+    });
   } catch (error) {
     console.error('Forgot password error:', error);
     return res.status(500).json({
@@ -697,9 +727,21 @@ export const forgotPassword = async (req, res) => {
 
 export const resetPassword = async (req, res) => {
   try {
-    const { email, phone_number, otp, new_password } = req.body;
+    // Mobile API doc: { email, token, password, password_confirmation }
+    const {
+      email,
+      phone_number,
+      otp,
+      token,
+      password,
+      password_confirmation,
+      new_password
+    } = req.body;
 
-    if (!otp || !new_password) {
+    const finalOtp = otp || token;
+    const finalNewPassword = new_password || password;
+
+    if (!finalOtp || !finalNewPassword) {
       return res.status(400).json({
         success: false,
         message: 'OTP and new password are required',
@@ -716,7 +758,7 @@ export const resetPassword = async (req, res) => {
     }
 
     const identifier = email || phone_number;
-    const otpString = otp.toString().trim();
+    const otpString = finalOtp.toString().trim();
     if (!/^\d{4}$/.test(otpString)) {
       return res.status(400).json({
         success: false,
@@ -759,7 +801,16 @@ export const resetPassword = async (req, res) => {
       });
     }
 
-    user.password = new_password;
+    // Optional confirmation check (matches docs)
+    if (password_confirmation !== undefined && finalNewPassword !== password_confirmation) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password confirmation does not match',
+        data: null
+      });
+    }
+
+    user.password = finalNewPassword;
     await user.save();
     await otpRecord.destroy({ force: true });
 
