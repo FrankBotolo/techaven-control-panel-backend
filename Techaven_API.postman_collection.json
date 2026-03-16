@@ -941,7 +941,7 @@
 							"response": []
 						},
 						{
-							"name": "Pay with OneKhusa",
+							"name": "Pay with Malipo",
 							"request": {
 								"method": "POST",
 								"header": [
@@ -952,14 +952,14 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": ""
+									"raw": "{\n  \"msisdn\": \"0980256737\",\n  \"psp_id\": 1\n}"
 								},
 								"url": {
-									"raw": "{{base_url}}/api/orders/1/pay/onekhusa",
+									"raw": "{{base_url}}/api/orders/1/pay/malipo",
 									"host": ["{{base_url}}"],
-									"path": ["api", "orders", "1", "pay", "onekhusa"]
+									"path": ["api", "orders", "1", "pay", "malipo"]
 								},
-								"description": "Initiates OneKhusa payment. Returns payment_url, transaction_id, amount. Webhook POST /api/webhooks/onekhusa confirms payment."
+								"description": "Initiates Malipo mobile money payment. Body: msisdn (phone), psp_id (1=Airtel Money, 2=Mpamba). Sends push to customer's phone. Webhook POST /api/webhooks/malipo confirms payment. Requires MALIPO_API_KEY and MALIPO_APP_ID in .env."
 							},
 							"response": []
 						},
@@ -1673,7 +1673,7 @@
 					"name": "16. Webhooks",
 					"item": [
 						{
-							"name": "OneKhusa Payment Webhook",
+							"name": "Malipo Payment Webhook",
 							"request": {
 								"auth": {
 									"type": "noauth"
@@ -1687,14 +1687,14 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"transaction_id\": \"TXN-12345\",\n  \"status\": \"success\",\n  \"amount\": 155000,\n  \"reference\": \"ORDER-1\"\n}"
+									"raw": "{\n  \"order_id\": \"ORD-20240316-1234\",\n  \"status\": \"success\",\n  \"transaction_id\": \"TXN-MALIPO-123\",\n  \"amount\": 100,\n  \"psp_id\": 1\n}"
 								},
 								"url": {
-									"raw": "{{base_url}}/api/webhooks/onekhusa",
+									"raw": "{{base_url}}/api/webhooks/malipo",
 									"host": ["{{base_url}}"],
-									"path": ["api", "webhooks", "onekhusa"]
+									"path": ["api", "webhooks", "malipo"]
 								},
-								"description": "Called by OneKhusa after payment. No auth. reference: ORDER-{orderId}. On success: mark order paid. (Wallet deposit/topup removed - wallet only receives refunds.)"
+								"description": "Called by Malipo after payment. No auth. order_id: order_number. On success: mark order paid, create escrow, credit admin wallet."
 							},
 							"response": []
 						}

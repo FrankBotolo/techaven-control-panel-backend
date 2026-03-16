@@ -3,6 +3,6 @@ import * as WebhookController from '../controllers/WebhookController.js';
 
 const router = express.Router();
 
-router.post('/onekhusa', WebhookController.onekhusa);
+router.post('/malipo', WebhookController.malipo);
 
 export default router;

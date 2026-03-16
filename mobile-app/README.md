@@ -9,7 +9,7 @@ React Native (Expo) mobile app for the TecHaven API (v2.0).
 - **Profile:** View/update profile, change password
 - **Products:** Browse featured, hot sales, search, by category, product detail
 - **Shops:** List shops, shop detail with products
-- **Orders:** List orders, order detail, create order (checkout), pay with wallet/OneKhusa, cancel
+- **Orders:** List orders, order detail, create order (checkout), pay with wallet/Malipo (Airtel Money/Mpamba), cancel
 - **Wallet:** Balance, top-up, transaction history
 - **Shipping addresses:** CRUD, set default
 - **Notifications:** List, unread count, mark read

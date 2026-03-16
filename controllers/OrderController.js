@@ -214,7 +214,7 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    const validPaymentMethods = ['cash_on_delivery', 'mobile_money', 'bank_transfer', 'card', 'wallet', 'onekhusa'];
+    const validPaymentMethods = ['cash_on_delivery', 'mobile_money', 'bank_transfer', 'card', 'wallet', 'airtel_money', 'mpamba'];
     let paymentMethodValue = payment_method || payment_method_id || 'mobile_money';
     if (payment_method_id && !validPaymentMethods.includes(payment_method_id)) {
       if (payment_method_id.startsWith('pm_')) paymentMethodValue = 'mobile_money';
@@ -1421,11 +1421,15 @@ export const payWithWallet = async (req, res) => {
   }
 };
 
-/** POST /api/orders/:id/pay/onekhusa — initiate OneKhusa payment */
-export const payWithOnekhusa = async (req, res) => {
+/** POST /api/orders/:id/pay/malipo — initiate Malipo mobile money payment (Airtel Money or Mpamba)
+ * Body: { msisdn: "0980256737", psp_id: 1 | 2 }
+ * psp_id: 1 = Airtel Money, 2 = Mpamba
+ */
+export const payWithMalipo = async (req, res) => {
   try {
     const userId = req.user.id;
     const id = resolveOrderId(req);
+    const { msisdn, psp_id } = req.body;
 
     const order = await Order.findByPk(id);
     if (!order || order.user_id !== userId) {
@@ -1443,22 +1447,78 @@ export const payWithOnekhusa = async (req, res) => {
       });
     }
 
-    const amount = parseFloat(order.total_amount) || 0;
-    const transactionId = `TXN-${Date.now()}-${order.id}`;
-    const baseUrl = process.env.ONEKHUSA_BASE_URL || 'https://api.onekhusa.com';
-    const paymentUrl = `${baseUrl}/pay?ref=ORDER-${order.id}&amount=${amount}&txn=${transactionId}`;
+    if (!msisdn || !psp_id) {
+      return res.status(400).json({
+        success: false,
+        message: 'msisdn and psp_id are required. psp_id: 1 = Airtel Money, 2 = Mpamba',
+        data: null
+      });
+    }
+
+    const pspId = parseInt(psp_id, 10);
+    if (pspId !== 1 && pspId !== 2) {
+      return res.status(400).json({
+        success: false,
+        message: 'psp_id must be 1 (Airtel Money) or 2 (Mpamba)',
+        data: null
+      });
+    }
+
+    const apiKey = process.env.MALIPO_API_KEY;
+    const appId = process.env.MALIPO_APP_ID;
+    if (!apiKey || !appId) {
+      return res.status(500).json({
+        success: false,
+        message: 'Malipo payment is not configured. Set MALIPO_API_KEY and MALIPO_APP_ID in .env',
+        data: null
+      });
+    }
+
+    const amount = Math.round(parseFloat(order.total_amount) || 0);
+    const malipoPayload = {
+      order_id: order.order_number,
+      msisdn: String(msisdn).replace(/^\+265/, '0').replace(/^265/, '0'),
+      amount,
+      psp_id: pspId
+    };
+
+    const response = await fetch('https://gateway.malipo.mw/api/v2/transactions/collect', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'x-app-id': appId
+      },
+      body: JSON.stringify(malipoPayload)
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      console.error('Malipo collect error:', response.status, data);
+      return res.status(response.status >= 400 && response.status < 500 ? response.status : 500).json({
+        success: false,
+        message: data?.message || data?.error || 'Malipo payment request failed',
+        data: null,
+        error: data?.message || data?.error
+      });
+    }
 
     return res.json({
       success: true,
-      message: 'Payment initiated',
+      message: 'Payment request sent. Customer will receive a prompt on their phone to confirm.',
       data: {
-        payment_url: paymentUrl,
-        transaction_id: transactionId,
-        amount
+        order_id: `ord_${order.id}`,
+        order_number: order.order_number,
+        amount,
+        psp_id: pspId,
+        provider: pspId === 1 ? 'airtel_money' : 'mpamba',
+        ...(data?.transaction_id && { transaction_id: data.transaction_id }),
+        ...data
       }
     });
   } catch (error) {
-    console.error('Pay with OneKhusa error:', error);
+    console.error('Pay with Malipo error:', error);
     return res.status(500).json({
       success: false,
       message: 'Payment initiation failed',

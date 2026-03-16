@@ -286,7 +286,7 @@ Product reviews (`GET /api/products/:product_id/reviews`): `data` is an array of
 | GET | `/api/orders` | 🔒 | List my orders. |
 | GET | `/api/orders/:order_id` | 🔒 | Single order. |
 | POST | `/api/orders/:id/pay/wallet` | 🔒 | Pay with wallet. No body. Returns order + wallet_balance. |
-| POST | `/api/orders/:id/pay/onekhusa` | 🔒 | Initiate OneKhusa payment. Returns payment_url, transaction_id, amount. |
+| POST | `/api/orders/:id/pay/malipo` | 🔒 | Initiate Malipo mobile money (Airtel Money/Mpamba). Body: msisdn, psp_id (1=Airtel, 2=Mpamba). |
 | POST | `/api/orders/:id/cancel` | 🔒 | Cancel order (only when status is pending). No body. |
 | POST | `/api/orders/:id/payment/complete` | 🔒 | Mark payment complete (escrow). Body: payment_reference, payment_proof. |
 | POST | `/api/orders/:id/delivery/confirm` | 🔒 | Customer confirm delivery. |
@@ -723,15 +723,16 @@ All under `/api/shipping-addresses` (or `/api/addresses`). Data: id, label, name
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| POST | `/api/webhooks/onekhusa` | No | OneKhusa payment callback. Body: transaction_id, status, amount, reference (ORDER-{id} or TOPUP-{userId}). |
+| POST | `/api/webhooks/malipo` | No | Malipo payment callback. Body: order_id (order_number), status, transaction_id, amount, psp_id. On success: marks order paid, creates escrow, notifies customer/admin/seller. |
 
-**OneKhusa webhook payload**
+**Malipo webhook payload**
 ```json
 {
-  "transaction_id": "TXN-12345",
+  "order_id": "ORD-20240316-1234",
   "status": "success",
-  "amount": 155000,
-  "reference": "ORDER-1"
+  "transaction_id": "TXN-MALIPO-123",
+  "amount": 100,
+  "psp_id": 1
 }
 ```
 

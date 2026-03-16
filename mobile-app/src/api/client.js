@@ -97,7 +97,7 @@ export const orders = {
   getById: (id) => client.get(`/orders/${id}`),
   create: (body) => client.post('/orders', body),
   payWithWallet: (id) => client.post(`/orders/${id}/pay/wallet`),
-  payWithOneKhusa: (id, body) => client.post(`/orders/${id}/pay/onekhusa`, body),
+  payWithMalipo: (id, body) => client.post(`/orders/${id}/pay/malipo`, body),
   cancel: (id, body) => client.post(`/orders/${id}/cancel`, body),
 };
 export const paymentMethods = {

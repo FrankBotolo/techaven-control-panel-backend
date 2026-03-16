@@ -1,8 +1,4 @@
-/**
- * Test Click Mobile SMS integration.
- * Usage: node scripts/test-sms.js [phone_number]
- * Example: node scripts/test-sms.js 0990411173
- */
+
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
