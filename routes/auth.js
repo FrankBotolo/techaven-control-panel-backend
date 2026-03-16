@@ -6,6 +6,11 @@ const router = express.Router();
 
 router.post('/register', AuthController.register);
 router.post(
+  '/register-delivery-agent',
+  upload.fields([{ name: 'id_document', maxCount: 1 }]),
+  AuthController.registerDeliveryAgent
+);
+router.post(
   '/register-seller',
   upload.fields([
     { name: 'logo', maxCount: 1 },

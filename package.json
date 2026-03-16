@@ -13,6 +13,7 @@
     "migrate:fresh:seed": "node scripts/migrate-fresh.js && node scripts/seed.js",
     "add-specifications": "node scripts/add-specifications-column.js",
     "add-escrow": "node scripts/add-escrow-to-orders.js",
+    "auto-confirm": "node scripts/auto-confirm-delivery.js",
     "test-email": "node scripts/test-email.js",
     "test-notification-email": "node scripts/test-notification-email.js",
     "test-single-notification": "node scripts/test-single-notification.js",

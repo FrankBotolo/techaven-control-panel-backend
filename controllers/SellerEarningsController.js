@@ -97,7 +97,7 @@ export const requestWithdrawal = async (req, res) => {
     const { amount, withdrawal_method, account_number, account_name } = req.body;
 
     const MIN_WITHDRAWAL = 1000;
-    const validMethods = ['mobile_money', 'bank_transfer'];
+    const validMethods = ['mobile_money', 'bank_transfer', 'cash_pickup'];
 
     if (!amount) {
       return res.status(400).json({

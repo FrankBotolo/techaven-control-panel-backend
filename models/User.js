@@ -9,7 +9,7 @@ const User = sequelize.define('User', {
     autoIncrement: true
   },
   role: {
-    type: DataTypes.ENUM('customer', 'seller', 'admin'),
+    type: DataTypes.ENUM('customer', 'seller', 'admin', 'delivery_agent'),
     allowNull: false,
     defaultValue: 'customer'
   },
@@ -54,6 +54,11 @@ const User = sequelize.define('User', {
     type: DataTypes.BOOLEAN,
     defaultValue: false
   },
+  is_active: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+    allowNull: false
+  },
   email_verified_at: {
     type: DataTypes.DATE,
     allowNull: true
@@ -65,6 +70,12 @@ const User = sequelize.define('User', {
   remember_token: {
     type: DataTypes.STRING,
     allowNull: true
+  },
+  points: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    defaultValue: 0,
+    comment: 'Reward points earned from purchases'
   }
 }, {
   tableName: 'users',

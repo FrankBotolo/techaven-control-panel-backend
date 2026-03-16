@@ -39,37 +39,39 @@ export const sendNotificationEmail = async (notification, orderData = null) => {
     const title = notificationData.title;
     const orderNumber = notificationData.order?.order_number || '';
 
-    // Send email when user has email
+    // Send email when user has email - ALL notifications
     if (user.email) {
       if (userRole === 'seller') {
-        if (title === 'New Order Received' || title === 'Order Payment Received' || title === 'Payment Released') {
+        if (title === 'New Order Received' || title === 'Order Payment Received' || title === 'Payment Released' ||
+            title === 'Dispute Opened' || title === 'Dispute Resolution' || title === 'Dispute Resolved' ||
+            title === 'Order Cancelled') {
           await sendSellerNotificationEmail(user.email, notificationData);
-        } else if (title.includes('Payment')) {
+        } else if (title.includes('Payment') || title.includes('Withdrawal')) {
           await sendPaymentNotificationEmail(user.email, notificationData, 'seller');
+        } else {
+          await sendSellerNotificationEmail(user.email, notificationData);
         }
       } else if (userRole === 'admin') {
         await sendAdminNotificationEmail(user.email, notificationData);
       } else {
-        if (title === 'Order Placed' || title === 'Order Shipped' || title === 'Order Delivered' || title === 'Delivery Confirmed') {
+        if (title === 'Order Placed' || title === 'Order Shipped' || title === 'Order Delivered' || title === 'Delivery Confirmed' ||
+            title === 'Order Picked Up' || title === 'Order Accepted' || title === 'Order Cancelled' ||
+            title === 'Dispute Opened' || title === 'Dispute Resolution' || title === 'Dispute Resolved') {
           await sendOrderNotificationEmail(user.email, notificationData);
-        } else if (title.includes('Payment')) {
+        } else if (title.includes('Payment') || title.includes('Withdrawal')) {
           await sendPaymentNotificationEmail(user.email, notificationData, 'customer');
+        } else {
+          await sendOrderNotificationEmail(user.email, notificationData);
         }
       }
     }
 
-    // Send SMS when user has phone number (same notification types)
+    // Send SMS when user has phone number - ALL notifications/transactions
     if (user.phone_number) {
-      const smsTitles = [
-        'Order Placed', 'Order Shipped', 'Order Delivered', 'Delivery Confirmed',
-        'New Order Received', 'Order Payment Received', 'Payment Received for Order', 'Payment Released'
-      ];
-      if (smsTitles.includes(title) || title.includes('Payment')) {
-        try {
-          await sendNotificationSms(user.phone_number, title, orderNumber);
-        } catch (smsErr) {
-          console.error('Failed to send notification SMS:', smsErr.message);
-        }
+      try {
+        await sendNotificationSms(user.phone_number, title, orderNumber);
+      } catch (smsErr) {
+        console.error('Failed to send notification SMS:', smsErr.message);
       }
     }
   } catch (error) {

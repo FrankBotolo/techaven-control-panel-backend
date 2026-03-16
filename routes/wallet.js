@@ -10,7 +10,6 @@ router.use(authenticate);
 router.get('/', WalletController.getWallet);
 router.get('/balance', WalletController.getBalance);
 router.get('/transactions', WalletController.getTransactions);
-router.post('/topup', WalletController.topUpWallet);
 
 export default router;
 

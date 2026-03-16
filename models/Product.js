@@ -89,6 +89,12 @@ const Product = sequelize.define('Product', {
     type: DataTypes.JSON,
     allowNull: true,
     defaultValue: null
+  },
+  points: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    defaultValue: 0,
+    comment: 'Optional reward points customer earns when buying this product'
   }
 }, {
   tableName: 'products',

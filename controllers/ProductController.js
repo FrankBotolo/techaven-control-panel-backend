@@ -17,6 +17,7 @@ const toProductDto = (p) => ({
   is_featured: !!p.is_featured,
   is_hot: !!p.is_hot,
   is_special: !!p.is_special,
+  points: p.points || 0,
   category_id: p.category_id,
   shop_id: p.shop_id,
   vendor: p.vendor || (p.shop && p.shop.name) || null,

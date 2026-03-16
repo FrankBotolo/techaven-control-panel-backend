@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "techaven-api-collection",
 		"name": "Techaven API",
-		"description": "Complete API documentation for Techaven e-commerce platform.\n\n**Response envelope:** All endpoints return JSON with `success` (boolean), `message` (string), and `data` (object/array/null). Use `Authorization: Bearer {{access_token}}` for protected routes.\n\n**Organization:**\n- **Mobile App (Customer APIs)**: Auth, user, products, orders, wallet, shipping addresses, notifications, shops, search, SMS, webhooks\n- **Web (Admin & Seller APIs)**: Admin and seller dashboard endpoints",
+		"description": "Complete API documentation for Techaven e-commerce platform (Flow Diagram v1.0).\n\n**Seed credentials** (run `npm run seed` first):\n- Admin: admin@techaven.mw / admin12345\n- Buyer: buyer@techaven.mw / password123\n- Seller: seller@techaven.mw / seller12345\n- Delivery Agent: agent@techaven.mw / agent12345\n\n**Response envelope:** All endpoints return JSON with `success`, `message`, `data`. Use `Authorization: Bearer {{access_token}}` for protected routes.\n\n**Organization:** Mobile App (Customer APIs), Web (Admin & Seller APIs), Delivery Agent APIs.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"auth": {
@@ -76,6 +76,32 @@
 							"response": []
 						},
 						{
+							"name": "Register Delivery Agent",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"full_name\": \"Agent Mike\",\n  \"email\": \"agent@example.com\",\n  \"phone_number\": \"+265991234567\",\n  \"password\": \"agent12345\",\n  \"vehicle_type\": \"motorcycle\",\n  \"operating_zone\": \"Lilongwe\",\n  \"id_document_url\": \"https://example.com/id.pdf\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/auth/register-delivery-agent",
+									"host": ["{{base_url}}"],
+									"path": ["api", "auth", "register-delivery-agent"]
+								},
+								"description": "Register as delivery agent. Body: full_name, password (required); email or phone_number required; vehicle_type, operating_zone, id_document_url optional. For file upload use multipart/form-data with id_document. Flow: 1) Call this 2) Verify OTP with /api/auth/verify-otp (type=signup) 3) Login."
+							},
+							"response": []
+						},
+						{
 							"name": "Login",
 							"request": {
 								"auth": {
@@ -90,14 +116,62 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"securePassword123\"\n}"
+									"raw": "{\n  \"email\": \"{{login_email}}\",\n  \"password\": \"{{login_password}}\"\n}"
 								},
 								"url": {
 									"raw": "{{base_url}}/api/auth/login",
 									"host": ["{{base_url}}"],
 									"path": ["api", "auth", "login"]
 								},
-								"description": "Authenticates with email+password or phone_number+password. Returns access_token, token_type: Bearer, and user (id, name, email, phone_number, avatar, is_verified, role, member_since, created_at). Unverified users get 403."
+								"description": "Authenticates with email+password. Returns access_token. Set login_email/login_password or use Quick Login requests below. Seed: buyer@techaven.mw, seller@techaven.mw, admin@techaven.mw, agent@techaven.mw."
+							},
+							"response": []
+						},
+						{
+							"name": "Login (Buyer - Seed)",
+							"request": {
+								"auth": { "type": "noauth" },
+								"method": "POST",
+								"header": [{ "key": "Content-Type", "value": "application/json" }],
+								"body": { "mode": "raw", "raw": "{\n  \"email\": \"buyer@techaven.mw\",\n  \"password\": \"password123\"\n}" },
+								"url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api", "auth", "login"] },
+								"description": "Quick login as Buyer. Copy access_token to collection variable."
+							},
+							"response": []
+						},
+						{
+							"name": "Login (Seller - Seed)",
+							"request": {
+								"auth": { "type": "noauth" },
+								"method": "POST",
+								"header": [{ "key": "Content-Type", "value": "application/json" }],
+								"body": { "mode": "raw", "raw": "{\n  \"email\": \"seller@techaven.mw\",\n  \"password\": \"seller12345\"\n}" },
+								"url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api", "auth", "login"] },
+								"description": "Quick login as Seller. Copy access_token to collection variable."
+							},
+							"response": []
+						},
+						{
+							"name": "Login (Admin - Seed)",
+							"request": {
+								"auth": { "type": "noauth" },
+								"method": "POST",
+								"header": [{ "key": "Content-Type", "value": "application/json" }],
+								"body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@techaven.mw\",\n  \"password\": \"admin12345\"\n}" },
+								"url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api", "auth", "login"] },
+								"description": "Quick login as Admin. Copy access_token to collection variable."
+							},
+							"response": []
+						},
+						{
+							"name": "Login (Delivery Agent - Seed)",
+							"request": {
+								"auth": { "type": "noauth" },
+								"method": "POST",
+								"header": [{ "key": "Content-Type", "value": "application/json" }],
+								"body": { "mode": "raw", "raw": "{\n  \"email\": \"agent@techaven.mw\",\n  \"password\": \"agent12345\"\n}" },
+								"url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api", "auth", "login"] },
+								"description": "Quick login as Delivery Agent. Copy access_token to collection variable."
 							},
 							"response": []
 						},
@@ -116,7 +190,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"email\": \"john@example.com\"\n}"
+									"raw": "{\n  \"email\": \"{{login_email}}\"\n}"
 								},
 								"url": {
 									"raw": "{{base_url}}/api/auth/send-login-otp",
@@ -142,7 +216,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"email\": \"john@example.com\",\n  \"otp\": \"1234\",\n  \"type\": \"signup\"\n}"
+									"raw": "{\n  \"email\": \"{{login_email}}\",\n  \"otp\": \"1234\",\n  \"type\": \"signup\"\n}"
 								},
 								"url": {
 									"raw": "{{base_url}}/api/auth/verify-otp",
@@ -168,7 +242,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"email\": \"john@example.com\",\n  \"type\": \"signup\"\n}"
+									"raw": "{\n  \"email\": \"{{login_email}}\",\n  \"type\": \"signup\"\n}"
 								},
 								"url": {
 									"raw": "{{base_url}}/api/auth/resend-otp",
@@ -194,7 +268,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"email\": \"john@example.com\"\n}"
+									"raw": "{\n  \"email\": \"{{login_email}}\"\n}"
 								},
 								"url": {
 									"raw": "{{base_url}}/api/auth/forgot-password",
@@ -220,7 +294,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"email\": \"john@example.com\",\n  \"otp\": \"1234\",\n  \"new_password\": \"newSecurePassword456\"\n}"
+									"raw": "{\n  \"email\": \"{{login_email}}\",\n  \"otp\": \"1234\",\n  \"new_password\": \"newSecurePassword456\"\n}"
 								},
 								"url": {
 									"raw": "{{base_url}}/api/auth/reset-password",
@@ -295,7 +369,7 @@
 									"host": ["{{base_url}}"],
 									"path": ["api", "user", "profile"]
 								},
-								"description": "Get profile. Response data: id, name, email, phone_number, avatar, is_verified, role, member_since, created_at."
+								"description": "Get profile. Response data: id, name, email, phone_number, avatar, is_verified, role, points (reward points earned from purchases), member_since, created_at."
 							},
 							"response": []
 						},
@@ -318,7 +392,7 @@
 									"host": ["{{base_url}}"],
 									"path": ["api", "user", "profile"]
 								},
-								"description": "Update profile. Response: id, name, email, phone_number, avatar, is_verified, role, member_since, created_at."
+								"description": "Update profile. Response: id, name, email, phone_number, avatar, is_verified, role, points, member_since, created_at."
 							},
 							"response": []
 						},
@@ -757,6 +831,25 @@
 					]
 				},
 				{
+					"name": "5b. Courier Services",
+					"item": [
+						{
+							"name": "List Courier Services",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/courier-services",
+									"host": ["{{base_url}}"],
+									"path": ["api", "courier-services"]
+								},
+								"description": "Get active courier services for customer to select when placing order. No auth required. Returns id, name, description, logo_url."
+							},
+							"response": []
+						}
+					]
+				},
+				{
 					"name": "6. Orders",
 					"item": [
 						{
@@ -771,14 +864,14 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"shipping_address_id\": 1,\n  \"items\": [\n    { \"product_id\": 3, \"quantity\": 2 },\n    { \"product_id\": 5, \"quantity\": 1 }\n  ],\n  \"notes\": \"Please call before delivery\"\n}"
+									"raw": "{\n  \"shipping_address_id\": 1,\n  \"courier_service_id\": 1,\n  \"items\": [\n    { \"product_id\": 1, \"quantity\": 1 },\n    { \"product_id\": 2, \"quantity\": 1 }\n  ],\n  \"notes\": \"Please call before delivery\"\n}"
 								},
 								"url": {
 									"raw": "{{base_url}}/api/orders",
 									"host": ["{{base_url}}"],
 									"path": ["api", "orders"]
 								},
-								"description": "Create order from items array + shipping_address_id (API doc). Response: order with order_number, status, payment_status (unpaid), subtotal, shipping_fee, total, items[]. Legacy: omit items to create from cart (then courier_service required)."
+								"description": "Create order from items array + shipping_address_id. courier_service_id: from GET /api/courier-services (seed has ids 1-4). Seed: Login as Buyer first; shipping_address_id=1; product_ids 1,2,3 from seeded products."
 							},
 							"response": []
 						},
@@ -1135,7 +1228,7 @@
 									"host": ["{{base_url}}"],
 									"path": ["api", "wallet", "balance"]
 								},
-								"description": "Get balance. Response: data: { balance, currency }."
+								"description": "Get balance. Response: data: { balance, currency }. Wallet only receives money from refunds (e.g. seller cancels order, dispute resolution). No deposit/top-up API."
 							},
 							"response": []
 						},
@@ -1149,30 +1242,7 @@
 									"host": ["{{base_url}}"],
 									"path": ["api", "wallet", "transactions"]
 								},
-								"description": "Get transactions. Response: data array of { id, type, amount, description, status, created_at }."
-							},
-							"response": []
-						},
-						{
-							"name": "Top Up Wallet",
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"amount\": 100000\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/api/wallet/topup",
-									"host": ["{{base_url}}"],
-									"path": ["api", "wallet", "topup"]
-								},
-								"description": "Initiates OneKhusa top-up. Returns payment_url, transaction_id, amount."
+								"description": "Get transactions. Response: data array of { id, type, amount, description, status, created_at }. Wallet credits come from refunds (seller order cancellation, dispute resolution)."
 							},
 							"response": []
 						}
@@ -1624,7 +1694,7 @@
 									"host": ["{{base_url}}"],
 									"path": ["api", "webhooks", "onekhusa"]
 								},
-								"description": "Called by OneKhusa after payment. No auth. reference: ORDER-{orderId} or TOPUP-{userId}. On success: mark order paid or credit wallet."
+								"description": "Called by OneKhusa after payment. No auth. reference: ORDER-{orderId}. On success: mark order paid. (Wallet deposit/topup removed - wallet only receives refunds.)"
 							},
 							"response": []
 						}
@@ -1846,6 +1916,85 @@
 											"path": ["api", "admin", "orders", "1", "status"]
 										},
 										"description": "Update order status and courier tracking. Admin can manage delivery based on shipping address. **Important:** When status is set to 'delivered', escrow funds are AUTOMATICALLY released to seller wallet and seller's transaction changes to 'completed'. No customer confirmation needed. Requires admin role."
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Courier Services Management",
+							"item": [
+								{
+									"name": "List Courier Services (Admin)",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/courier-services",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "courier-services"]
+										},
+										"description": "List all courier services. Customers select from these when placing orders. Requires admin role."
+									},
+									"response": []
+								},
+								{
+									"name": "Create Courier Service",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"DHL Malawi\",\n  \"description\": \"International and local courier\",\n  \"logo_url\": \"https://example.com/dhl-logo.png\",\n  \"is_active\": true,\n  \"sort_order\": 1\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/api/admin/courier-services",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "courier-services"]
+										},
+										"description": "Create a courier service for customers to select at checkout. Requires admin role."
+									},
+									"response": []
+								},
+								{
+									"name": "Update Courier Service",
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"DHL Malawi Updated\",\n  \"is_active\": true\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/api/admin/courier-services/1",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "courier-services", "1"]
+										},
+										"description": "Update a courier service. Requires admin role."
+									},
+									"response": []
+								},
+								{
+									"name": "Delete Courier Service",
+									"request": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/courier-services/1",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "courier-services", "1"]
+										},
+										"description": "Delete a courier service. Requires admin role."
 									},
 									"response": []
 								}
@@ -2187,6 +2336,78 @@
 					"name": "Seller APIs",
 					"item": [
 						{
+							"name": "Seller Orders",
+							"item": [
+								{
+									"name": "List Seller Orders",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/sellers/orders?status=pending",
+											"host": ["{{base_url}}"],
+											"path": ["api", "sellers", "orders"],
+											"query": [
+												{
+													"key": "status",
+													"value": "pending",
+													"description": "Filter: pending, processing, shipped, delivered, cancelled"
+												}
+											]
+										},
+										"description": "List orders where seller is the seller. Query: status=pending|processing|shipped|delivered|cancelled. Response includes delivery_agent_name for shipped/delivered orders (platform_agent). Requires seller role."
+									},
+									"response": []
+								},
+								{
+									"name": "Accept Order",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"delivery_method\": \"platform_agent\"\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/api/sellers/orders/1/accept",
+											"host": ["{{base_url}}"],
+											"path": ["api", "sellers", "orders", "1", "accept"]
+										},
+										"description": "Seller accepts order. delivery_method: self_ship, platform_agent, or third_party_courier. If platform_agent, creates DeliveryJob for agents. Requires seller role."
+									},
+									"response": []
+								},
+								{
+									"name": "Reject Order",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"reason\": \"Out of stock\"\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/api/sellers/orders/1/reject",
+											"host": ["{{base_url}}"],
+											"path": ["api", "sellers", "orders", "1", "reject"]
+										},
+										"description": "Seller rejects order. Buyer refunded from escrow if paid. Requires seller role."
+									},
+									"response": []
+								}
+							]
+						},
+						{
 							"name": "Onboarding",
 							"item": [
 								{
@@ -2379,9 +2600,9 @@
 										"method": "GET",
 										"header": [],
 										"url": {
-											"raw": "{{base_url}}/api/sellers/1/categories",
+											"raw": "{{base_url}}/api/sellers/{{shop_id}}/categories",
 											"host": ["{{base_url}}"],
-											"path": ["api", "sellers", "1", "categories"]
+											"path": ["api", "sellers", "{{shop_id}}", "categories"]
 										},
 										"description": "Get all admin-created categories. Use these category IDs when creating or updating products (category_id). Sellers cannot create categories. Requires seller role; replace 1 with your shop ID."
 									},
@@ -2484,11 +2705,11 @@
 										"method": "GET",
 										"header": [],
 										"url": {
-											"raw": "{{base_url}}/api/sellers/1/products",
+											"raw": "{{base_url}}/api/sellers/{{shop_id}}/products",
 											"host": ["{{base_url}}"],
-											"path": ["api", "sellers", "1", "products"]
+											"path": ["api", "sellers", "{{shop_id}}", "products"]
 										},
-										"description": "Get all products for a shop. Requires seller role and shop ownership."
+										"description": "Get all products for a shop. Requires seller role and shop ownership. Seed: shop_id=1 for seller@techaven.mw."
 									},
 									"response": []
 								},
@@ -2504,14 +2725,14 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n  \"name\": \"New Product\",\n  \"category_id\": 1,\n  \"price\": 50000,\n  \"image_url\": \"https://example.com/product-image.jpg\",\n  \"images_urls\": [\"https://example.com/image1.jpg\", \"https://example.com/image2.jpg\"],\n  \"description\": \"Product description\",\n  \"stock\": 100,\n  \"original_price\": 60000,\n  \"discount\": 17,\n  \"vendor\": \"Shop Name\",\n  \"is_featured\": false,\n  \"is_hot\": false,\n  \"is_special\": false\n}"
+											"raw": "{\n  \"name\": \"New Product\",\n  \"category_id\": 1,\n  \"price\": 50000,\n  \"image_url\": \"https://example.com/product-image.jpg\",\n  \"images_urls\": [\"https://example.com/image1.jpg\", \"https://example.com/image2.jpg\"],\n  \"description\": \"Product description\",\n  \"stock\": 100,\n  \"original_price\": 60000,\n  \"discount\": 17,\n  \"vendor\": \"Shop Name\",\n  \"is_featured\": false,\n  \"is_hot\": false,\n  \"is_special\": false,\n  \"points\": 10\n}"
 										},
 										"url": {
-											"raw": "{{base_url}}/api/sellers/1/products",
+											"raw": "{{base_url}}/api/sellers/{{shop_id}}/products",
 											"host": ["{{base_url}}"],
-											"path": ["api", "sellers", "1", "products"]
+											"path": ["api", "sellers", "{{shop_id}}", "products"]
 										},
-										"description": "Create a new product for a shop. category_id must be an ID from the admin-created categories list (GET .../sellers/:shopId/categories). Requires seller role and shop ownership."
+										"description": "Create a new product for a shop. category_id must be an ID from the admin-created categories list (GET .../sellers/:shopId/categories). points (optional): reward points customer earns when buying this product. Requires seller role and shop ownership."
 									},
 									"response": []
 								},
@@ -2527,14 +2748,14 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n  \"name\": \"Updated Product Name\",\n  \"category_id\": 2,\n  \"price\": 55000,\n  \"image_url\": \"https://example.com/new-image.jpg\",\n  \"images_urls\": [\"https://example.com/new-image1.jpg\"],\n  \"description\": \"Updated description\",\n  \"stock\": 150,\n  \"original_price\": 65000,\n  \"discount\": 15,\n  \"vendor\": \"Updated Shop Name\",\n  \"is_featured\": true,\n  \"is_hot\": false,\n  \"is_special\": true\n}"
+											"raw": "{\n  \"name\": \"Updated Product Name\",\n  \"category_id\": 2,\n  \"price\": 55000,\n  \"image_url\": \"https://example.com/new-image.jpg\",\n  \"images_urls\": [\"https://example.com/new-image1.jpg\"],\n  \"description\": \"Updated description\",\n  \"stock\": 150,\n  \"original_price\": 65000,\n  \"discount\": 15,\n  \"vendor\": \"Updated Shop Name\",\n  \"is_featured\": true,\n  \"is_hot\": false,\n  \"is_special\": true,\n  \"points\": 15\n}"
 										},
 										"url": {
-											"raw": "{{base_url}}/api/sellers/1/products/1",
+											"raw": "{{base_url}}/api/sellers/{{shop_id}}/products/1",
 											"host": ["{{base_url}}"],
-											"path": ["api", "sellers", "1", "products", "1"]
+											"path": ["api", "sellers", "{{shop_id}}", "products", "1"]
 										},
-										"description": "Update a product. category_id (if sent) must be an ID from the admin-created categories list (GET .../sellers/:shopId/categories). Requires seller role and shop ownership."
+										"description": "Update a product. category_id (if sent) must be an ID from the admin-created categories list (GET .../sellers/:shopId/categories). points (optional): reward points customer earns when buying. Requires seller role and shop ownership."
 									},
 									"response": []
 								},
@@ -2544,9 +2765,9 @@
 										"method": "DELETE",
 										"header": [],
 										"url": {
-											"raw": "{{base_url}}/api/sellers/1/products/1",
+											"raw": "{{base_url}}/api/sellers/{{shop_id}}/products/1",
 											"host": ["{{base_url}}"],
-											"path": ["api", "sellers", "1", "products", "1"]
+											"path": ["api", "sellers", "{{shop_id}}", "products", "1"]
 										},
 										"description": "Delete a product. Requires seller role and shop ownership."
 									},
@@ -2556,8 +2777,184 @@
 						}
 					]
 				},
-				{
-					"name": "Shop Owner Registration",
+						{
+							"name": "Delivery Agent APIs",
+							"description": "APIs for delivery agents. Flow: 1) Register via /api/auth/register-delivery-agent 2) Verify OTP 3) Login 4) Set availability 5) Get available jobs 6) Accept/decline jobs 7) Pickup and deliver. Use Bearer {{access_token}} for protected endpoints.",
+							"item": [
+								{
+									"name": "Register Delivery Agent",
+									"request": {
+										"auth": {
+											"type": "noauth"
+										},
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"full_name\": \"Agent Mike\",\n  \"email\": \"agent@example.com\",\n  \"phone_number\": \"+265991234567\",\n  \"password\": \"agent12345\",\n  \"vehicle_type\": \"motorcycle\",\n  \"operating_zone\": \"Lilongwe\",\n  \"id_document_url\": \"https://example.com/id.pdf\"\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/api/auth/register-delivery-agent",
+											"host": ["{{base_url}}"],
+											"path": ["api", "auth", "register-delivery-agent"]
+										},
+										"description": "Register as delivery agent. Body: full_name, password (required); email or phone_number required; vehicle_type, operating_zone, id_document_url optional. For file upload use multipart/form-data with id_document. Flow: 1) Call this 2) Verify OTP with /api/auth/verify-otp (type=signup) 3) Login."
+									},
+									"response": []
+								},
+								{
+									"name": "Complete Agent Profile",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"vehicle_type\": \"motorcycle\",\n  \"operating_zone\": \"Lilongwe\",\n  \"id_document_url\": \"https://example.com/id.pdf\"\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/api/delivery-agents/register",
+											"host": ["{{base_url}}"],
+											"path": ["api", "delivery-agents", "register"]
+										},
+										"description": "Create or update delivery agent profile. For users who already have delivery_agent role (e.g. assigned by admin). Requires Bearer token. Supports multipart/form-data for id_document file upload."
+									},
+									"response": []
+								},
+								{
+									"name": "Get Agent Profile",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/delivery-agents/profile",
+											"host": ["{{base_url}}"],
+											"path": ["api", "delivery-agents", "profile"]
+										},
+										"description": "Get delivery agent profile. Requires delivery_agent role."
+									},
+									"response": []
+								},
+								{
+									"name": "Set Availability",
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"is_available\": true\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/api/delivery-agents/availability",
+											"host": ["{{base_url}}"],
+											"path": ["api", "delivery-agents", "availability"]
+										},
+										"description": "Set agent availability to receive jobs. Requires delivery_agent role."
+									},
+									"response": []
+								},
+								{
+									"name": "Get My Jobs",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/delivery-agents/jobs",
+											"host": ["{{base_url}}"],
+											"path": ["api", "delivery-agents", "jobs"]
+										},
+										"description": "List all delivery jobs assigned to the logged-in agent. Response includes job_id, order_number, shop_name, pickup_address, dropoff_address, parcel_summary, delivery_fee, status, timestamps. Requires delivery_agent role."
+									},
+									"response": []
+								},
+								{
+									"name": "Get Available Jobs",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/delivery-agents/jobs/available",
+											"host": ["{{base_url}}"],
+											"path": ["api", "delivery-agents", "jobs", "available"]
+										},
+										"description": "List unassigned delivery jobs (when seller selects platform_agent). Response includes job_id, order_number, shop_name, pickup_address, dropoff_address, parcel_summary, delivery_fee. Requires delivery_agent role."
+									},
+									"response": []
+								},
+								{
+									"name": "Accept Job",
+									"request": {
+										"method": "POST",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/delivery-agents/jobs/{{job_id}}/accept",
+											"host": ["{{base_url}}"],
+											"path": ["api", "delivery-agents", "jobs", "{{job_id}}", "accept"]
+										},
+										"description": "Accept a delivery job. Set job_id variable from Get Available Jobs response. Requires delivery_agent role."
+									},
+									"response": []
+								},
+								{
+									"name": "Decline Job",
+									"request": {
+										"method": "POST",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/delivery-agents/jobs/{{job_id}}/decline",
+											"host": ["{{base_url}}"],
+											"path": ["api", "delivery-agents", "jobs", "{{job_id}}", "decline"]
+										},
+										"description": "Decline a job. Job is reassigned to other available agents. Requires delivery_agent role."
+									},
+									"response": []
+								},
+								{
+									"name": "Mark Picked Up",
+									"request": {
+										"method": "POST",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/delivery-agents/jobs/{{job_id}}/pickup",
+											"host": ["{{base_url}}"],
+											"path": ["api", "delivery-agents", "jobs", "{{job_id}}", "pickup"]
+										},
+										"description": "Mark parcel as picked up from seller. Order status -> shipped. Requires delivery_agent role."
+									},
+									"response": []
+								},
+								{
+									"name": "Mark Delivered",
+									"request": {
+										"method": "POST",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/delivery-agents/jobs/{{job_id}}/deliver",
+											"host": ["{{base_url}}"],
+											"path": ["api", "delivery-agents", "jobs", "{{job_id}}", "deliver"]
+										},
+										"description": "Mark delivery complete. Order status -> delivered, starts buyer 72h confirmation window. Requires delivery_agent role."
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Shop Owner Registration",
 					"description": "APIs for invited shop owners to register and activate their seller account. Flow: 1) Admin invites owner → 2) Owner receives email with registration link → 3) Owner registers with invite_token → 4) Owner verifies OTP → 5) Owner accesses seller dashboard. See docs/OWNER_REGISTRATION.md for full flow.",
 					"item": [
 						{
@@ -2646,7 +3043,7 @@
 	"variable": [
 		{
 			"key": "base_url",
-			"value": "https://api.techaven.mw",
+			"value": "http://localhost:8000",
 			"type": "string"
 		},
 		{
@@ -2655,8 +3052,28 @@
 			"type": "string"
 		},
 		{
+			"key": "login_email",
+			"value": "buyer@techaven.mw",
+			"type": "string"
+		},
+		{
+			"key": "login_password",
+			"value": "password123",
+			"type": "string"
+		},
+		{
+			"key": "shop_id",
+			"value": "1",
+			"type": "string"
+		},
+		{
 			"key": "invite_token",
 			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "job_id",
+			"value": "1",
 			"type": "string"
 		}
 	]

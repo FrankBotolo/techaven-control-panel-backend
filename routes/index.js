@@ -23,6 +23,8 @@ import helpRoutes from './help.js';
 import appRoutes from './app.js';
 import smsRoutes from './sms.js';
 import webhookRoutes from './webhooks.js';
+import courierServicesRoutes from './courier-services.js';
+import deliveryAgentRoutes from './delivery-agents.js';
 
 const router = express.Router();
 
@@ -50,6 +52,8 @@ router.use('/help', helpRoutes);
 router.use('/app', appRoutes);
 router.use('/sms', smsRoutes);
 router.use('/webhooks', webhookRoutes);
+router.use('/courier-services', courierServicesRoutes);
+router.use('/delivery-agents', deliveryAgentRoutes);
 
 export default router;
 

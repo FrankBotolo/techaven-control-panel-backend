@@ -20,7 +20,8 @@ export const create = async (req, res) => {
       is_featured,
       is_hot,
       is_special,
-      specifications
+      specifications,
+      points
     } = req.body;
 
     // Validation
@@ -101,7 +102,8 @@ export const create = async (req, res) => {
       is_featured: is_featured === true || is_featured === 'true',
       is_hot: is_hot === true || is_hot === 'true',
       is_special: is_special === true || is_special === 'true',
-      specifications: specificationsObj
+      specifications: specificationsObj,
+      points: points != null ? parseInt(points, 10) || 0 : 0
     });
 
     // Update shop product count
@@ -195,7 +197,8 @@ export const update = async (req, res) => {
       is_featured,
       is_hot,
       is_special,
-      specifications
+      specifications,
+      points
     } = req.body;
 
     // Update fields if provided
@@ -242,6 +245,7 @@ export const update = async (req, res) => {
         });
       }
     }
+    if (points !== undefined) product.points = parseInt(points, 10) || 0;
 
     // Recalculate discount if original_price and price changed
     if (product.original_price && product.original_price > product.price && !product.discount) {

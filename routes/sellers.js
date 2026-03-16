@@ -5,6 +5,7 @@ import * as SellerProductController from '../controllers/SellerProductController
 import * as SellerDashboardController from '../controllers/SellerDashboardController.js';
 import * as SellerEarningsController from '../controllers/SellerEarningsController.js';
 import * as SellerOnboardingController from '../controllers/SellerOnboardingController.js';
+import * as SellerOrderController from '../controllers/SellerOrderController.js';
 
 const router = express.Router();
 
@@ -16,6 +17,11 @@ router.get('/status', SellerOnboardingController.getStatus);
 
 // All routes below require approved shop
 router.use(requireApprovedSeller);
+
+// Orders - accept or reject new orders (must be before :shopId routes)
+router.get('/orders', SellerOrderController.listSellerOrders);
+router.post('/orders/:order_id/accept', SellerOrderController.acceptOrder);
+router.post('/orders/:order_id/reject', SellerOrderController.rejectOrder);
 
 // Dashboard
 router.get('/dashboard', SellerDashboardController.getDashboard);

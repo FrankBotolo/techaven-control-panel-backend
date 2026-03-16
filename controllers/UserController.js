@@ -27,6 +27,7 @@ export const profile = async (req, res) => {
         avatar: user.avatar_url || null,
         is_verified: user.is_verified,
         role: user.role,
+        points: user.points || 0,
         member_since: memberSince(user.createdAt || user.created_at),
         created_at: user.createdAt || user.created_at || null
       }
@@ -68,6 +69,7 @@ export const updateProfile = async (req, res) => {
         avatar: user.avatar_url || null,
         is_verified: user.is_verified,
         role: user.role,
+        points: user.points || 0,
         member_since: memberSince(user.createdAt || user.created_at),
         created_at: user.createdAt || user.created_at || null
       }

@@ -1,5 +1,6 @@
 import db from '../models/index.js';
 import { logAudit } from '../utils/audit.js';
+import { sendNotificationEmail } from '../utils/notificationHelper.js';
 
 const { WithdrawalRequest, User, Wallet, WalletTransaction, Notification } = db;
 
@@ -154,7 +155,7 @@ export const processWithdrawal = async (req, res) => {
     });
 
     const amountStr = `MK ${parseFloat(request.amount).toLocaleString()}`;
-    await Notification.create({
+    const withdrawalNotification = await Notification.create({
       user_id: request.user_id,
       title: request.status === 'completed' ? 'Withdrawal Completed' : 'Withdrawal Rejected',
       message: request.status === 'completed'
@@ -163,6 +164,7 @@ export const processWithdrawal = async (req, res) => {
       type: 'payment',
       read: false
     });
+    sendNotificationEmail(withdrawalNotification, null);
 
     return res.json({
       success: true,

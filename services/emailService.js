@@ -116,53 +116,48 @@ export const sendInvitationEmail = async (email, { owner_name, shop_name, regist
 /**
  * Send order notification email
  */
+const getGenericNotificationHtml = (title, message) => `
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+      body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+      .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+      .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; }
+      .body { padding: 30px; background: #f9f9f9; }
+      .footer { padding: 20px; text-align: center; color: #666; font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header"><h1>${title}</h1></div>
+      <div class="body"><p>${message}</p></div>
+      <div class="footer"><p>© ${new Date().getFullYear()} Techaven. All rights reserved.</p></div>
+    </div>
+  </body>
+  </html>
+`;
+
 export const sendOrderNotificationEmail = async (email, notification) => {
   try {
     const { title, order } = notification;
     let subject = '';
     let html = '';
 
-    if (title === 'Order Placed') {
+    if (order && title === 'Order Placed') {
       subject = `Order Confirmed - ${order.order_number}`;
       html = getOrderPlacedEmailTemplate(order);
-    } else if (title === 'Order Shipped') {
+    } else if (order && title === 'Order Shipped') {
       subject = `Your Order Has Shipped - ${order.order_number}`;
       html = getOrderShippedEmailTemplate(order);
-    } else if (title === 'Order Delivered') {
+    } else if (order && title === 'Order Delivered') {
       subject = `Order Delivered - ${order.order_number}`;
       html = getOrderDeliveredEmailTemplate(order);
     } else {
-      // Generic notification
       subject = notification.title;
-      html = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; }
-            .body { padding: 30px; background: #f9f9f9; }
-            .footer { padding: 20px; text-align: center; color: #666; font-size: 12px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>${notification.title}</h1>
-            </div>
-            <div class="body">
-              <p>${notification.message}</p>
-            </div>
-            <div class="footer">
-              <p>© ${new Date().getFullYear()} Techaven. All rights reserved.</p>
-            </div>
-          </div>
-        </body>
-        </html>
-      `;
+      html = getGenericNotificationHtml(notification.title, notification.message);
     }
 
     const mailOptions = {
@@ -191,15 +186,15 @@ export const sendPaymentNotificationEmail = async (email, notification, recipien
     let subject = '';
     let html = '';
 
-    if (title === 'Payment Received' || title === 'Order Payment Received' || title === 'Payment Received for Order') {
+    if (order && (title === 'Payment Received' || title === 'Order Payment Received' || title === 'Payment Received for Order')) {
       subject = `Payment Received - ${order.order_number}`;
       html = getPaymentReceivedEmailTemplate(order, recipientType);
-    } else if (title === 'Payment Released') {
+    } else if (order && title === 'Payment Released') {
       subject = `Payment Released - ${order.order_number}`;
       html = getPaymentReleasedEmailTemplate(order, recipientType);
     } else {
       subject = notification.title;
-      html = getPaymentReceivedEmailTemplate(order, recipientType);
+      html = order ? getPaymentReceivedEmailTemplate(order, recipientType) : getGenericNotificationHtml(notification.title, notification.message);
     }
 
     const mailOptions = {
@@ -228,46 +223,18 @@ export const sendSellerNotificationEmail = async (email, notification) => {
     let subject = '';
     let html = '';
 
-    if (title === 'New Order Received') {
+    if (order && title === 'New Order Received') {
       subject = `New Order - ${order.order_number}`;
       html = getNewOrderSellerEmailTemplate(order);
-    } else if (title === 'Order Payment Received' || title === 'Payment Received for Order') {
+    } else if (order && (title === 'Order Payment Received' || title === 'Payment Received for Order')) {
       subject = `Payment Received - ${order.order_number}`;
       html = getPaymentReceivedEmailTemplate(order, 'seller');
-    } else if (title === 'Payment Released') {
+    } else if (order && title === 'Payment Released') {
       subject = `Payment Released - ${order.order_number}`;
       html = getPaymentReleasedEmailTemplate(order, 'seller');
     } else {
       subject = notification.title;
-      html = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; }
-            .body { padding: 30px; background: #f9f9f9; }
-            .footer { padding: 20px; text-align: center; color: #666; font-size: 12px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>${notification.title}</h1>
-            </div>
-            <div class="body">
-              <p>${notification.message}</p>
-            </div>
-            <div class="footer">
-              <p>© ${new Date().getFullYear()} Techaven. All rights reserved.</p>
-            </div>
-          </div>
-        </body>
-        </html>
-      `;
+      html = getGenericNotificationHtml(notification.title, notification.message);
     }
 
     const mailOptions = {

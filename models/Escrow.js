@@ -33,7 +33,7 @@ const Escrow = sequelize.define('Escrow', {
     defaultValue: 'MWK'
   },
   status: {
-    type: DataTypes.ENUM('pending', 'held', 'released', 'refunded'),
+    type: DataTypes.ENUM('pending', 'held', 'frozen', 'released', 'refunded'),
     allowNull: false,
     defaultValue: 'pending'
   },

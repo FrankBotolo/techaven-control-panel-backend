@@ -6,6 +6,7 @@ import * as AdminProductController from '../controllers/AdminProductController.j
 import * as DashboardController from '../controllers/DashboardController.js';
 import * as OrderController from '../controllers/OrderController.js';
 import * as AdminWithdrawalController from '../controllers/AdminWithdrawalController.js';
+import * as AdminCourierController from '../controllers/AdminCourierController.js';
 
 const router = express.Router();
 
@@ -41,6 +42,12 @@ router.get('/dashboard', DashboardController.getDashboard);
 // Orders - Admin can view all orders and manage delivery
 router.get('/orders', OrderController.getAllOrdersAdmin);
 router.patch('/orders/:id/status', OrderController.updateOrderStatus);
+
+// Courier services - Admin manages courier options for customer checkout
+router.get('/courier-services', AdminCourierController.listCourierServices);
+router.post('/courier-services', AdminCourierController.createCourierService);
+router.patch('/courier-services/:id', AdminCourierController.updateCourierService);
+router.delete('/courier-services/:id', AdminCourierController.deleteCourierService);
 
 // Withdrawals - Process seller withdrawal requests (approve/reject)
 router.get('/withdrawals', AdminWithdrawalController.listWithdrawals);

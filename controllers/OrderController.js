@@ -3,7 +3,25 @@ import { Op } from 'sequelize';
 import { logAudit } from '../utils/audit.js';
 import { sendNotificationEmail } from '../utils/notificationHelper.js';
 
-const { Order, OrderItem, Cart, Product, User, Notification, Shop, Escrow, Wallet, WalletTransaction, ShippingAddress } = db;
+const { Order, OrderItem, Cart, Product, User, Notification, Shop, Escrow, Wallet, WalletTransaction, ShippingAddress, CourierService } = db;
+
+/** Award points to customer when order is completed (delivery confirmed). Points come from product.points * quantity. */
+const awardPointsForOrder = async (orderId, userId) => {
+  const items = await OrderItem.findAll({
+    where: { order_id: orderId },
+    include: [{ model: Product, as: 'product', attributes: ['id', 'points'] }]
+  });
+  let totalPoints = 0;
+  for (const item of items) {
+    const pts = (item.product?.points || 0) * (item.quantity || 1);
+    totalPoints += pts;
+  }
+  if (totalPoints <= 0) return;
+  const buyer = await User.findByPk(userId);
+  if (!buyer) return;
+  buyer.points = (buyer.points || 0) + totalPoints;
+  await buyer.save();
+};
 
 const generateOrderNumber = () => {
   const now = new Date();
@@ -46,9 +64,24 @@ export const createOrder = async (req, res) => {
       payment_method_id,
       payment_method,
       courier_service,
+      courier_service_id,
       notes,
       coupon_code
     } = req.body;
+
+    let courierName = courier_service || null;
+    let courierId = courier_service_id ? parseInt(courier_service_id, 10) : null;
+    if (courierId) {
+      const courier = await CourierService.findOne({ where: { id: courierId, is_active: true } });
+      if (!courier) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid or inactive courier service selected',
+          data: null
+        });
+      }
+      courierName = courier.name;
+    }
 
     // API doc path: create from items array + shipping_address_id
     if (bodyItems && Array.isArray(bodyItems) && bodyItems.length > 0) {
@@ -138,6 +171,8 @@ export const createOrder = async (req, res) => {
         shipping_address_id: addr.id,
         shipping_address: [addr.address, addr.city, addr.region].filter(Boolean).join(', '),
         shipping_city: addr.city,
+        courier_service: courierName,
+        courier_service_id: courierId,
         shipping_phone: addr.phone,
         seller_id: sellerId,
         escrow_status: 'pending',
@@ -312,7 +347,8 @@ export const createOrder = async (req, res) => {
       shipping_phone: shippingAddress.phone || '',
       payment_method: paymentMethodValue,
       payment_status: 'pending',
-      courier_service: courier_service || null,
+      courier_service: courierName || courier_service || null,
+      courier_service_id: courierId,
       seller_id: sellerId,
       escrow_status: 'pending',
       escrow_amount: sellerAmount,
@@ -380,7 +416,7 @@ export const createOrder = async (req, res) => {
     const customerNotification = await Notification.create({
       user_id: userId,
       title: 'Order Placed',
-      message: `Your order ${orderNumber} has been placed successfully. Shipping details have been shared with ${courier_service}.`,
+      message: `Your order ${orderNumber} has been placed successfully. Shipping details have been shared with ${courierName || courier_service || 'courier'}.`,
       type: 'order',
       order_id: order.id,
       read: false
@@ -393,7 +429,7 @@ export const createOrder = async (req, res) => {
       const sellerNotification = await Notification.create({
         user_id: sellerId,
         title: 'New Order Received',
-        message: `New order ${orderNumber} has been placed for your products. Total: MWK ${finalTotal}. Customer: ${shippingAddress.address_line}, ${shippingAddress.city}. Courier: ${courier_service}`,
+        message: `New order ${orderNumber} has been placed for your products. Total: MWK ${finalTotal}. Customer: ${shippingAddress.address_line}, ${shippingAddress.city}. Courier: ${courierName || courier_service || 'TBD'}`,
         type: 'order',
         order_id: order.id,
         read: false
@@ -408,7 +444,7 @@ export const createOrder = async (req, res) => {
       const adminNotification = await Notification.create({
         user_id: admin.id,
         title: 'New Order Received',
-        message: `New order ${orderNumber} has been placed. Shipping address: ${shippingAddress.address_line}, ${shippingAddress.city}. Courier: ${courier_service}`,
+        message: `New order ${orderNumber} has been placed. Shipping address: ${shippingAddress.address_line}, ${shippingAddress.city}. Courier: ${courierName || courier_service || 'TBD'}`,
         type: 'order',
         order_id: order.id,
         read: false
@@ -587,7 +623,7 @@ export const updateOrderStatus = async (req, res) => {
       ? orderId.replace('ord_', '') 
       : orderId;
     
-    const { status, payment_status, courier_tracking_number } = req.body;
+    const { status, payment_status, courier_tracking_number, delivery_method } = req.body;
 
     const order = await Order.findByPk(id);
     if (!order) {
@@ -606,6 +642,13 @@ export const updateOrderStatus = async (req, res) => {
         });
       }
       order.status = status;
+      if (status === 'delivered' && !order.delivered_at) {
+        order.delivered_at = new Date();
+      }
+    }
+
+    if (delivery_method && ['self_ship', 'platform_agent', 'third_party_courier'].includes(delivery_method)) {
+      order.delivery_method = delivery_method;
     }
 
     if (payment_status) {
@@ -734,6 +777,9 @@ export const updateOrderStatus = async (req, res) => {
         });
         sendNotificationEmail(adminReleaseNotification, order);
       }
+
+      // Award points to customer when admin auto-confirms delivery
+      await awardPointsForOrder(order.id, order.user_id);
     }
 
     // Create notification for customer
@@ -747,11 +793,13 @@ export const updateOrderStatus = async (req, res) => {
         read: false
       });
       sendNotificationEmail(deliveredNotification, order);
-    } else if (order.status === 'shipped' && courier_tracking_number) {
+    } else if (order.status === 'shipped') {
       const shippedNotification = await Notification.create({
         user_id: order.user_id,
         title: 'Order Shipped',
-        message: `Your order ${order.order_number} has been shipped. Tracking number: ${courier_tracking_number}`,
+        message: courier_tracking_number
+          ? `Your order ${order.order_number} has been shipped. Tracking number: ${courier_tracking_number}`
+          : `Your order ${order.order_number} has been shipped and is on the way.`,
         type: 'order',
         order_id: order.id,
         read: false
@@ -1063,6 +1111,9 @@ export const confirmDelivery = async (req, res) => {
       balance_after: sellerNewBalance
     });
 
+    // Award points to customer (from product.points * quantity)
+    await awardPointsForOrder(order.id, order.user_id);
+
     // Notify customer
     const customerDeliveryNotification = await Notification.create({
       user_id: order.user_id,
@@ -1239,6 +1290,28 @@ export const cancelOrder = async (req, res) => {
 
     order.status = 'cancelled';
     await order.save();
+
+    const customerCancelNotification = await Notification.create({
+      user_id: order.user_id,
+      title: 'Order Cancelled',
+      message: `Your order ${order.order_number} has been cancelled.`,
+      type: 'order',
+      order_id: order.id,
+      read: false
+    });
+    sendNotificationEmail(customerCancelNotification, order);
+
+    if (order.seller_id) {
+      const sellerCancelNotification = await Notification.create({
+        user_id: order.seller_id,
+        title: 'Order Cancelled',
+        message: `Order ${order.order_number} was cancelled by the customer.`,
+        type: 'order',
+        order_id: order.id,
+        read: false
+      });
+      sendNotificationEmail(sellerCancelNotification, order);
+    }
 
     await logAudit({
       action: 'customer.order.cancel',

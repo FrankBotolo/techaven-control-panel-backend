@@ -6,7 +6,7 @@ import moment from 'moment';
 import { Op } from 'sequelize';
 import { logAudit } from '../utils/audit.js';
 
-const { User, Otp, ShopInvitation, Shop } = db;
+const { User, Otp, ShopInvitation, Shop, DeliveryAgent } = db;
 
 const generateAccessToken = (user) => {
   return jwt.sign(
@@ -56,6 +56,83 @@ const sendOtp = async (user, type) => {
   }
 
   return code;
+};
+
+export const registerDeliveryAgent = async (req, res) => {
+  try {
+    const { full_name, email, phone_number, password, vehicle_type, operating_zone } = req.body;
+
+    if (!full_name || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'full_name and password are required'
+      });
+    }
+
+    if (!email && !phone_number) {
+      return res.status(400).json({
+        success: false,
+        message: 'Either email or phone_number is required'
+      });
+    }
+
+    const existingUser = await User.findOne({
+      where: email ? { email } : { phone_number }
+    });
+
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'User already exists with this email or phone number'
+      });
+    }
+
+    const idDocumentFile = req.files?.id_document?.[0] || null;
+    const baseUrl = process.env.APP_URL || 'http://localhost:8000';
+    const idDocumentUrl = idDocumentFile ? `${baseUrl}/uploads/${idDocumentFile.filename}` : (req.body.id_document_url || null);
+
+    const user = await User.create({
+      name: full_name,
+      email: email || null,
+      phone_number: phone_number || null,
+      password: password,
+      is_verified: false,
+      role: 'delivery_agent'
+    });
+
+    await DeliveryAgent.create({
+      user_id: user.id,
+      vehicle_type: vehicle_type || null,
+      operating_zone: operating_zone || null,
+      id_document_url: idDocumentUrl,
+      is_available: false
+    });
+
+    const otpCode = await sendOtp(user, 'signup');
+
+    const responseData = {
+      user_id: user.id,
+      email: user.email,
+      phone_number: user.phone_number
+    };
+
+    if (user.phone_number && !user.email) {
+      responseData.otp = otpCode;
+    }
+
+    return res.json({
+      success: true,
+      message: 'Delivery agent registration submitted. Please verify OTP.',
+      data: responseData
+    });
+  } catch (error) {
+    console.error('Register delivery agent error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Delivery agent registration failed',
+      error: error.message
+    });
+  }
 };
 
 export const registerSeller = async (req, res) => {

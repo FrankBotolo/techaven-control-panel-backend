@@ -1,6 +1,7 @@
 import express from 'express';
 import { authenticate } from '../middleware/auth.js';
 import * as OrderController from '../controllers/OrderController.js';
+import * as DisputeController from '../controllers/DisputeController.js';
 
 const router = express.Router();
 
@@ -16,6 +17,9 @@ router.post('/:order_id/cancel', OrderController.cancelOrder);
 router.post('/:order_id/payment/complete', OrderController.completePayment);
 router.post('/:order_id/delivery/confirm', OrderController.confirmDelivery);
 router.patch('/:order_id/status', OrderController.updateOrderStatus);
+
+router.post('/:order_id/disputes', DisputeController.openDispute);
+router.get('/:order_id/disputes', DisputeController.getDisputeStatus);
 
 export default router;
 

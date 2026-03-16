@@ -68,6 +68,23 @@ const Order = sequelize.define('Order', {
     type: DataTypes.STRING,
     allowNull: true
   },
+  courier_service_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: { model: 'courier_services', key: 'id' }
+  },
+  delivery_method: {
+    type: DataTypes.ENUM('self_ship', 'platform_agent', 'third_party_courier'),
+    allowNull: true
+  },
+  seller_accepted_at: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  delivered_at: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
   courier_tracking_number: {
     type: DataTypes.STRING,
     allowNull: true
@@ -81,9 +98,21 @@ const Order = sequelize.define('Order', {
     }
   },
   escrow_status: {
-    type: DataTypes.ENUM('pending', 'held', 'released', 'refunded'),
+    type: DataTypes.ENUM('pending', 'held', 'frozen', 'released', 'refunded'),
     allowNull: false,
     defaultValue: 'pending'
+  },
+  delivery_method: {
+    type: DataTypes.ENUM('self_ship', 'platform_agent', 'third_party_courier'),
+    allowNull: true
+  },
+  seller_accepted_at: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  delivered_at: {
+    type: DataTypes.DATE,
+    allowNull: true
   },
   escrow_amount: {
     type: DataTypes.DECIMAL(12, 2),

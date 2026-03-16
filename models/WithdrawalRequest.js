@@ -30,7 +30,7 @@ const WithdrawalRequest = sequelize.define('WithdrawalRequest', {
     defaultValue: 'pending'
   },
   withdrawal_method: {
-    type: DataTypes.ENUM('mobile_money', 'bank_transfer'),
+    type: DataTypes.ENUM('mobile_money', 'bank_transfer', 'cash_pickup'),
     allowNull: false,
     defaultValue: 'mobile_money'
   },

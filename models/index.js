@@ -18,6 +18,10 @@ import Review from './Review.js';
 import Escrow from './Escrow.js';
 import WithdrawalRequest from './WithdrawalRequest.js';
 import ShippingAddress from './ShippingAddress.js';
+import Dispute from './Dispute.js';
+import CourierService from './CourierService.js';
+import DeliveryAgent from './DeliveryAgent.js';
+import DeliveryJob from './DeliveryJob.js';
 
 // Define associations
 Product.belongsTo(Category, { foreignKey: 'category_id', as: 'category' });
@@ -103,6 +107,26 @@ User.hasMany(WithdrawalRequest, { foreignKey: 'user_id', as: 'withdrawal_request
 ShippingAddress.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 User.hasMany(ShippingAddress, { foreignKey: 'user_id', as: 'shipping_addresses' });
 
+// Disputes
+Dispute.belongsTo(Order, { foreignKey: 'order_id', as: 'order' });
+Dispute.belongsTo(User, { foreignKey: 'buyer_id', as: 'buyer' });
+Dispute.belongsTo(User, { foreignKey: 'seller_id', as: 'seller' });
+Dispute.belongsTo(User, { foreignKey: 'resolved_by', as: 'resolver' });
+Order.hasMany(Dispute, { foreignKey: 'order_id', as: 'disputes' });
+User.hasMany(Dispute, { foreignKey: 'buyer_id', as: 'buyer_disputes' });
+User.hasMany(Dispute, { foreignKey: 'seller_id', as: 'seller_disputes' });
+
+// Courier services (admin-managed, customer selects at checkout)
+Order.belongsTo(CourierService, { foreignKey: 'courier_service_id', as: 'courierService' });
+CourierService.hasMany(Order, { foreignKey: 'courier_service_id', as: 'orders' });
+
+DeliveryAgent.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+User.hasOne(DeliveryAgent, { foreignKey: 'user_id', as: 'delivery_agent' });
+DeliveryJob.belongsTo(Order, { foreignKey: 'order_id', as: 'order' });
+DeliveryJob.belongsTo(DeliveryAgent, { foreignKey: 'agent_id', as: 'agent' });
+Order.hasOne(DeliveryJob, { foreignKey: 'order_id', as: 'delivery_job' });
+DeliveryAgent.hasMany(DeliveryJob, { foreignKey: 'agent_id', as: 'jobs' });
+
 const db = {
   sequelize,
   Sequelize: sequelize.Sequelize,
@@ -124,7 +148,11 @@ const db = {
   Review,
   Escrow,
   WithdrawalRequest,
-  ShippingAddress
+  ShippingAddress,
+  Dispute,
+  CourierService,
+  DeliveryAgent,
+  DeliveryJob
 };
 
 export default db;
