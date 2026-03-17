@@ -1481,6 +1481,7 @@ export const payWithMalipo = async (req, res) => {
     const amount = Math.round(parseFloat(order.total_amount) || 0);
     const malipoPayload = {
       order_id: order.order_number,
+      merchant_txn_id: order.order_number, // Malipo webhook echoes this back
       msisdn: String(msisdn).replace(/^\+265/, '0').replace(/^265/, '0'),
       amount,
       psp_id: pspId

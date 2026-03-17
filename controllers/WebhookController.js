@@ -28,11 +28,15 @@ export const malipo = async (req, res) => {
     const orderRef = body.merchant_txn_id || body.order_id || body.order_number || body.reference;
     const status = (body.status || '').toLowerCase();
 
+    console.log('[Malipo webhook] Received:', { orderRef, status, body: JSON.stringify(body) });
+
     if (!orderRef) {
+      console.log('[Malipo webhook] Rejected: missing order reference');
       return res.status(400).json({ success: false, message: 'Missing merchant_txn_id or order reference' });
     }
 
     if (status !== 'success' && status !== 'completed' && status !== 'paid') {
+      console.log('[Malipo webhook] Ignored: status is not success/completed/paid:', status);
       return res.status(200).json({ success: true, message: 'Webhook received (non-success)' });
     }
 
@@ -44,7 +48,12 @@ export const malipo = async (req, res) => {
       ]
     });
 
-    if (!order || order.payment_status === 'paid') {
+    if (!order) {
+      console.log('[Malipo webhook] Order not found for:', orderRef);
+      return res.status(200).json({ success: true, message: 'Webhook received (order not found)' });
+    }
+    if (order.payment_status === 'paid') {
+      console.log('[Malipo webhook] Order already paid:', order.order_number);
       return res.status(200).json({ success: true, message: 'Webhook received' });
     }
 
@@ -52,6 +61,7 @@ export const malipo = async (req, res) => {
     order.payment_method = body.psp_id === 2 ? 'tnm' : body.psp_id === 1 ? 'airtel' : 'malipo';
     order.escrow_status = 'held';
     await order.save();
+    console.log('[Malipo webhook] Order marked paid:', order.order_number, 'id:', order.id);
 
     const escrowAmount = parseFloat(order.escrow_amount ?? order.total_amount) || 0;
 
