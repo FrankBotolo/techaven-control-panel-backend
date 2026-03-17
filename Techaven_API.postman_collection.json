@@ -1664,14 +1664,14 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"order_id\": \"ORD-20240316-1234\",\n  \"status\": \"success\",\n  \"transaction_id\": \"TXN-MALIPO-123\",\n  \"amount\": 100,\n  \"psp_id\": 1\n}"
+									"raw": "{\n  \"status\": \"Completed\",\n  \"merchant_txn_id\": \"ORD-20260317-7183\",\n  \"transaction_id\": \"IP260317-1344-B0AE\",\n  \"customer_ref\": \"MP260317.1345.E22009\",\n  \"amount\": \"100.00\",\n  \"narration\": \"Your transaction has been successfully processed\"\n}"
 								},
 								"url": {
 									"raw": "{{base_url}}/api/webhooks/malipo",
 									"host": ["{{base_url}}"],
 									"path": ["api", "webhooks", "malipo"]
 								},
-								"description": "Called by Malipo after payment. No auth. order_id: order_number. On success: mark order paid, create escrow, credit admin wallet."
+								"description": "Called by Malipo after payment. No auth. Payload: status, merchant_txn_id (order_number), transaction_id, amount, narration, customer_ref. On success: mark order paid, create escrow, credit admin wallet, store in malipo_transactions."
 							},
 							"response": []
 						}
@@ -1702,6 +1702,65 @@
 										"description": "Get admin dashboard statistics. Requires admin role."
 									},
 									"response": []
+								}
+							]
+						},
+						{
+							"name": "Malipo Transactions",
+							"item": [
+								{
+									"name": "List All Malipo Transactions",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/malipo-transactions?page=1&limit=20",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "malipo-transactions"],
+											"query": [
+												{
+													"key": "page",
+													"value": "1"
+												},
+												{
+													"key": "limit",
+													"value": "20"
+												},
+												{
+													"key": "status",
+													"value": "Completed",
+													"disabled": true,
+													"description": "Filter by status (e.g. Completed, Failed)"
+												},
+												{
+													"key": "merchant_txn_id",
+													"value": "ORD-",
+													"disabled": true,
+													"description": "Search by order number"
+												}
+											]
+										},
+										"description": "List all Malipo payment webhook transactions with status. Includes customer_name, customer_email, customer_phone. Query: page, limit, status, merchant_txn_id. Requires admin role.\n\n**Response fields:** id, transaction_id, merchant_txn_id, order_id, order (order_number, total_amount, payment_status, status), customer_name, customer_email, customer_phone, amount, currency, status, customer_ref, narration, psp_id, created_at"
+									},
+									"response": [
+										{
+											"name": "Success",
+											"originalRequest": {
+												"method": "GET",
+												"url": {
+													"raw": "{{base_url}}/api/admin/malipo-transactions?page=1&limit=20",
+													"host": ["{{base_url}}"],
+													"path": ["api", "admin", "malipo-transactions"],
+													"query": [{"key": "page", "value": "1"}, {"key": "limit", "value": "20"}]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [{"key": "Content-Type", "value": "application/json"}],
+											"body": "{\n  \"success\": true,\n  \"message\": \"Malipo transactions retrieved\",\n  \"data\": {\n    \"transactions\": [\n      {\n        \"id\": 1,\n        \"transaction_id\": \"IP260317-1344-B0AE\",\n        \"merchant_txn_id\": \"ORD-20260317-7183\",\n        \"order_id\": 123,\n        \"order\": {\n          \"id\": 123,\n          \"order_number\": \"ORD-20260317-7183\",\n          \"total_amount\": 100,\n          \"payment_status\": \"paid\",\n          \"status\": \"pending\"\n        },\n        \"customer_name\": \"John Doe\",\n        \"customer_email\": \"john@example.com\",\n        \"customer_phone\": \"0981234567\",\n        \"amount\": 100,\n        \"currency\": \"MWK\",\n        \"status\": \"Completed\",\n        \"customer_ref\": \"MP260317.1345.E22009\",\n        \"narration\": \"Your transaction has been successfully processed\",\n        \"psp_id\": null,\n        \"created_at\": \"2026-03-17T11:45:17.690Z\"\n      }\n    ],\n    \"pagination\": {\n      \"current_page\": 1,\n      \"total_pages\": 1,\n      \"total_items\": 1\n    }\n  }\n}"
+										}
+									]
 								}
 							]
 						},

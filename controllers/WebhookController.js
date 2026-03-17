@@ -4,7 +4,7 @@ import { sendNotificationEmail } from '../utils/notificationHelper.js';
 import { logAudit } from '../utils/audit.js';
 import { captureWebhook } from '../utils/webhookCapture.js';
 
-const { Order, Wallet, WalletTransaction, Escrow, User, Notification } = db;
+const { Order, Wallet, WalletTransaction, Escrow, User, Notification, MalipoTransaction } = db;
 
 /**
  * POST /api/webhooks/malipo
@@ -18,14 +18,40 @@ export const malipo = async (req, res) => {
   // Always capture everything the webhook sends for inspection
   captureWebhook('malipo', req);
 
+  // Store every Malipo webhook for admin transaction list
+  const body = req.body || {};
+  const orderRef = body.merchant_txn_id || body.order_id || body.order_number || body.reference;
+  const malipoStatus = (body.status || '').toString();
+  const txId = body.transaction_id;
+  try {
+    const existing = txId ? await MalipoTransaction.findOne({ where: { transaction_id: txId } }) : null;
+    if (existing) {
+      existing.status = malipoStatus;
+      existing.amount = body.amount != null ? parseFloat(body.amount) : existing.amount;
+      existing.narration = body.narration ?? existing.narration;
+      existing.raw_payload = body;
+      await existing.save();
+    } else {
+      await MalipoTransaction.create({
+        transaction_id: txId,
+        merchant_txn_id: orderRef,
+        amount: body.amount != null ? parseFloat(body.amount) : null,
+        status: malipoStatus,
+        customer_ref: body.customer_ref,
+        narration: body.narration,
+        psp_id: body.psp_id,
+        raw_payload: body
+      });
+    }
+  } catch (storeErr) {
+    console.error('[Malipo webhook] Failed to store transaction:', storeErr);
+  }
+
   if (process.env.WEBHOOK_CAPTURE_ONLY === 'true') {
     return res.status(200).json({ success: true, message: 'Webhook captured (capture-only mode)' });
   }
 
   try {
-    const body = req.body || {};
-    // Malipo sends: merchant_txn_id (order_number), status, transaction_id, amount, narration
-    const orderRef = body.merchant_txn_id || body.order_id || body.order_number || body.reference;
     const status = (body.status || '').toLowerCase();
 
     console.log('[Malipo webhook] Received:', { orderRef, status, body: JSON.stringify(body) });
@@ -62,6 +88,16 @@ export const malipo = async (req, res) => {
     order.escrow_status = 'held';
     await order.save();
     console.log('[Malipo webhook] Order marked paid:', order.order_number, 'id:', order.id);
+
+    // Link MalipoTransaction to order
+    const mt = await MalipoTransaction.findOne({
+      where: { [Op.or]: [{ transaction_id: body.transaction_id }, { merchant_txn_id: orderRef }] },
+      order: [['createdAt', 'DESC']]
+    });
+    if (mt && !mt.order_id) {
+      mt.order_id = order.id;
+      await mt.save();
+    }
 
     const escrowAmount = parseFloat(order.escrow_amount ?? order.total_amount) || 0;
 

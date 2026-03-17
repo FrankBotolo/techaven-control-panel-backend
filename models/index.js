@@ -23,6 +23,7 @@ import CourierService from './CourierService.js';
 import DeliveryAgent from './DeliveryAgent.js';
 import DeliveryJob from './DeliveryJob.js';
 import PaymentMethod from './PaymentMethod.js';
+import MalipoTransaction from './MalipoTransaction.js';
 
 // Define associations
 Product.belongsTo(Category, { foreignKey: 'category_id', as: 'category' });
@@ -131,6 +132,9 @@ DeliveryJob.belongsTo(DeliveryAgent, { foreignKey: 'agent_id', as: 'agent' });
 Order.hasOne(DeliveryJob, { foreignKey: 'order_id', as: 'delivery_job' });
 DeliveryAgent.hasMany(DeliveryJob, { foreignKey: 'agent_id', as: 'jobs' });
 
+MalipoTransaction.belongsTo(Order, { foreignKey: 'order_id', as: 'order' });
+Order.hasMany(MalipoTransaction, { foreignKey: 'order_id', as: 'malipo_transactions' });
+
 const db = {
   sequelize,
   Sequelize: sequelize.Sequelize,
@@ -157,7 +161,8 @@ const db = {
   CourierService,
   DeliveryAgent,
   DeliveryJob,
-  PaymentMethod
+  PaymentMethod,
+  MalipoTransaction
 };
 
 export default db;
