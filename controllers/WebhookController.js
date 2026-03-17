@@ -9,7 +9,7 @@ const { Order, Wallet, WalletTransaction, Escrow, User, Notification } = db;
 /**
  * POST /api/webhooks/malipo
  * Called by Malipo after payment success. Configure callback URL in Malipo dashboard.
- * Payload may include: order_id (order_number), status, transaction_id, amount, etc.
+ * Malipo payload: status, merchant_txn_id (order_number), transaction_id, amount, narration, customer_ref
  *
  * Capture mode: Set WEBHOOK_CAPTURE_ONLY=true in .env to only capture payloads
  * without processing. Inspect logs/webhook-captures/ then add logic later.
@@ -24,11 +24,12 @@ export const malipo = async (req, res) => {
 
   try {
     const body = req.body || {};
-    const orderRef = body.order_id || body.order_number || body.reference;
+    // Malipo sends: merchant_txn_id (order_number), status, transaction_id, amount, narration
+    const orderRef = body.merchant_txn_id || body.order_id || body.order_number || body.reference;
     const status = (body.status || '').toLowerCase();
 
     if (!orderRef) {
-      return res.status(400).json({ success: false, message: 'Missing order_id or reference' });
+      return res.status(400).json({ success: false, message: 'Missing merchant_txn_id or order reference' });
     }
 
     if (status !== 'success' && status !== 'completed' && status !== 'paid') {
@@ -48,7 +49,7 @@ export const malipo = async (req, res) => {
     }
 
     order.payment_status = 'paid';
-    order.payment_method = body.psp_id === 2 ? 'tnm' : 'airtel';
+    order.payment_method = body.psp_id === 2 ? 'tnm' : body.psp_id === 1 ? 'airtel' : 'malipo';
     order.escrow_status = 'held';
     await order.save();
 
