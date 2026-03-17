@@ -214,12 +214,16 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    const validPaymentMethods = ['cash_on_delivery', 'mobile_money', 'bank_transfer', 'card', 'wallet', 'airtel_money', 'mpamba'];
-    let paymentMethodValue = payment_method || payment_method_id || 'mobile_money';
-    if (payment_method_id && !validPaymentMethods.includes(payment_method_id)) {
-      if (payment_method_id.startsWith('pm_')) paymentMethodValue = 'mobile_money';
-      else if (validPaymentMethods.includes(payment_method_id)) paymentMethodValue = payment_method_id;
-      else paymentMethodValue = 'mobile_money';
+    const validPaymentMethods = ['airtel', 'tnm'];
+    let paymentMethodValue = payment_method || payment_method_id || 'airtel';
+    if (payment_method_id && validPaymentMethods.includes(payment_method_id)) {
+      paymentMethodValue = payment_method_id;
+    } else if (payment_method_id === 'airtel_money') {
+      paymentMethodValue = 'airtel';
+    } else if (payment_method_id === 'tnm' || payment_method_id === 'tnm_mpamba' || payment_method_id === 'mpamba') {
+      paymentMethodValue = 'tnm';
+    } else {
+      paymentMethodValue = 'airtel';
     }
     if (!validPaymentMethods.includes(paymentMethodValue)) {
       return res.status(400).json({
@@ -1421,9 +1425,9 @@ export const payWithWallet = async (req, res) => {
   }
 };
 
-/** POST /api/orders/:id/pay/malipo — initiate Malipo mobile money payment (Airtel Money or Mpamba)
+/** POST /api/orders/:id/pay/malipo — initiate Malipo mobile money payment (Airtel or TNM)
  * Body: { msisdn: "0980256737", psp_id: 1 | 2 }
- * psp_id: 1 = Airtel Money, 2 = Mpamba
+ * psp_id: 1 = Airtel, 2 = TNM
  */
 export const payWithMalipo = async (req, res) => {
   try {
@@ -1450,7 +1454,7 @@ export const payWithMalipo = async (req, res) => {
     if (!msisdn || !psp_id) {
       return res.status(400).json({
         success: false,
-        message: 'msisdn and psp_id are required. psp_id: 1 = Airtel Money, 2 = Mpamba',
+        message: 'msisdn and psp_id are required. psp_id: 1 = Airtel, 2 = TNM',
         data: null
       });
     }
@@ -1459,7 +1463,7 @@ export const payWithMalipo = async (req, res) => {
     if (pspId !== 1 && pspId !== 2) {
       return res.status(400).json({
         success: false,
-        message: 'psp_id must be 1 (Airtel Money) or 2 (Mpamba)',
+        message: 'psp_id must be 1 (Airtel) or 2 (TNM)',
         data: null
       });
     }
@@ -1512,7 +1516,7 @@ export const payWithMalipo = async (req, res) => {
         order_number: order.order_number,
         amount,
         psp_id: pspId,
-        provider: pspId === 1 ? 'airtel_money' : 'mpamba',
+        provider: pspId === 1 ? 'airtel' : 'tnm',
         ...(data?.transaction_id && { transaction_id: data.transaction_id }),
         ...data
       }

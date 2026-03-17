@@ -22,6 +22,7 @@ import Dispute from './Dispute.js';
 import CourierService from './CourierService.js';
 import DeliveryAgent from './DeliveryAgent.js';
 import DeliveryJob from './DeliveryJob.js';
+import PaymentMethod from './PaymentMethod.js';
 
 // Define associations
 Product.belongsTo(Category, { foreignKey: 'category_id', as: 'category' });
@@ -120,6 +121,9 @@ User.hasMany(Dispute, { foreignKey: 'seller_id', as: 'seller_disputes' });
 Order.belongsTo(CourierService, { foreignKey: 'courier_service_id', as: 'courierService' });
 CourierService.hasMany(Order, { foreignKey: 'courier_service_id', as: 'orders' });
 
+// Payment methods (Malipo: Airtel psp_id=1, TNM psp_id=2)
+// No FK - payment_method on Order stores slug (airtel, tnm)
+
 DeliveryAgent.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 User.hasOne(DeliveryAgent, { foreignKey: 'user_id', as: 'delivery_agent' });
 DeliveryJob.belongsTo(Order, { foreignKey: 'order_id', as: 'order' });
@@ -152,7 +156,8 @@ const db = {
   Dispute,
   CourierService,
   DeliveryAgent,
-  DeliveryJob
+  DeliveryJob,
+  PaymentMethod
 };
 
 export default db;

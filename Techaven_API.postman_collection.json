@@ -918,29 +918,6 @@
 							"response": []
 						},
 						{
-							"name": "Pay with Wallet",
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": ""
-								},
-								"url": {
-									"raw": "{{base_url}}/api/orders/1/pay/wallet",
-									"host": ["{{base_url}}"],
-									"path": ["api", "orders", "1", "pay", "wallet"]
-								},
-								"description": "Deduct order total from user wallet. Returns order + wallet_balance. 400 if insufficient balance."
-							},
-							"response": []
-						},
-						{
 							"name": "Pay with Malipo",
 							"request": {
 								"method": "POST",
@@ -959,7 +936,7 @@
 									"host": ["{{base_url}}"],
 									"path": ["api", "orders", "1", "pay", "malipo"]
 								},
-								"description": "Initiates Malipo mobile money payment. Body: msisdn (phone), psp_id (1=Airtel Money, 2=Mpamba). Sends push to customer's phone. Webhook POST /api/webhooks/malipo confirms payment. Requires MALIPO_API_KEY and MALIPO_APP_ID in .env."
+								"description": "Initiates Malipo mobile money payment. Body: msisdn (phone), psp_id (1=Airtel, 2=TNM). Sends push to customer's phone. Webhook POST /api/webhooks/malipo confirms payment. Requires MALIPO_API_KEY and MALIPO_APP_ID in .env."
 							},
 							"response": []
 						},

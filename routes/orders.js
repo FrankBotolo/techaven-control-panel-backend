@@ -11,7 +11,6 @@ router.use(authenticate);
 router.post('/', OrderController.createOrder);
 router.get('/', OrderController.getOrders);
 router.get('/:order_id', OrderController.getOrder);
-router.post('/:order_id/pay/wallet', OrderController.payWithWallet);
 router.post('/:order_id/pay/malipo', OrderController.payWithMalipo);
 router.post('/:order_id/cancel', OrderController.cancelOrder);
 router.post('/:order_id/payment/complete', OrderController.completePayment);

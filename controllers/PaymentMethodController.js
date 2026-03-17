@@ -1,25 +1,29 @@
 import db from '../models/index.js';
 
-// TODO: Create PaymentMethod model
-// const { PaymentMethod } = db;
+const { PaymentMethod } = db;
 
 export const getPaymentMethods = async (req, res) => {
   try {
-    const userId = req.user.id;
-    
-    // TODO: Implement payment methods from database
-    const paymentMethods = [];
-    const availableProviders = [
-      { type: 'mobile_money', provider: 'Airtel Money', icon: 'airtel_money' },
-      { type: 'mobile_money', provider: 'TNM Mpamba', icon: 'tnm_mpamba' },
-      { type: 'bank_transfer', provider: 'National Bank', icon: 'national_bank' }
-    ];
-    
+    const methods = await PaymentMethod.findAll({
+      where: { is_active: true },
+      order: [['sort_order', 'ASC']],
+      attributes: ['id', 'name', 'slug', 'psp_id', 'provider', 'icon']
+    });
+
+    const availableProviders = methods.map((m) => ({
+      id: m.id,
+      name: m.name,
+      slug: m.slug,
+      psp_id: m.psp_id,
+      provider: m.provider,
+      icon: m.icon || m.slug
+    }));
+
     return res.json({
       success: true,
       message: 'Payment methods retrieved',
       data: {
-        payment_methods: paymentMethods,
+        payment_methods: [],
         available_providers: availableProviders
       }
     });

@@ -20,7 +20,8 @@ const {
   CourierService,
   DeliveryAgent,
   ShippingAddress,
-  Wallet
+  Wallet,
+  PaymentMethod
 } = db;
 
 const seedDatabase = async () => {
@@ -215,6 +216,21 @@ const seedDatabase = async () => {
       await CourierService.findOrCreate({ where: { name: c.name }, defaults: c });
     }
     console.log('       ✅ Courier services seeded (for checkout delivery_method).\n');
+
+    // ═══════════════════════════════════════════════════════════════════
+    // PAYMENT METHODS – Malipo only: Airtel (psp_id=1), TNM (psp_id=2)
+    // ═══════════════════════════════════════════════════════════════════
+
+    console.log('─── Payment Methods (Malipo) ───\n');
+
+    const paymentMethodsData = [
+      { name: 'Airtel Money', slug: 'airtel', psp_id: 1, provider: 'malipo', icon: 'airtel', is_active: true, sort_order: 1 },
+      { name: 'TNM Mpamba', slug: 'tnm', psp_id: 2, provider: 'malipo', icon: 'tnm', is_active: true, sort_order: 2 }
+    ];
+    for (const pm of paymentMethodsData) {
+      await PaymentMethod.findOrCreate({ where: { slug: pm.slug }, defaults: pm });
+    }
+    console.log('       ✅ Payment methods seeded: Airtel (psp_id=1), TNM (psp_id=2).\n');
 
     // ═══════════════════════════════════════════════════════════════════
     // 7. ESCROW SYSTEM – Admin wallet for platform escrow operations

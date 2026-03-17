@@ -2,6 +2,7 @@ import db from '../models/index.js';
 import { Op } from 'sequelize';
 import { sendNotificationEmail } from '../utils/notificationHelper.js';
 import { logAudit } from '../utils/audit.js';
+import { captureWebhook } from '../utils/webhookCapture.js';
 
 const { Order, Wallet, WalletTransaction, Escrow, User, Notification } = db;
 
@@ -9,8 +10,18 @@ const { Order, Wallet, WalletTransaction, Escrow, User, Notification } = db;
  * POST /api/webhooks/malipo
  * Called by Malipo after payment success. Configure callback URL in Malipo dashboard.
  * Payload may include: order_id (order_number), status, transaction_id, amount, etc.
+ *
+ * Capture mode: Set WEBHOOK_CAPTURE_ONLY=true in .env to only capture payloads
+ * without processing. Inspect logs/webhook-captures/ then add logic later.
  */
 export const malipo = async (req, res) => {
+  // Always capture everything the webhook sends for inspection
+  captureWebhook('malipo', req);
+
+  if (process.env.WEBHOOK_CAPTURE_ONLY === 'true') {
+    return res.status(200).json({ success: true, message: 'Webhook captured (capture-only mode)' });
+  }
+
   try {
     const body = req.body || {};
     const orderRef = body.order_id || body.order_number || body.reference;
@@ -37,7 +48,7 @@ export const malipo = async (req, res) => {
     }
 
     order.payment_status = 'paid';
-    order.payment_method = body.psp_id === 2 ? 'mpamba' : 'airtel_money';
+    order.payment_method = body.psp_id === 2 ? 'tnm' : 'airtel';
     order.escrow_status = 'held';
     await order.save();
 
