@@ -21,6 +21,28 @@
 			"description": "All APIs for mobile customer application",
 			"item": [
 				{
+					"name": "0. Onboarding",
+					"item": [
+						{
+							"name": "Get Onboarding Slides",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/onboarding/slides",
+									"host": ["{{base_url}}"],
+									"path": ["api", "onboarding", "slides"]
+								},
+								"description": "Get onboarding carousel slides. No auth, no parameters. Returns active slides ordered by order_index."
+							},
+							"response": []
+						}
+					]
+				},
+				{
 					"name": "1. Authentication",
 					"item": [
 						{
@@ -2031,6 +2053,192 @@
 											"path": ["api", "admin", "courier-services", "1"]
 										},
 										"description": "Delete a courier service. Requires admin role."
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Onboarding Slides",
+							"item": [
+								{
+									"name": "List Onboarding Slides",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/onboarding-slides",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "onboarding-slides"]
+										},
+										"description": "List all onboarding slides (admin only). Requires admin role."
+									},
+									"response": []
+								},
+								{
+									"name": "Get Onboarding Slide",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/onboarding-slides/1",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "onboarding-slides", "1"]
+										},
+										"description": "Get a single onboarding slide by id. Requires admin role."
+									},
+									"response": []
+								},
+								{
+									"name": "Create Onboarding Slide",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"title\": \"Welcome\",\n  \"description\": \"Discover amazing products...\",\n  \"image_url\": \"https://example.com/slide1.png\",\n  \"order_index\": 0,\n  \"is_active\": true\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/api/admin/onboarding-slides",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "onboarding-slides"]
+										},
+										"description": "Create a new onboarding slide. Requires admin role. Body: title, image_url (required); description, order_index, is_active (optional)."
+									},
+									"response": []
+								},
+								{
+									"name": "Update Onboarding Slide",
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"title\": \"Welcome Updated\",\n  \"description\": \"Updated description\",\n  \"image_url\": \"https://example.com/slide1-new.png\",\n  \"order_index\": 1,\n  \"is_active\": true\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/api/admin/onboarding-slides/1",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "onboarding-slides", "1"]
+										},
+										"description": "Update an onboarding slide. Requires admin role."
+									},
+									"response": []
+								},
+								{
+									"name": "Delete Onboarding Slide",
+									"request": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/onboarding-slides/1",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "onboarding-slides", "1"]
+										},
+										"description": "Delete an onboarding slide. Requires admin role."
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Banners",
+							"item": [
+								{
+									"name": "List Banners",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/banners",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "banners"]
+										},
+										"description": "List all banners. Requires admin role."
+									},
+									"response": []
+								},
+								{
+									"name": "Get Banner",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/banners/1",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "banners", "1"]
+										},
+										"description": "Get a single banner by id. Requires admin role."
+									},
+									"response": []
+								},
+								{
+									"name": "Create Banner",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"title\": \"Summer Sale\",\n  \"image\": \"https://example.com/banner.png\",\n  \"product_id\": 1\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/api/admin/banners",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "banners"]
+										},
+										"description": "Create a new banner. Requires admin role. Body: image (required); title, product_id (optional)."
+									},
+									"response": []
+								},
+								{
+									"name": "Update Banner",
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"title\": \"Summer Sale Updated\",\n  \"image\": \"https://example.com/banner-new.png\",\n  \"product_id\": 2\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/api/admin/banners/1",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "banners", "1"]
+										},
+										"description": "Update a banner. Requires admin role."
+									},
+									"response": []
+								},
+								{
+									"name": "Delete Banner",
+									"request": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/banners/1",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "banners", "1"]
+										},
+										"description": "Delete a banner. Requires admin role."
 									},
 									"response": []
 								}

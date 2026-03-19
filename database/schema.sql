@@ -148,6 +148,20 @@ CREATE TABLE IF NOT EXISTS products (
   INDEX idx_special (is_special)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Onboarding slides table (app onboarding carousel)
+CREATE TABLE IF NOT EXISTS onboarding_slides (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  image_url VARCHAR(500) NOT NULL,
+  order_index INT NOT NULL DEFAULT 0,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_order (order_index),
+  INDEX idx_active (is_active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Banners table
 CREATE TABLE IF NOT EXISTS banners (
   id INT AUTO_INCREMENT PRIMARY KEY,

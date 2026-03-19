@@ -21,7 +21,8 @@ const {
   DeliveryAgent,
   ShippingAddress,
   Wallet,
-  PaymentMethod
+  PaymentMethod,
+  OnboardingSlide
 } = db;
 
 const seedDatabase = async () => {
@@ -33,6 +34,44 @@ const seedDatabase = async () => {
 
     await db.sequelize.sync({ alter: false });
     console.log('✅ Database synchronized.\n');
+
+    // ═══════════════════════════════════════════════════════════════════
+    // 1. ONBOARDING SLIDES – App carousel (shown before login)
+    // ═══════════════════════════════════════════════════════════════════
+
+    console.log('─── 1. Onboarding Slides ───\n');
+
+    const onboardingSlidesData = [
+      {
+        title: 'All Your Favorite Electronics Shops, in One',
+        description: 'Discover and buy top-quality electronics from Browse verified suppliers from across Malawi all in one app.',
+        image_url: 'https://res.cloudinary.com/dd1raaqnh/image/upload/v1773905083/techaven/onboarding-slides/gg76jvo0dwkdbsqdddgk.png',
+        order_index: 0,
+        is_active: true
+      },
+      {
+        title: 'All Your Favorite Products, in One',
+        description: 'Find the best deals on phones, laptops, and accessories. Compare products and make smart buying decisions.',
+        image_url: 'https://res.cloudinary.com/dd1raaqnh/image/upload/v1773905155/techaven/onboarding-slides/fxemvtofhuhlztsfh7qz.png',
+        order_index: 1,
+        is_active: true
+      },
+      {
+        title: 'All Your Favorite Payment Gateways in One',
+        description: 'Discover and buy top-quality electronics from Browse verified suppliers from across Malawi all in one app.',
+        image_url: 'https://res.cloudinary.com/dd1raaqnh/image/upload/v1773905197/techaven/onboarding-slides/hwdsvz2m3blr79vropl2.png',
+        order_index: 2,
+        is_active: true
+      }
+    ];
+
+    for (const slide of onboardingSlidesData) {
+      await OnboardingSlide.findOrCreate({
+        where: { title: slide.title },
+        defaults: slide
+      });
+    }
+    console.log('       ✅ Onboarding slides seeded.\n');
 
     // ═══════════════════════════════════════════════════════════════════
     // 2. SHARED AUTHENTICATION FLOW (Section 2 of Flow Doc)

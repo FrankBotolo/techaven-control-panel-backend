@@ -24,6 +24,7 @@ import DeliveryAgent from './DeliveryAgent.js';
 import DeliveryJob from './DeliveryJob.js';
 import PaymentMethod from './PaymentMethod.js';
 import MalipoTransaction from './MalipoTransaction.js';
+import OnboardingSlide from './OnboardingSlide.js';
 
 // Define associations
 Product.belongsTo(Category, { foreignKey: 'category_id', as: 'category' });
@@ -162,7 +163,8 @@ const db = {
   DeliveryAgent,
   DeliveryJob,
   PaymentMethod,
-  MalipoTransaction
+  MalipoTransaction,
+  OnboardingSlide
 };
 
 export default db;

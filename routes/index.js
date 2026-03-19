@@ -25,6 +25,7 @@ import smsRoutes from './sms.js';
 import webhookRoutes from './webhooks.js';
 import courierServicesRoutes from './courier-services.js';
 import deliveryAgentRoutes from './delivery-agents.js';
+import onboardingRoutes from './onboarding.js';
 
 const router = express.Router();
 
@@ -54,6 +55,7 @@ router.use('/sms', smsRoutes);
 router.use('/webhooks', webhookRoutes);
 router.use('/courier-services', courierServicesRoutes);
 router.use('/delivery-agents', deliveryAgentRoutes);
+router.use('/onboarding', onboardingRoutes);
 
 export default router;
 
