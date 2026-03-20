@@ -1,6 +1,6 @@
 import db from '../models/index.js';
 import { Op } from 'sequelize';
-import { logAudit } from '../utils/audit.js';
+import { logAudit, auditContext } from '../utils/audit.js';
 import { sendNotificationEmail } from '../utils/notificationHelper.js';
 
 const { Order, OrderItem, Cart, Product, User, Notification, Shop, Escrow, Wallet, WalletTransaction, ShippingAddress, CourierService } = db;
@@ -458,12 +458,12 @@ export const createOrder = async (req, res) => {
     }
 
     await logAudit({
+      ...auditContext(req),
       action: 'customer.order.create',
       actor_user_id: userId,
       target_type: 'order',
       target_id: order.id,
-      metadata: { order_number: orderNumber, total_amount: totalAmount },
-      ip_address: req.ip
+      metadata: { order_number: orderNumber, total_amount: totalAmount }
     });
 
     return res.status(201).json({

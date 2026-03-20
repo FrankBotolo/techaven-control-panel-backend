@@ -10,6 +10,7 @@ import * as AdminCourierController from '../controllers/AdminCourierController.j
 import * as AdminMalipoController from '../controllers/AdminMalipoController.js';
 import * as AdminOnboardingSlideController from '../controllers/AdminOnboardingSlideController.js';
 import * as AdminBannerController from '../controllers/AdminBannerController.js';
+import * as AdminAuditLogController from '../controllers/AdminAuditLogController.js';
 
 const router = express.Router();
 
@@ -68,6 +69,13 @@ router.get('/banners/:id', AdminBannerController.getOne);
 router.post('/banners', AdminBannerController.create);
 router.patch('/banners/:id', AdminBannerController.update);
 router.delete('/banners/:id', AdminBannerController.remove);
+
+// Audit logs - System activity for support, fraud detection, compliance
+router.get('/audit-logs', AdminAuditLogController.list);
+router.get('/audit-logs/stats', AdminAuditLogController.getStats);
+router.delete('/audit-logs', AdminAuditLogController.clear);
+router.get('/audit-logs/:id', AdminAuditLogController.getOne);
+router.delete('/audit-logs/:id', AdminAuditLogController.remove);
 
 // Withdrawals - Process seller withdrawal requests (approve/reject)
 router.get('/withdrawals', AdminWithdrawalController.listWithdrawals);

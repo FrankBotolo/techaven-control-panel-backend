@@ -1,6 +1,6 @@
-# TecHaven API Documentation — Mobile App Only
+# TecHaven API Documentation
 
-API reference for **Mobile App (Customer)** endpoints only. Grouping matches the Postman collection.
+API reference for **Mobile App (Customer)** and **Admin** endpoints. Grouping matches the Postman collection.
 
 ---
 
@@ -33,27 +33,62 @@ Every response is JSON:
 
 ## Table of contents
 
-1. [Authentication](#1-authentication)
-2. [User Management](#2-user-management)
-3. [Products](#3-products)
-4. [Categories](#4-categories)
-5. [Cart](#5-cart)
-6. [Orders](#6-orders)
-7. [Wishlist](#7-wishlist)
-8. [Shipping Addresses](#8-shipping-addresses)
-9. [Wallet](#9-wallet)
-10. [Payment Methods](#10-payment-methods)
-11. [Notifications](#11-notifications)
-12. [Shops](#12-shops)
-13. [Search](#13-search)
-14. [Help & Support](#14-help--support)
-15. [App Info](#15-app-info)
-16. [SMS](#16-sms)
-17. [Webhooks](#17-webhooks)
+**Mobile App**
+- [0. Onboarding](#0-onboarding)
+- [1. Authentication](#1-authentication)
+- [2. User Management](#2-user-management)
+- [3. Products](#3-products)
+- [4. Categories](#4-categories)
+- [5. Cart](#5-cart)
+- [6. Orders](#6-orders)
+- [7. Wishlist](#7-wishlist)
+- [8. Shipping Addresses](#8-shipping-addresses)
+- [9. Wallet](#9-wallet)
+- [10. Payment Methods](#10-payment-methods)
+- [11. Notifications](#11-notifications)
+- [12. Shops](#12-shops)
+- [12b. Banners](#12b-banners)
+- [13. Search](#13-search)
+- [14. Help & Support](#14-help--support)
+- [15. App Info](#15-app-info)
+- [16. SMS](#16-sms)
+- [17. Webhooks](#17-webhooks)
+
+**Admin APIs**
+- [Admin - Onboarding Slides](#admin---onboarding-slides)
+- [Admin - Banners](#admin---banners)
+- [Admin - Audit Logs](#admin---audit-logs)
 
 ---
 
 ## Mobile App (Customer APIs)
+
+### 0. Onboarding
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/onboarding/slides` | No | Get onboarding carousel slides. Returns active slides ordered by order_index. |
+
+**Response**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "title": "Welcome",
+      "description": "Discover amazing products...",
+      "image_url": "https://...",
+      "order_index": 0,
+      "is_active": true,
+      "created_at": "...",
+      "updated_at": "..."
+    }
+  ]
+}
+```
+
+---
 
 ### 1. Authentication
 
@@ -609,6 +644,31 @@ All under `/api/shipping-addresses` (or `/api/addresses`). Data: id, label, name
 
 ---
 
+### 12b. Banners
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/banners` | No | Get homepage banner carousel. |
+
+**Response**
+```json
+{
+  "success": true,
+  "message": "Banners retrieved",
+  "data": [
+    {
+      "id": 1,
+      "title": "Summer Sale",
+      "image": "https://...",
+      "link": null,
+      "is_active": true
+    }
+  ]
+}
+```
+
+---
+
 ### 13. Search
 
 | Method | Endpoint | Auth | Description |
@@ -735,6 +795,48 @@ All under `/api/shipping-addresses` (or `/api/addresses`). Data: id, label, name
   "psp_id": 1
 }
 ```
+
+---
+
+## Admin APIs
+
+All admin endpoints require `Authorization: Bearer <access_token>` and user role `admin`.
+
+### Admin - Onboarding Slides
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/admin/onboarding-slides` | List all slides |
+| GET | `/api/admin/onboarding-slides/:id` | Get one slide |
+| POST | `/api/admin/onboarding-slides` | Create slide. Body: title, image_url (required); description, order_index, is_active |
+| PATCH | `/api/admin/onboarding-slides/:id` | Update slide |
+| DELETE | `/api/admin/onboarding-slides/:id` | Delete slide |
+
+---
+
+### Admin - Banners
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/admin/banners` | List all banners |
+| GET | `/api/admin/banners/:id` | Get one banner |
+| POST | `/api/admin/banners` | Create banner. Body: image (required); title, product_id |
+| PATCH | `/api/admin/banners/:id` | Update banner |
+| DELETE | `/api/admin/banners/:id` | Delete banner |
+
+---
+
+### Admin - Audit Logs
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/admin/audit-logs` | List logs. Query: page, limit, action, actor_user_id, target_type, ip_address, date_from, date_to, sort |
+| GET | `/api/admin/audit-logs/stats` | Statistics (total, actions by type, activity by target). Query: date_from, date_to |
+| GET | `/api/admin/audit-logs/:id` | Get single log |
+| DELETE | `/api/admin/audit-logs` | Clear logs. Query: date_before (optional, delete logs older than date) |
+| DELETE | `/api/admin/audit-logs/:id` | Delete single log |
+
+**List response** includes: action, actor (user), target_type, target_id, metadata, ip_address, user_agent, created_at.
 
 ---
 

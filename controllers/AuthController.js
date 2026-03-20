@@ -4,7 +4,7 @@ import { sendOtpEmail } from '../services/emailService.js';
 import { sendOtpSms, sendPasswordResetOtpSms } from '../services/smsService.js';
 import moment from 'moment';
 import { Op } from 'sequelize';
-import { logAudit } from '../utils/audit.js';
+import { logAudit, auditContext } from '../utils/audit.js';
 
 const { User, Otp, ShopInvitation, Shop, DeliveryAgent } = db;
 
@@ -236,6 +236,7 @@ export const registerSeller = async (req, res) => {
     });
 
     await logAudit({
+      ...auditContext(req),
       action: 'seller.self_registration.request',
       actor_user_id: user.id,
       target_type: 'shop',
@@ -246,8 +247,7 @@ export const registerSeller = async (req, res) => {
         address,
         phone_number,
         email
-      },
-      ip_address: req.ip
+      }
     });
 
     const otpCode = await sendOtp(user, 'signup');

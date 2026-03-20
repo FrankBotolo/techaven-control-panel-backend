@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS shop_invitations (
   FOREIGN KEY (accepted_by_user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Audit logs table
+-- Audit logs table (system activity for support, fraud detection, compliance)
 CREATE TABLE IF NOT EXISTS audit_logs (
   id INT AUTO_INCREMENT PRIMARY KEY,
   action VARCHAR(255) NOT NULL,
@@ -111,10 +111,13 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   target_id VARCHAR(255),
   metadata JSON,
   ip_address VARCHAR(255),
+  user_agent TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_audit_action (action),
   INDEX idx_audit_actor (actor_user_id),
+  INDEX idx_audit_created (created_at),
+  INDEX idx_audit_ip (ip_address),
   FOREIGN KEY (actor_user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

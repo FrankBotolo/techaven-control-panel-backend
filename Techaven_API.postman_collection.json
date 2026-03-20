@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "techaven-api-collection",
 		"name": "Techaven API",
-		"description": "Complete API documentation for Techaven e-commerce platform (Flow Diagram v1.0).\n\n**Seed credentials** (run `npm run seed` first):\n- Admin: admin@techaven.mw / admin12345\n- Buyer: buyer@techaven.mw / password123\n- Seller: seller@techaven.mw / seller12345\n- Delivery Agent: agent@techaven.mw / agent12345\n\n**Response envelope:** All endpoints return JSON with `success`, `message`, `data`. Use `Authorization: Bearer {{access_token}}` for protected routes.\n\n**Organization:** Mobile App (Customer APIs), Web (Admin & Seller APIs), Delivery Agent APIs.",
+		"description": "Complete API documentation for Techaven e-commerce platform (Flow Diagram v1.0).\n\n**Seed credentials** (run `npm run seed` first):\n- Admin: admin@techaven.mw / admin12345\n- Buyer: buyer@techaven.mw / password123\n- Seller: seller@techaven.mw / seller12345\n- Delivery Agent: agent@techaven.mw / agent12345\n\n**Response envelope:** All endpoints return JSON with `success`, `message`, `data`. Use `Authorization: Bearer {{access_token}}` for protected routes.\n\n**Organization:**\n- **Mobile App:** Onboarding, Auth, User, Products, Categories, Cart, Orders, Wishlist, Addresses, Wallet, Payment Methods, Notifications, Shops, Search, Help, App Info, SMS, Webhooks\n- **Admin:** Dashboard, Malipo, Shops, Orders, Courier Services, Onboarding Slides, Banners, Audit Logs, Withdrawals, Notifications, Categories\n- **Seller:** Products, Orders, Dashboard, Notifications\n- **Delivery Agent:** Jobs, Profile",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"auth": {
@@ -1486,6 +1486,28 @@
 					]
 				},
 				{
+					"name": "11b. Banners",
+					"item": [
+						{
+							"name": "Get Banners",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/banners",
+									"host": ["{{base_url}}"],
+									"path": ["api", "banners"]
+								},
+								"description": "Get homepage banner carousel. No auth. Returns id, title, image, link, is_active."
+							},
+							"response": []
+						}
+					]
+				},
+				{
 					"name": "12. Search",
 					"item": [
 						{
@@ -2239,6 +2261,99 @@
 											"path": ["api", "admin", "banners", "1"]
 										},
 										"description": "Delete a banner. Requires admin role."
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Audit Logs",
+							"item": [
+								{
+									"name": "List Audit Logs",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/audit-logs?page=1&limit=50",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "audit-logs"],
+											"query": [
+												{"key": "page", "value": "1"},
+												{"key": "limit", "value": "50"},
+												{"key": "action", "value": "order", "disabled": true, "description": "Filter by action (partial match)"},
+												{"key": "actor_user_id", "value": "1", "disabled": true, "description": "Filter by user who performed action"},
+												{"key": "target_type", "value": "order", "disabled": true, "description": "Filter by target (order, shop, user, etc.)"},
+												{"key": "ip_address", "value": "192.168", "disabled": true, "description": "Filter by IP (fraud detection)"},
+												{"key": "date_from", "value": "2026-01-01", "disabled": true, "description": "Logs from this date (ISO)"},
+												{"key": "date_to", "value": "2026-12-31", "disabled": true, "description": "Logs until this date (ISO)"},
+												{"key": "sort", "value": "createdAt:desc", "disabled": true, "description": "Sort: createdAt:desc | createdAt:asc"}
+											]
+										},
+										"description": "List system audit logs with pagination and filters. For support, fraud detection, compliance. Returns action, actor (user), target, metadata, ip_address, user_agent, created_at."
+									},
+									"response": []
+								},
+								{
+									"name": "Get Audit Log Stats",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/audit-logs/stats",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "audit-logs", "stats"],
+											"query": [
+												{"key": "date_from", "value": "2026-01-01", "disabled": true},
+												{"key": "date_to", "value": "2026-12-31", "disabled": true}
+											]
+										},
+										"description": "Get audit log statistics: total logs, actions by type, activity by target. Optional date range."
+									},
+									"response": []
+								},
+								{
+									"name": "Get Audit Log by ID",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/audit-logs/1",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "audit-logs", "1"]
+										},
+										"description": "Get full details of a single audit log entry."
+									},
+									"response": []
+								},
+								{
+									"name": "Clear Audit Logs",
+									"request": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/audit-logs",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "audit-logs"],
+											"query": [
+												{"key": "date_before", "value": "2026-01-01", "disabled": true, "description": "Optional: only delete logs older than this date (ISO)"}
+											]
+										},
+										"description": "Clear audit logs. Without date_before: deletes all. With date_before: deletes only logs older than that date."
+									},
+									"response": []
+								},
+								{
+									"name": "Delete Audit Log",
+									"request": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/audit-logs/1",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "audit-logs", "1"]
+										},
+										"description": "Delete a single audit log by id."
 									},
 									"response": []
 								}

@@ -34,6 +34,10 @@ const AuditLog = sequelize.define('AuditLog', {
   ip_address: {
     type: DataTypes.STRING,
     allowNull: true
+  },
+  user_agent: {
+    type: DataTypes.TEXT,
+    allowNull: true
   }
 }, {
   tableName: 'audit_logs',
