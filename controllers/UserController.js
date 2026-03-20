@@ -1,5 +1,6 @@
 import db from '../models/index.js';
 import path from 'path';
+import { logAudit, auditContext } from '../utils/audit.js';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 
@@ -56,6 +57,15 @@ export const updateProfile = async (req, res) => {
     if (phone !== undefined && !phone_number) user.phone_number = phone;
 
     await user.save();
+
+    await logAudit({
+      ...auditContext(req),
+      action: 'user.profile.update',
+      actor_user_id: user.id,
+      target_type: 'user',
+      target_id: user.id,
+      metadata: { role: user.role }
+    });
 
     return res.json({
       success: true,
@@ -156,6 +166,15 @@ export const changePassword = async (req, res) => {
     user.password = new_password;
     await user.save();
 
+    await logAudit({
+      ...auditContext(req),
+      action: 'user.password.change',
+      actor_user_id: user.id,
+      target_type: 'user',
+      target_id: user.id,
+      metadata: { role: user.role }
+    });
+
     return res.json({
       success: true,
       message: 'Password changed successfully',
@@ -191,8 +210,15 @@ export const deleteAccount = async (req, res) => {
       });
     }
 
-    // Soft delete or hard delete based on your requirements
-    // For now, we'll just mark as deleted or actually delete
+    await logAudit({
+      ...auditContext(req),
+      action: 'user.account.delete',
+      actor_user_id: user.id,
+      target_type: 'user',
+      target_id: user.id,
+      metadata: { role: user.role, email: user.email, reason: reason || null }
+    });
+
     await user.destroy();
 
     return res.json({

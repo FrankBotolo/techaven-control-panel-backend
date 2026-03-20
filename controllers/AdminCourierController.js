@@ -1,4 +1,5 @@
 import db from '../models/index.js';
+import { logAudit, auditContext } from '../utils/audit.js';
 
 const { CourierService } = db;
 
@@ -52,6 +53,16 @@ export const createCourierService = async (req, res) => {
       is_active: is_active !== false && is_active !== 'false',
       sort_order: parseInt(sort_order, 10) || 0
     });
+
+    await logAudit({
+      ...auditContext(req),
+      action: 'admin.courier_service.create',
+      actor_user_id: req.user.id,
+      target_type: 'courier_service',
+      target_id: service.id,
+      metadata: { name: service.name }
+    });
+
     return res.status(201).json({
       success: true,
       message: 'Courier service created',
@@ -91,6 +102,16 @@ export const updateCourierService = async (req, res) => {
     if (is_active !== undefined) service.is_active = is_active !== false && is_active !== 'false';
     if (sort_order !== undefined) service.sort_order = parseInt(sort_order, 10) || 0;
     await service.save();
+
+    await logAudit({
+      ...auditContext(req),
+      action: 'admin.courier_service.update',
+      actor_user_id: req.user.id,
+      target_type: 'courier_service',
+      target_id: service.id,
+      metadata: { name: service.name }
+    });
+
     return res.json({
       success: true,
       message: 'Courier service updated',
@@ -123,7 +144,18 @@ export const deleteCourierService = async (req, res) => {
         message: 'Courier service not found'
       });
     }
+    const serviceName = service.name;
     await service.destroy();
+
+    await logAudit({
+      ...auditContext(req),
+      action: 'admin.courier_service.delete',
+      actor_user_id: req.user.id,
+      target_type: 'courier_service',
+      target_id: id,
+      metadata: { name: serviceName }
+    });
+
     return res.json({
       success: true,
       message: 'Courier service deleted'

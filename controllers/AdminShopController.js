@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import db from '../models/index.js';
 import { sendInvitationEmail } from '../services/emailService.js';
-import { logAudit } from '../utils/audit.js';
+import { logAudit, auditContext } from '../utils/audit.js';
 
 const { Shop, ShopInvitation } = db;
 
@@ -29,12 +29,12 @@ export const createShop = async (req, res) => {
     });
 
     await logAudit({
+      ...auditContext(req),
       action: 'admin.shop.create',
       actor_user_id: req.user.id,
       target_type: 'shop',
       target_id: shop.id,
-      metadata: { shop_name, location, address, phone, email, logo_url },
-      ip_address: req.ip
+      metadata: { shop_name, location, address, phone, email, logo_url }
     });
 
     return res.json({
@@ -90,12 +90,12 @@ export const updateShop = async (req, res) => {
     await shop.save();
 
     await logAudit({
+      ...auditContext(req),
       action: 'admin.shop.update',
       actor_user_id: req.user.id,
       target_type: 'shop',
       target_id: shop.id,
-      metadata: { shop_name, location, address, phone, email, status, logo_url },
-      ip_address: req.ip
+      metadata: { shop_name, location, address, phone, email, status, logo_url }
     });
 
     return res.json({ success: true, message: 'Shop updated successfully', data: shop });
@@ -121,12 +121,12 @@ export const approveShopApplication = async (req, res) => {
     await shop.save();
 
     await logAudit({
+      ...auditContext(req),
       action: 'admin.shop.application.approve',
       actor_user_id: req.user.id,
       target_type: 'shop',
       target_id: shop.id,
-      metadata: { application_status: 'approved' },
-      ip_address: req.ip
+      metadata: { application_status: 'approved' }
     });
 
     return res.json({
@@ -161,12 +161,12 @@ export const rejectShopApplication = async (req, res) => {
     await shop.save();
 
     await logAudit({
+      ...auditContext(req),
       action: 'admin.shop.application.reject',
       actor_user_id: req.user.id,
       target_type: 'shop',
       target_id: shop.id,
-      metadata: { application_status: 'rejected', reason: reason || null },
-      ip_address: req.ip
+      metadata: { application_status: 'rejected', reason: reason || null }
     });
 
     return res.json({
@@ -197,12 +197,12 @@ export const deleteShop = async (req, res) => {
     await shop.destroy({ force: true });
 
     await logAudit({
+      ...auditContext(req),
       action: 'admin.shop.delete',
       actor_user_id: req.user.id,
       target_type: 'shop',
       target_id: shopIdForAudit,
-      metadata: { hard_delete: true, shop_name: shopName },
-      ip_address: req.ip
+      metadata: { hard_delete: true, shop_name: shopName }
     });
 
     return res.json({ success: true, message: 'Shop deleted successfully' });
@@ -256,12 +256,12 @@ export const inviteOwner = async (req, res) => {
     }
 
     await logAudit({
+      ...auditContext(req),
       action: 'admin.shop.invite_owner',
       actor_user_id: req.user.id,
       target_type: 'shop_invitation',
       target_id: invite.id,
-      metadata: { shop_id: shop.id, owner_name, owner_email, owner_phone },
-      ip_address: req.ip
+      metadata: { shop_id: shop.id, owner_name, owner_email, owner_phone }
     });
 
     return res.json({

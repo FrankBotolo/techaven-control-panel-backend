@@ -1,4 +1,5 @@
 import db from '../models/index.js';
+import { logAudit, auditContext } from '../utils/audit.js';
 
 const { OnboardingSlide } = db;
 
@@ -90,6 +91,15 @@ export const create = async (req, res) => {
       is_active: is_active !== false
     });
 
+    await logAudit({
+      ...auditContext(req),
+      action: 'admin.onboarding_slide.create',
+      actor_user_id: req.user.id,
+      target_type: 'onboarding_slide',
+      target_id: slide.id,
+      metadata: { title: slide.title }
+    });
+
     return res.status(201).json({
       success: true,
       message: 'Onboarding slide created successfully',
@@ -137,6 +147,15 @@ export const update = async (req, res) => {
 
     await slide.save();
 
+    await logAudit({
+      ...auditContext(req),
+      action: 'admin.onboarding_slide.update',
+      actor_user_id: req.user.id,
+      target_type: 'onboarding_slide',
+      target_id: slide.id,
+      metadata: { title: slide.title }
+    });
+
     return res.json({
       success: true,
       message: 'Onboarding slide updated successfully',
@@ -175,7 +194,17 @@ export const remove = async (req, res) => {
       });
     }
 
+    const slideTitle = slide.title;
     await slide.destroy();
+
+    await logAudit({
+      ...auditContext(req),
+      action: 'admin.onboarding_slide.delete',
+      actor_user_id: req.user.id,
+      target_type: 'onboarding_slide',
+      target_id: id,
+      metadata: { title: slideTitle }
+    });
 
     return res.json({
       success: true,

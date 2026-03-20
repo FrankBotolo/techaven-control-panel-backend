@@ -1,5 +1,5 @@
 import db from '../models/index.js';
-import { logAudit } from '../utils/audit.js';
+import { logAudit, auditContext } from '../utils/audit.js';
 
 const { Product, Category, Shop } = db;
 
@@ -111,12 +111,12 @@ export const create = async (req, res) => {
     await shop.save();
 
     await logAudit({
+      ...auditContext(req),
       action: 'seller.product.create',
       actor_user_id: req.user.id,
       target_type: 'product',
       target_id: product.id,
-      metadata: { shop_id: shop.id, product_name: name, category_id, price },
-      ip_address: req.ip
+      metadata: { shop_id: shop.id, product_name: name, category_id, price }
     });
 
     return res.json({
@@ -255,12 +255,12 @@ export const update = async (req, res) => {
     await product.save();
 
     await logAudit({
+      ...auditContext(req),
       action: 'seller.product.update',
       actor_user_id: req.user.id,
       target_type: 'product',
       target_id: product.id,
-      metadata: { shop_id: shop.id, product_name: product.name },
-      ip_address: req.ip
+      metadata: { shop_id: shop.id, product_name: product.name }
     });
 
     return res.json({ success: true, message: 'Product updated successfully', data: product });
@@ -295,12 +295,12 @@ export const remove = async (req, res) => {
     await shop.save();
 
     await logAudit({
+      ...auditContext(req),
       action: 'seller.product.delete',
       actor_user_id: req.user.id,
       target_type: 'product',
       target_id: productId,
-      metadata: { shop_id: shop.id, product_name: product.name },
-      ip_address: req.ip
+      metadata: { shop_id: shop.id, product_name: product.name }
     });
 
     return res.json({ success: true, message: 'Product deleted successfully' });

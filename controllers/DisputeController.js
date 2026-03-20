@@ -1,6 +1,6 @@
 import db from '../models/index.js';
 import { Op } from 'sequelize';
-import { logAudit } from '../utils/audit.js';
+import { logAudit, auditContext } from '../utils/audit.js';
 import { sendNotificationEmail } from '../utils/notificationHelper.js';
 
 const { Dispute, Order, OrderItem, User, Escrow, Wallet, WalletTransaction, Notification } = db;
@@ -104,12 +104,12 @@ export const openDispute = async (req, res) => {
     }
 
     await logAudit({
+      ...auditContext(req),
       action: 'buyer.dispute.open',
       actor_user_id: userId,
       target_type: 'dispute',
       target_id: dispute.id,
-      metadata: { order_id: order.id, order_number: order.order_number },
-      ip_address: req.ip
+      metadata: { order_id: order.id, order_number: order.order_number }
     });
 
     return res.status(201).json({
@@ -421,12 +421,12 @@ export const resolveDispute = async (req, res) => {
       sendNotificationEmail(sellerReplacementNotification, order);
 
       await logAudit({
+        ...auditContext(req),
         action: 'admin.dispute.resolve',
         actor_user_id: adminId,
         target_type: 'dispute',
         target_id: dispute.id,
-        metadata: { resolution_type: 'replacement', order_id: order.id },
-        ip_address: req.ip
+        metadata: { resolution_type: 'replacement', order_id: order.id }
       });
 
       return res.json({
@@ -552,6 +552,7 @@ export const resolveDispute = async (req, res) => {
     sendNotificationEmail(sellerResolvedNotification, order);
 
     await logAudit({
+      ...auditContext(req),
       action: 'admin.dispute.resolve',
       actor_user_id: adminId,
       target_type: 'dispute',
@@ -561,8 +562,7 @@ export const resolveDispute = async (req, res) => {
         refund_amount: buyerRefundAmount,
         seller_amount: sellerReceiveAmount,
         order_id: order.id
-      },
-      ip_address: req.ip
+      }
     });
 
     return res.json({

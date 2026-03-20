@@ -354,6 +354,17 @@ export const register = async (req, res) => {
       shop_id: invite ? invite.shop_id : null
     });
 
+    if (!invite) {
+      await logAudit({
+        ...auditContext(req),
+        action: 'customer.register',
+        actor_user_id: user.id,
+        target_type: 'user',
+        target_id: user.id,
+        metadata: { role: 'customer' }
+      });
+    }
+
     if (invite) {
       invite.status = 'accepted';
       invite.accepted_by_user_id = user.id;
@@ -445,6 +456,15 @@ export const login = async (req, res) => {
 
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
+
+    await logAudit({
+      ...auditContext(req),
+      action: 'user.login',
+      actor_user_id: user.id,
+      target_type: 'user',
+      target_id: user.id,
+      metadata: { role: user.role }
+    });
 
     const memberSince = user.createdAt
       ? new Date(user.createdAt).toLocaleString('en-US', { month: 'long', year: 'numeric' })

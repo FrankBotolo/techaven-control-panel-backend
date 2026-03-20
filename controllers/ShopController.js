@@ -1,5 +1,5 @@
 import db from '../models/index.js';
-import { logAudit } from '../utils/audit.js';
+import { logAudit, auditContext } from '../utils/audit.js';
 
 const { Shop, Product, Category, User } = db;
 
@@ -244,12 +244,12 @@ export const updateShop = async (req, res) => {
     // Log audit if user is authenticated
     if (req.user) {
       await logAudit({
+        ...auditContext(req),
         action: 'shop.update',
         actor_user_id: req.user.id,
         target_type: 'shop',
         target_id: shop.id,
-        metadata: { shop_name, location, address, phone, email, status, logo_url },
-        ip_address: req.ip
+        metadata: { shop_name, location, address, phone, email, status, logo_url }
       });
     }
 

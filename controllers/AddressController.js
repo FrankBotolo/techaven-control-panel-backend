@@ -1,4 +1,5 @@
 import db from '../models/index.js';
+import { logAudit, auditContext } from '../utils/audit.js';
 
 const { ShippingAddress } = db;
 
@@ -68,6 +69,15 @@ export const addAddress = async (req, res) => {
       is_default: !!is_default
     });
 
+    await logAudit({
+      ...auditContext(req),
+      action: 'customer.address.add',
+      actor_user_id: userId,
+      target_type: 'shipping_address',
+      target_id: row.id,
+      metadata: { label: row.label, city: row.city }
+    });
+
     return res.status(201).json({
       success: true,
       message: 'Address added',
@@ -119,6 +129,15 @@ export const updateAddress = async (req, res) => {
     }
     await row.save();
 
+    await logAudit({
+      ...auditContext(req),
+      action: 'customer.address.update',
+      actor_user_id: userId,
+      target_type: 'shipping_address',
+      target_id: row.id,
+      metadata: { label: row.label }
+    });
+
     return res.json({
       success: true,
       message: 'Address updated',
@@ -152,7 +171,18 @@ export const deleteAddress = async (req, res) => {
       });
     }
 
+    const rowLabel = row.label;
     await row.destroy();
+
+    await logAudit({
+      ...auditContext(req),
+      action: 'customer.address.delete',
+      actor_user_id: userId,
+      target_type: 'shipping_address',
+      target_id: id,
+      metadata: { label: rowLabel }
+    });
+
     return res.json({
       success: true,
       message: 'Address deleted',

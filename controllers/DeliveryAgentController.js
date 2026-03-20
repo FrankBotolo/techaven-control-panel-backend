@@ -1,5 +1,5 @@
 import db from '../models/index.js';
-import { logAudit } from '../utils/audit.js';
+import { logAudit, auditContext } from '../utils/audit.js';
 import { sendNotificationEmail } from '../utils/notificationHelper.js';
 
 const { User, DeliveryAgent, DeliveryJob, Order, OrderItem, Product, Shop, Notification } = db;
@@ -35,12 +35,12 @@ export const register = async (req, res) => {
     }
 
     await logAudit({
+      ...auditContext(req),
       action: 'delivery_agent.register',
       actor_user_id: userId,
       target_type: 'delivery_agent',
       target_id: agent.id,
-      metadata: { vehicle_type: agent.vehicle_type, operating_zone: agent.operating_zone },
-      ip_address: req.ip
+      metadata: { vehicle_type: agent.vehicle_type, operating_zone: agent.operating_zone }
     });
 
     return res.json({
@@ -116,6 +116,15 @@ export const setAvailability = async (req, res) => {
 
     agent.is_available = !!is_available;
     await agent.save();
+
+    await logAudit({
+      ...auditContext(req),
+      action: 'delivery_agent.availability.update',
+      actor_user_id: userId,
+      target_type: 'delivery_agent',
+      target_id: agent.id,
+      metadata: { is_available: agent.is_available }
+    });
 
     return res.json({
       success: true,
@@ -297,6 +306,15 @@ export const acceptJob = async (req, res) => {
     job.accepted_at = new Date();
     await job.save();
 
+    await logAudit({
+      ...auditContext(req),
+      action: 'delivery_agent.job.accept',
+      actor_user_id: userId,
+      target_type: 'delivery_job',
+      target_id: job.id,
+      metadata: { order_id: job.order_id, order_number: job.order?.order_number }
+    });
+
     return res.json({
       success: true,
       message: 'Job accepted',
@@ -351,6 +369,15 @@ export const declineJob = async (req, res) => {
     job.agent_id = null;
     job.status = 'pending';
     await job.save();
+
+    await logAudit({
+      ...auditContext(req),
+      action: 'delivery_agent.job.decline',
+      actor_user_id: userId,
+      target_type: 'delivery_job',
+      target_id: job.id,
+      metadata: { order_id: job.order_id }
+    });
 
     return res.json({
       success: true,
@@ -416,6 +443,15 @@ export const markPickedUp = async (req, res) => {
       sendNotificationEmail(pickedUpNotification, order);
     }
 
+    await logAudit({
+      ...auditContext(req),
+      action: 'delivery_agent.job.pickup',
+      actor_user_id: userId,
+      target_type: 'delivery_job',
+      target_id: job.id,
+      metadata: { order_id: job.order_id, order_number: order?.order_number }
+    });
+
     return res.json({
       success: true,
       message: 'Parcel marked as picked up. Live tracking started.',
@@ -478,6 +514,15 @@ export const markDelivered = async (req, res) => {
         type: 'order',
         order_id: order.id,
         read: false
+      });
+
+      await logAudit({
+        ...auditContext(req),
+        action: 'delivery_agent.job.deliver',
+        actor_user_id: userId,
+        target_type: 'delivery_job',
+        target_id: job.id,
+        metadata: { order_id: job.order_id, order_number: order.order_number }
       });
       sendNotificationEmail(deliveredNotification, order);
     }

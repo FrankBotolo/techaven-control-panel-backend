@@ -1,3 +1,5 @@
+import { logAudit, auditContext } from '../utils/audit.js';
+
 export const getTopics = async (req, res) => {
   try {
     // TODO: Implement help topics from database
@@ -50,6 +52,15 @@ export const submitTicket = async (req, res) => {
     // TODO: Implement support ticket creation
     const ticketId = `tkt_${Date.now()}`;
     const ticketNumber = `SUP-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`;
+
+    await logAudit({
+      ...auditContext(req),
+      action: 'customer.support_ticket.submit',
+      actor_user_id: userId,
+      target_type: 'support_ticket',
+      target_id: ticketId,
+      metadata: { subject, category, order_id: order_id || null }
+    });
     
     return res.status(201).json({
       success: true,
@@ -69,4 +80,3 @@ export const submitTicket = async (req, res) => {
     });
   }
 };
-

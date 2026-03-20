@@ -812,6 +812,7 @@ export const updateOrderStatus = async (req, res) => {
     }
 
     await logAudit({
+      ...auditContext(req),
       action: 'order.update_status',
       actor_user_id: req.user.id,
       target_type: 'order',
@@ -819,9 +820,9 @@ export const updateOrderStatus = async (req, res) => {
       metadata: { 
         status: order.status, 
         payment_status: order.payment_status,
-        courier_tracking_number: order.courier_tracking_number
-      },
-      ip_address: req.ip
+        courier_tracking_number: order.courier_tracking_number,
+        actor_role: req.user.role
+      }
     });
 
     return res.json({
@@ -1318,12 +1319,12 @@ export const cancelOrder = async (req, res) => {
     }
 
     await logAudit({
+      ...auditContext(req),
       action: 'customer.order.cancel',
       actor_user_id: userId,
       target_type: 'order',
       target_id: order.id,
-      metadata: { order_number: order.order_number },
-      ip_address: req.ip
+      metadata: { order_number: order.order_number }
     });
 
     const orderWithItems = await Order.findByPk(order.id, { include: [{ model: OrderItem, as: 'items' }] });
@@ -1403,6 +1404,16 @@ export const payWithWallet = async (req, res) => {
       reference: `order_${order.id}`,
       status: 'completed',
       balance_after: wallet.balance
+    });
+
+    await logAudit({
+      ...auditContext(req),
+      action: 'customer.order.pay_wallet',
+      actor_user_id: userId,
+      target_type: 'order',
+      target_id: order.id,
+      metadata: { order_number: order.order_number, amount: total },
+      ip_address: req.ip
     });
 
     const orderWithItems = await Order.findByPk(order.id, { include: [{ model: OrderItem, as: 'items' }] });
@@ -1498,6 +1509,18 @@ export const payWithMalipo = async (req, res) => {
     });
 
     const data = await response.json().catch(() => ({}));
+
+    if (response.ok) {
+      await logAudit({
+        ...auditContext(req),
+        action: 'customer.order.pay_malipo_initiate',
+        actor_user_id: userId,
+        target_type: 'order',
+        target_id: order.id,
+        metadata: { order_number: order.order_number, amount, psp_id: pspId },
+        ip_address: req.ip
+      });
+    }
 
     if (!response.ok) {
       console.error('Malipo collect error:', response.status, data);

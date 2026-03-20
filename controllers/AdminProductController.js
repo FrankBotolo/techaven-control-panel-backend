@@ -1,5 +1,5 @@
 import db from '../models/index.js';
-import { logAudit } from '../utils/audit.js';
+import { logAudit, auditContext } from '../utils/audit.js';
 
 const { Product, Shop, Category } = db;
 
@@ -41,6 +41,7 @@ export const deleteProduct = async (req, res) => {
     }
 
     await logAudit({
+      ...auditContext(req),
       action: 'admin.product.delete',
       actor_user_id: req.user.id,
       target_type: 'product',
@@ -50,8 +51,7 @@ export const deleteProduct = async (req, res) => {
         product_name: productName,
         shop_id: shopId,
         shop_name: shop?.name || null
-      },
-      ip_address: req.ip
+      }
     });
 
     return res.json({ 

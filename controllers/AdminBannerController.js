@@ -1,4 +1,5 @@
 import db from '../models/index.js';
+import { logAudit, auditContext } from '../utils/audit.js';
 
 const { Banner } = db;
 
@@ -84,6 +85,15 @@ export const create = async (req, res) => {
       product_id: product_id || null
     });
 
+    await logAudit({
+      ...auditContext(req),
+      action: 'admin.banner.create',
+      actor_user_id: req.user.id,
+      target_type: 'banner',
+      target_id: banner.id,
+      metadata: { title: banner.title }
+    });
+
     return res.status(201).json({
       success: true,
       message: 'Banner created successfully',
@@ -127,6 +137,15 @@ export const update = async (req, res) => {
 
     await banner.save();
 
+    await logAudit({
+      ...auditContext(req),
+      action: 'admin.banner.update',
+      actor_user_id: req.user.id,
+      target_type: 'banner',
+      target_id: banner.id,
+      metadata: { title: banner.title }
+    });
+
     return res.json({
       success: true,
       message: 'Banner updated successfully',
@@ -163,7 +182,17 @@ export const remove = async (req, res) => {
       });
     }
 
+    const bannerTitle = banner.title;
     await banner.destroy();
+
+    await logAudit({
+      ...auditContext(req),
+      action: 'admin.banner.delete',
+      actor_user_id: req.user.id,
+      target_type: 'banner',
+      target_id: id,
+      metadata: { title: bannerTitle }
+    });
 
     return res.json({
       success: true,

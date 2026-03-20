@@ -1,5 +1,6 @@
 import db from '../models/index.js';
 import { Op } from 'sequelize';
+import { logAudit, auditContext } from '../utils/audit.js';
 
 const { Order, Wallet, WithdrawalRequest } = db;
 
@@ -147,6 +148,15 @@ export const requestWithdrawal = async (req, res) => {
       withdrawal_method: method,
       account_number: account_number || null,
       account_name: account_name || null
+    });
+
+    await logAudit({
+      ...auditContext(req),
+      action: 'seller.withdrawal.request',
+      actor_user_id: sellerId,
+      target_type: 'withdrawal_request',
+      target_id: request.id,
+      metadata: { amount: withdrawAmount, method }
     });
 
     return res.status(201).json({

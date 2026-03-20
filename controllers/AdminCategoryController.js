@@ -1,5 +1,5 @@
 import db from '../models/index.js';
-import { logAudit } from '../utils/audit.js';
+import { logAudit, auditContext } from '../utils/audit.js';
 
 const { Category, Shop, User, Product } = db;
 
@@ -40,12 +40,12 @@ export const createCategory = async (req, res) => {
       status: 'approved'
     });
     await logAudit({
+      ...auditContext(req),
       action: 'admin.category.create',
       actor_user_id: req.user.id,
       target_type: 'category',
       target_id: category.id,
-      metadata: { name: categoryName, description },
-      ip_address: req.ip
+      metadata: { name: categoryName, description }
     });
     return res.json({
       success: true,
@@ -72,12 +72,12 @@ export const updateCategory = async (req, res) => {
     if (icon != null || icon_url != null) category.icon = icon || icon_url || category.icon;
     await category.save();
     await logAudit({
+      ...auditContext(req),
       action: 'admin.category.update',
       actor_user_id: req.user.id,
       target_type: 'category',
       target_id: category.id,
-      metadata: { name: category.name },
-      ip_address: req.ip
+      metadata: { name: category.name }
     });
     return res.json({
       success: true,
@@ -262,12 +262,12 @@ export const approveCategory = async (req, res) => {
     await category.save();
 
     await logAudit({
+      ...auditContext(req),
       action: 'admin.category.approve',
       actor_user_id: req.user.id,
       target_type: 'category',
       target_id: category.id,
-      metadata: { status: 'approved' },
-      ip_address: req.ip
+      metadata: { status: 'approved' }
     });
 
     return res.json({ 
@@ -298,12 +298,12 @@ export const rejectCategory = async (req, res) => {
     await category.save();
 
     await logAudit({
+      ...auditContext(req),
       action: 'admin.category.reject',
       actor_user_id: req.user.id,
       target_type: 'category',
       target_id: category.id,
-      metadata: { status: 'rejected', reason: reason || null },
-      ip_address: req.ip
+      metadata: { status: 'rejected', reason: reason || null }
     });
 
     return res.json({ 
@@ -348,12 +348,12 @@ export const deleteCategory = async (req, res) => {
     await category.destroy({ force: true });
 
     await logAudit({
+      ...auditContext(req),
       action: 'admin.category.delete',
       actor_user_id: req.user.id,
       target_type: 'category',
       target_id: categoryIdForAudit,
-      metadata: { hard_delete: true, category_name: categoryName },
-      ip_address: req.ip
+      metadata: { hard_delete: true, category_name: categoryName }
     });
 
     return res.json({ 

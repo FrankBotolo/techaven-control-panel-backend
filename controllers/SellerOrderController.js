@@ -1,6 +1,6 @@
 import db from '../models/index.js';
 import { Op } from 'sequelize';
-import { logAudit } from '../utils/audit.js';
+import { logAudit, auditContext } from '../utils/audit.js';
 import { sendNotificationEmail } from '../utils/notificationHelper.js';
 
 const { Order, OrderItem, Product, User, Escrow, Wallet, WalletTransaction, Notification, Shop, DeliveryJob, DeliveryAgent } = db;
@@ -138,12 +138,12 @@ export const acceptOrder = async (req, res) => {
     sendNotificationEmail(acceptedNotification, order);
 
     await logAudit({
+      ...auditContext(req),
       action: 'seller.order.accept',
       actor_user_id: sellerId,
       target_type: 'order',
       target_id: order.id,
-      metadata: { order_number: order.order_number, delivery_method: order.delivery_method },
-      ip_address: req.ip
+      metadata: { order_number: order.order_number, delivery_method: order.delivery_method }
     });
 
     return res.json({
@@ -272,12 +272,12 @@ export const rejectOrder = async (req, res) => {
     sendNotificationEmail(cancelledNotification, order);
 
     await logAudit({
+      ...auditContext(req),
       action: 'seller.order.reject',
       actor_user_id: sellerId,
       target_type: 'order',
       target_id: order.id,
-      metadata: { order_number: order.order_number, reason: reason || 'Seller declined' },
-      ip_address: req.ip
+      metadata: { order_number: order.order_number, reason: reason || 'Seller declined' }
     });
 
     return res.json({

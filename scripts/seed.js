@@ -207,9 +207,70 @@ const seedDatabase = async () => {
     // Seller creates listings: title, brand, condition, price, stock, images
     console.log('  [4.1] Seller: Create Product Listings...');
     const productsData = [
-      { name: 'Samsung Galaxy A54', category_id: categories[0].id, shop_id: shop.id, price: 450000, stock: 10, image: 'https://res.cloudinary.com/dd1raaqnh/image/upload/v1772397000/techaven/products/samsung-a54.jpg', description: '5G smartphone, 128GB', vendor: 'Tech Haven Electronics', points: 45 },
-      { name: 'HP Pavilion 15 Laptop', category_id: categories[1].id, shop_id: shop.id, price: 850000, stock: 5, image: 'https://res.cloudinary.com/dd1raaqnh/image/upload/v1772397000/techaven/products/hp-pavilion.jpg', description: 'Intel i5, 8GB RAM, 256GB SSD', vendor: 'Tech Haven Electronics', points: 85 },
-      { name: 'Wireless Earbuds Pro', category_id: categories[2].id, shop_id: shop.id, price: 75000, stock: 25, image: 'https://res.cloudinary.com/dd1raaqnh/image/upload/v1772397000/techaven/products/earbuds.jpg', description: 'Noise cancelling, 24hr battery', vendor: 'Tech Haven Electronics', points: 7 }
+      {
+        name: 'Samsung Galaxy A54',
+        description: '5G smartphone, 128GB',
+        price: 450000,
+        original_price: null,
+        discount: null,
+        image: 'https://res.cloudinary.com/dd1raaqnh/image/upload/v1773906969/techaven/products/oclqbv3g4wpkqvoji6mi.webp',
+        stock: 10,
+        is_featured: false,
+        is_hot: false,
+        is_special: true,
+        points: 45,
+        category_id: categories[0].id,
+        shop_id: shop.id,
+        vendor: 'Tech Haven Electronics'
+      },
+      {
+        name: 'HP Pavilion 15 Laptop',
+        description: 'Intel i5, 8GB RAM, 256GB SSD',
+        price: 850000,
+        original_price: null,
+        discount: null,
+        image: 'https://res.cloudinary.com/dd1raaqnh/image/upload/v1773906889/techaven/products/laa7p73dfobk2zsduwn0.jpg',
+        stock: 5,
+        is_featured: false,
+        is_hot: true,
+        is_special: false,
+        points: 85,
+        category_id: categories[1].id,
+        shop_id: shop.id,
+        vendor: 'Tech Haven Electronics'
+      },
+      {
+        name: 'Wireless Earbuds Pro',
+        description: 'Noise cancelling, 24hr battery',
+        price: 100,
+        original_price: 200,
+        discount: 100,
+        image: 'https://res.cloudinary.com/dd1raaqnh/image/upload/v1773906748/techaven/products/nahncp7ojljnmbpk38j8.jpg',
+        stock: 25,
+        is_featured: true,
+        is_hot: false,
+        is_special: false,
+        points: 7,
+        category_id: categories[2].id,
+        shop_id: shop.id,
+        vendor: 'Tech Haven Electronics'
+      },
+      {
+        name: 'Apple smart watch',
+        description: 'Apple Watch Ultra 3 [GPS + Cellular 49mm] Running & Multisport Smartwatch w/Rugged Titanium Case w/Light Blue Alpine Loop - S. Satellite Communications,...',
+        price: 12000000,
+        original_price: 14000000,
+        discount: 10,
+        image: 'https://res.cloudinary.com/dd1raaqnh/image/upload/v1773908208/techaven/products/sm1jh90plbjfq7xvic9j.jpg',
+        stock: 10,
+        is_featured: false,
+        is_hot: false,
+        is_special: true,
+        points: 4,
+        category_id: categories[3].id,
+        shop_id: shop.id,
+        vendor: 'techaven'
+      }
     ];
     for (const p of productsData) {
       await Product.findOrCreate({

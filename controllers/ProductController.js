@@ -1,5 +1,6 @@
 import db from '../models/index.js';
 import { Op } from 'sequelize';
+import { logAudit, auditContext } from '../utils/audit.js';
 
 const { Product, Category, Shop, Review, User } = db;
 
@@ -426,6 +427,15 @@ export const addReview = async (req, res) => {
       
       // Recalculate product rating
       await updateProductRating(product_id);
+
+      await logAudit({
+        ...auditContext(req),
+        action: 'customer.review.update',
+        actor_user_id: userId,
+        target_type: 'review',
+        target_id: existingReview.id,
+        metadata: { product_id, rating: ratingNum }
+      });
       
       return res.json({
         success: true,
@@ -454,6 +464,15 @@ export const addReview = async (req, res) => {
     
     // Update product rating and total reviews
     await updateProductRating(product_id);
+
+    await logAudit({
+      ...auditContext(req),
+      action: 'customer.review.create',
+      actor_user_id: userId,
+      target_type: 'review',
+      target_id: review.id,
+      metadata: { product_id, rating: ratingNum }
+    });
     
     // Fetch user info for response
     const user = await User.findByPk(userId, {

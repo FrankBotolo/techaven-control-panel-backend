@@ -1,5 +1,5 @@
 import db from '../models/index.js';
-import { logAudit } from '../utils/audit.js';
+import { logAudit, auditContext } from '../utils/audit.js';
 import { sendNotificationEmail } from '../utils/notificationHelper.js';
 
 const { WithdrawalRequest, User, Wallet, WalletTransaction, Notification } = db;
@@ -146,12 +146,12 @@ export const processWithdrawal = async (req, res) => {
     await request.save();
 
     await logAudit({
+      ...auditContext(req),
       action: 'admin.withdrawal.process',
       actor_user_id: adminId,
       target_type: 'withdrawal_request',
       target_id: request.id,
-      metadata: { status: request.status, amount: request.amount, user_id: request.user_id },
-      ip_address: req.ip
+      metadata: { status: request.status, amount: request.amount, user_id: request.user_id }
     });
 
     const amountStr = `MK ${parseFloat(request.amount).toLocaleString()}`;
