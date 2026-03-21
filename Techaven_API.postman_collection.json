@@ -525,10 +525,20 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{base_url}}/api/products?category_id=1&min_price=0&max_price=5000000&sort=newest&per_page=20",
+									"raw": "{{base_url}}/api/products?page=1&limit=30",
 									"host": ["{{base_url}}"],
 									"path": ["api", "products"],
 									"query": [
+										{
+											"key": "page",
+											"value": "1",
+											"description": "Page number (default: 1)"
+										},
+										{
+											"key": "limit",
+											"value": "30",
+											"description": "Items per page (default: 30, max: 100). Alias: per_page"
+										},
 										{
 											"key": "category_id",
 											"value": "1",
@@ -547,15 +557,12 @@
 										{
 											"key": "sort",
 											"value": "newest",
+											"disabled": true,
 											"description": "price_asc | price_desc | newest | rating"
-										},
-										{
-											"key": "per_page",
-											"value": "20"
 										}
 									]
 								},
-								"description": "Get all products with pagination and filtering."
+								"description": "Get all products with pagination and filtering. Returns data.products and data.pagination."
 							},
 							"response": []
 						},

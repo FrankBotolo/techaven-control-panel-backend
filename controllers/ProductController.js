@@ -54,7 +54,7 @@ const updateProductRating = async (productId) => {
 
 export const index = async (req, res) => {
   try {
-    const { category_id, min_price, max_price, sort, per_page } = req.query;
+    const { category_id, min_price, max_price, sort, page, limit: limitParam, per_page } = req.query;
     const where = {};
     if (category_id) where.category_id = category_id;
     if (min_price != null || max_price != null) {
@@ -68,22 +68,38 @@ export const index = async (req, res) => {
     else if (sort === 'newest') order.push(['createdAt', 'DESC']);
     else if (sort === 'rating') order.push(['rating', 'DESC']);
     else order.push([['id', 'DESC']]);
-    const limit = Math.min(parseInt(per_page, 10) || 20, 100);
 
-    const products = await Product.findAll({
+    const perPage = Math.min(parseInt(limitParam || per_page, 10) || 30, 100);
+    const currentPage = Math.max(parseInt(page, 10) || 1, 1);
+    const offset = (currentPage - 1) * perPage;
+
+    const { count, rows: products } = await Product.findAndCountAll({
       where: Object.keys(where).length ? where : undefined,
       include: [
         { model: Category, as: 'category' },
         { model: Shop, as: 'shop' }
       ],
       order,
-      limit
+      limit: perPage,
+      offset
     });
+
+    const totalPages = Math.ceil(count / perPage);
 
     return res.json({
       success: true,
-      message: 'Products retrieved',
-      data: (products || []).map(toProductDto)
+      message: 'Products retrieved successfully',
+      data: {
+        products: (products || []).map(toProductDto),
+        pagination: {
+          current_page: currentPage,
+          per_page: perPage,
+          total_items: count,
+          total_pages: totalPages,
+          has_next: currentPage < totalPages,
+          has_prev: currentPage > 1
+        }
+      }
     });
   } catch (error) {
     console.error('Products index error:', error);

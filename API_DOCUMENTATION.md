@@ -196,7 +196,7 @@ Or: `{ "phone_number": "+265991234567", "password": "securePassword123" }`
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| GET | `/api/products` | No | List products. Query: category_id, min_price, max_price, sort (price_asc \| price_desc \| newest \| rating), per_page. |
+| GET | `/api/products` | No | List products. Query: page, limit (or per_page), category_id, min_price, max_price, sort (price_asc \| price_desc \| newest \| rating). |
 | GET | `/api/products/:id` | No | Single product. |
 | GET | `/api/products/featured` | No | Featured products. |
 | GET | `/api/products/hot-sales` | No | Hot sales. |
@@ -207,37 +207,49 @@ Or: `{ "phone_number": "+265991234567", "password": "securePassword123" }`
 
 **Response format (GET)**
 
-All product list endpoints (`/api/products`, `/api/products/featured`, `/api/products/hot-sales`, `/api/products/special-offers`, `/api/products/new-arrivals`, `/api/products/category/:id`, `/api/shops/:id/products`, `/api/products/search`) return the same `data` shape: **array of product objects**.
-
-Single product (`GET /api/products/:id`) returns one product object in `data`.
+`GET /api/products` returns paginated products with `data.products` (array) and `data.pagination`:
 
 ```json
 {
   "success": true,
-  "message": "Products retrieved",
-  "data": [
-    {
-      "id": 1,
-      "name": "MacBook Pro M3",
-      "description": "Powerful laptop...",
-      "price": 1500000,
-      "original_price": 1800000,
-      "discount": 17,
-      "image": "https://...",
-      "rating": 4.8,
-      "total_reviews": 124,
-      "stock": 15,
-      "is_featured": true,
-      "is_hot": true,
-      "is_special": false,
-      "category_id": 1,
-      "shop_id": 1,
-      "vendor": "TechShop Lilongwe",
-      "created_at": "2025-01-01T00:00:00.000Z"
+  "message": "Products retrieved successfully",
+  "data": {
+    "products": [
+      {
+        "id": 1,
+        "name": "MacBook Pro M3",
+        "description": "Powerful laptop...",
+        "price": 1500000,
+        "original_price": 1800000,
+        "discount": 17,
+        "image": "https://...",
+        "rating": 4.8,
+        "total_reviews": 124,
+        "stock": 15,
+        "is_featured": true,
+        "is_hot": true,
+        "is_special": false,
+        "category_id": 1,
+        "shop_id": 1,
+        "vendor": "TechShop Lilongwe",
+        "created_at": "2025-01-01T00:00:00.000Z"
+      }
+    ],
+    "pagination": {
+      "current_page": 1,
+      "per_page": 30,
+      "total_items": 450,
+      "total_pages": 15,
+      "has_next": true,
+      "has_prev": false
     }
-  ]
+  }
 }
 ```
+
+Other product list endpoints (`/api/products/featured`, `/api/products/hot-sales`, `/api/products/special-offers`, `/api/products/new-arrivals`, `/api/products/category/:id`, `/api/shops/:id/products`, `/api/products/search`) return `data` as an array of product objects.
+
+Single product (`GET /api/products/:id`) returns one product object in `data`.
 
 Product reviews (`GET /api/products/:product_id/reviews`): `data` is an array of review objects (e.g. `id`, `rating`, `title`, `comment`, `user`, `created_at`).
 
