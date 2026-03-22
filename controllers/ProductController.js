@@ -4,26 +4,46 @@ import { logAudit, auditContext } from '../utils/audit.js';
 
 const { Product, Category, Shop, Review, User } = db;
 
-const toProductDto = (p) => ({
-  id: p.id,
-  name: p.name,
-  description: p.description,
-  price: parseFloat(p.price),
-  original_price: p.original_price != null ? parseFloat(p.original_price) : null,
-  discount: p.discount,
-  image: p.image,
-  rating: parseFloat(p.rating) || 0,
-  total_reviews: p.total_reviews || 0,
-  stock: p.stock || 0,
-  is_featured: !!p.is_featured,
-  is_hot: !!p.is_hot,
-  is_special: !!p.is_special,
-  points: p.points || 0,
-  category_id: p.category_id,
-  shop_id: p.shop_id,
-  vendor: p.vendor || (p.shop && p.shop.name) || null,
-  created_at: p.createdAt || p.created_at
-});
+const toProductDto = (p) => {
+  const createdAt = p.createdAt || p.created_at;
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const isNewArrival = createdAt ? new Date(createdAt) >= thirtyDaysAgo : false;
+
+  const price = parseFloat(p.price);
+  const originalPrice = p.original_price != null ? parseFloat(p.original_price) : null;
+  const discountPct = originalPrice != null
+    ? (p.discount != null ? p.discount : Math.round((1 - price / originalPrice) * 100))
+    : null;
+
+  const images = Array.isArray(p.images) ? p.images : (p.image ? [p.image] : []);
+
+  return {
+    id: p.id,
+    name: p.name,
+    description: p.description,
+    price,
+    original_price: originalPrice,
+    discount_percentage: discountPct,
+    currency: 'MWK',
+    image: p.image,
+    images,
+    rating: parseFloat(p.rating) || 0,
+    total_reviews: p.total_reviews || 0,
+    stock: p.stock || 0,
+    is_featured: !!p.is_featured,
+    is_new_arrival: p.is_new_arrival != null ? !!p.is_new_arrival : isNewArrival,
+    is_hot_sale: !!p.is_hot,
+    is_special_offer: !!p.is_special,
+    category_id: p.category_id,
+    category_name: p.category?.name || null,
+    shop_id: p.shop_id,
+    shop_name: p.shop?.name || null,
+    vendor_name: p.vendor || p.shop?.name || null,
+    variants: p.variants || [],
+    created_at: createdAt
+  };
+};
 
 // Helper function to update product rating and total reviews
 const updateProductRating = async (productId) => {
