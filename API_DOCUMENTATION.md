@@ -196,12 +196,9 @@ Or: `{ "phone_number": "+265991234567", "password": "securePassword123" }`
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| GET | `/api/products` | No | List products. Query: page, limit (or per_page), category_id, min_price, max_price, sort (price_asc \| price_desc \| newest \| rating). |
-| GET | `/api/products/:id` | No | Single product. |
-| GET | `/api/products/featured` | No | Featured products. |
-| GET | `/api/products/hot-sales` | No | Hot sales. |
-| GET | `/api/products/special-offers` | No | Special offers. |
-| GET | `/api/products/new-arrivals` | No | New arrivals. |
+| GET | `/api/products` | No | List products. Query: page, limit (or per_page), category_id, min_price, max_price, sort (price_asc \| price_desc \| newest \| rating). Client filters featured/hot/new/special from the list. |
+| GET | `/api/products/:id` | No | Single product (same product object shape as list items). |
+| GET | `/api/products/search` | No | Search products. Query: **q** (required), page, limit, category_id. Same paginated response as `GET /api/products`. |
 | GET | `/api/products/:product_id/reviews` | No | Product reviews. |
 | POST | `/api/products/:product_id/reviews` | 🔒 | Add review. Body: rating, title, comment, images. |
 
@@ -221,17 +218,22 @@ Or: `{ "phone_number": "+265991234567", "password": "securePassword123" }`
         "description": "Powerful laptop...",
         "price": 1500000,
         "original_price": 1800000,
-        "discount": 17,
-        "image": "https://...",
+        "discount_percentage": 17,
+        "currency": "MWK",
+        "images": ["https://..."],
         "rating": 4.8,
         "total_reviews": 124,
         "stock": 15,
         "is_featured": true,
-        "is_hot": true,
-        "is_special": false,
+        "is_new_arrival": false,
+        "is_hot_sale": true,
+        "is_special_offer": false,
         "category_id": 1,
+        "category_name": "Laptops",
         "shop_id": 1,
-        "vendor": "TechShop Lilongwe",
+        "shop_name": "Tech Haven",
+        "vendor_name": "TechShop Lilongwe",
+        "variants": [],
         "created_at": "2025-01-01T00:00:00.000Z"
       }
     ],
@@ -247,7 +249,9 @@ Or: `{ "phone_number": "+265991234567", "password": "securePassword123" }`
 }
 ```
 
-Other product list endpoints (`/api/products/featured`, `/api/products/hot-sales`, `/api/products/special-offers`, `/api/products/new-arrivals`, `/api/products/category/:id`, `/api/shops/:id/products`, `/api/products/search`) return `data` as an array of product objects.
+`GET /api/products/category/:id`, `GET /api/categories/:id/products`, `GET /api/shops/:id/products`, and `GET /api/products/search` use the same paginated shape: `data.products` + `data.pagination`.
+
+**Seller create/update product (POST/PATCH `/api/sellers/:shopId/products`)** — optional `variants` array, each group: `type`, `name`, `options[]` with `value`, `label`, `price_modifier`, `stock`, optional `image`. Use `is_hot_sale` / `is_special_offer` (or legacy `is_hot` / `is_special`), optional `is_new_arrival`.
 
 Single product (`GET /api/products/:id`) returns one product object in `data`.
 
@@ -268,7 +272,7 @@ Product reviews (`GET /api/products/:product_id/reviews`): `data` is an array of
 | Endpoint | `data` shape |
 |----------|----------------|
 | `GET /api/categories` | Array of category objects |
-| `GET /api/products/category/:id` | Array of product objects (same as Products) |
+| `GET /api/products/category/:id` | Paginated products (`data.products` + `data.pagination`) |
 
 ```json
 {
@@ -630,7 +634,7 @@ All under `/api/shipping-addresses` (or `/api/addresses`). Data: id, label, name
 |----------|----------------|
 | `GET /api/shops` | Array of shop objects |
 | `GET /api/shops/:id` | Single shop object |
-| `GET /api/shops/:id/products` | Array of product objects (same as Products) |
+| `GET /api/shops/:id/products` | Paginated products (`data.products` + `data.pagination`) |
 
 ```json
 {
@@ -685,7 +689,7 @@ All under `/api/shipping-addresses` (or `/api/addresses`). Data: id, label, name
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| GET | `/api/products/search?q=...&category_id=...` | No | Search products. `q` required. |
+| GET | `/api/products/search?q=...&category_id=...&page=...&limit=...` | No | Search products. `q` required. Paginated: `data.products` + `data.pagination`. |
 | GET | `/api/search?q=...` | No | Search (alternate). |
 | GET | `/api/search/suggestions?q=...` | No | Search suggestions. |
 
@@ -693,17 +697,11 @@ All under `/api/shipping-addresses` (or `/api/addresses`). Data: id, label, name
 
 | Endpoint | `data` shape |
 |----------|----------------|
-| `GET /api/products/search?q=...` | Array of product objects (same as Products) |
+| `GET /api/products/search?q=...` | Paginated products (same shape as `GET /api/products`) |
 | `GET /api/search?q=...` | Search results (products/list depending on implementation) |
 | `GET /api/search/suggestions?q=...` | Array of suggestion strings or objects |
 
-```json
-{
-  "success": true,
-  "message": "Products retrieved",
-  "data": [ /* product objects */ ]
-}
-```
+Same response as `GET /api/products` (see section 3).
 
 ---
 

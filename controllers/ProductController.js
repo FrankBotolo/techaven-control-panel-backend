@@ -1,49 +1,9 @@
 import db from '../models/index.js';
 import { Op } from 'sequelize';
 import { logAudit, auditContext } from '../utils/audit.js';
+import { toProductDto } from '../utils/productDto.js';
 
 const { Product, Category, Shop, Review, User } = db;
-
-const toProductDto = (p) => {
-  const createdAt = p.createdAt || p.created_at;
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  const isNewArrival = createdAt ? new Date(createdAt) >= thirtyDaysAgo : false;
-
-  const price = parseFloat(p.price);
-  const originalPrice = p.original_price != null ? parseFloat(p.original_price) : null;
-  const discountPct = originalPrice != null
-    ? (p.discount != null ? p.discount : Math.round((1 - price / originalPrice) * 100))
-    : null;
-
-  const images = Array.isArray(p.images) ? p.images : (p.image ? [p.image] : []);
-
-  return {
-    id: p.id,
-    name: p.name,
-    description: p.description,
-    price,
-    original_price: originalPrice,
-    discount_percentage: discountPct,
-    currency: 'MWK',
-    image: p.image,
-    images,
-    rating: parseFloat(p.rating) || 0,
-    total_reviews: p.total_reviews || 0,
-    stock: p.stock || 0,
-    is_featured: !!p.is_featured,
-    is_new_arrival: p.is_new_arrival != null ? !!p.is_new_arrival : isNewArrival,
-    is_hot_sale: !!p.is_hot,
-    is_special_offer: !!p.is_special,
-    category_id: p.category_id,
-    category_name: p.category?.name || null,
-    shop_id: p.shop_id,
-    shop_name: p.shop?.name || null,
-    vendor_name: p.vendor || p.shop?.name || null,
-    variants: p.variants || [],
-    created_at: createdAt
-  };
-};
 
 // Helper function to update product rating and total reviews
 const updateProductRating = async (productId) => {
@@ -87,7 +47,7 @@ export const index = async (req, res) => {
     else if (sort === 'price_desc') order.push(['price', 'DESC']);
     else if (sort === 'newest') order.push(['createdAt', 'DESC']);
     else if (sort === 'rating') order.push(['rating', 'DESC']);
-    else order.push([['id', 'DESC']]);
+    else order.push(['id', 'DESC']);
 
     const perPage = Math.min(parseInt(limitParam || per_page, 10) || 30, 100);
     const currentPage = Math.max(parseInt(page, 10) || 1, 1);
@@ -132,84 +92,6 @@ export const index = async (req, res) => {
   }
 };
 
-export const featured = async (req, res) => {
-  try {
-    const products = await Product.findAll({
-      where: { is_featured: true },
-      include: [
-        { model: Category, as: 'category' },
-        { model: Shop, as: 'shop' }
-      ]
-    });
-
-    return res.json({
-      success: true,
-      message: 'Products retrieved',
-      data: (products || []).map(toProductDto)
-    });
-  } catch (error) {
-    console.error('Featured products error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to fetch featured products',
-      data: null,
-      error: error.message
-    });
-  }
-};
-
-export const hot = async (req, res) => {
-  try {
-    const products = await Product.findAll({
-      where: { is_hot: true },
-      include: [
-        { model: Category, as: 'category' },
-        { model: Shop, as: 'shop' }
-      ]
-    });
-
-    return res.json({
-      success: true,
-      message: 'Products retrieved',
-      data: (products || []).map(toProductDto)
-    });
-  } catch (error) {
-    console.error('Hot products error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to fetch hot products',
-      data: null,
-      error: error.message
-    });
-  }
-};
-
-export const special = async (req, res) => {
-  try {
-    const products = await Product.findAll({
-      where: { is_special: true },
-      include: [
-        { model: Category, as: 'category' },
-        { model: Shop, as: 'shop' }
-      ]
-    });
-
-    return res.json({
-      success: true,
-      message: 'Products retrieved',
-      data: (products || []).map(toProductDto)
-    });
-  } catch (error) {
-    console.error('Special products error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to fetch special products',
-      data: null,
-      error: error.message
-    });
-  }
-};
-
 export const show = async (req, res) => {
   try {
     const { id } = req.params;
@@ -230,7 +112,7 @@ export const show = async (req, res) => {
 
     return res.json({
       success: true,
-      message: 'Product retrieved',
+      message: 'Product retrieved successfully',
       data: toProductDto(product)
     });
   } catch (error) {
@@ -246,7 +128,7 @@ export const show = async (req, res) => {
 
 export const search = async (req, res) => {
   try {
-    const { q, category_id } = req.query;
+    const { q, category_id, page, limit: limitParam, per_page } = req.query;
 
     if (!q) {
       return res.status(400).json({
@@ -264,18 +146,37 @@ export const search = async (req, res) => {
     };
     if (category_id) where.category_id = category_id;
 
-    const products = await Product.findAll({
+    const perPage = Math.min(parseInt(limitParam || per_page, 10) || 30, 100);
+    const currentPage = Math.max(parseInt(page, 10) || 1, 1);
+    const offset = (currentPage - 1) * perPage;
+
+    const { count, rows: products } = await Product.findAndCountAll({
       where,
       include: [
         { model: Category, as: 'category' },
         { model: Shop, as: 'shop' }
-      ]
+      ],
+      order: [['id', 'DESC']],
+      limit: perPage,
+      offset
     });
+
+    const totalPages = Math.ceil(count / perPage);
 
     return res.json({
       success: true,
-      message: 'Products retrieved',
-      data: (products || []).map(toProductDto)
+      message: 'Products retrieved successfully',
+      data: {
+        products: (products || []).map(toProductDto),
+        pagination: {
+          current_page: currentPage,
+          per_page: perPage,
+          total_items: count,
+          total_pages: totalPages,
+          has_next: currentPage < totalPages,
+          has_prev: currentPage > 1
+        }
+      }
     });
   } catch (error) {
     console.error('Product search error:', error);
@@ -283,44 +184,6 @@ export const search = async (req, res) => {
       success: false,
       message: 'Failed to search products',
       data: null,
-      error: error.message
-    });
-  }
-};
-
-export const newArrivals = async (req, res) => {
-  try {
-    const { limit = 10 } = req.query;
-    
-    // Get products created in the last 30 days (new arrivals)
-    // This works even if is_new_arrival column doesn't exist
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
-    const products = await Product.findAll({
-      where: {
-        createdAt: { [Op.gte]: thirtyDaysAgo }
-      },
-      include: [
-        { model: Category, as: 'category' },
-        { model: Shop, as: 'shop' }
-      ],
-      limit: parseInt(limit),
-      order: [['id', 'DESC']]
-    });
-
-    return res.json({
-      success: true,
-      message: 'New arrivals retrieved',
-      data: {
-        products
-      }
-    });
-  } catch (error) {
-    console.error('New arrivals error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to fetch new arrivals',
       error: error.message
     });
   }
@@ -545,18 +408,39 @@ export const addReview = async (req, res) => {
 export const byCategory = async (req, res) => {
   try {
     const { id } = req.params;
-    const products = await Product.findAll({
+    const { page, limit: limitParam, per_page } = req.query;
+
+    const perPage = Math.min(parseInt(limitParam || per_page, 10) || 30, 100);
+    const currentPage = Math.max(parseInt(page, 10) || 1, 1);
+    const offset = (currentPage - 1) * perPage;
+
+    const { count, rows: products } = await Product.findAndCountAll({
       where: { category_id: id },
       include: [
         { model: Category, as: 'category' },
         { model: Shop, as: 'shop' }
-      ]
+      ],
+      order: [['id', 'DESC']],
+      limit: perPage,
+      offset
     });
+
+    const totalPages = Math.ceil(count / perPage);
 
     return res.json({
       success: true,
-      message: 'Products retrieved',
-      data: (products || []).map(toProductDto)
+      message: 'Products retrieved successfully',
+      data: {
+        products: (products || []).map(toProductDto),
+        pagination: {
+          current_page: currentPage,
+          per_page: perPage,
+          total_items: count,
+          total_pages: totalPages,
+          has_next: currentPage < totalPages,
+          has_prev: currentPage > 1
+        }
+      }
     });
   } catch (error) {
     console.error('Products by category error:', error);

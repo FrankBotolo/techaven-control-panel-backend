@@ -6,10 +6,6 @@ import * as ProductImageController from '../controllers/ProductImageController.j
 const router = express.Router();
 
 router.get('/', ProductController.index);
-router.get('/featured', ProductController.featured);
-router.get('/hot-sales', ProductController.hot);
-router.get('/special-offers', ProductController.special);
-router.get('/new-arrivals', ProductController.newArrivals);
 router.get('/search', ProductController.search);
 router.get('/category/:id', ProductController.byCategory);
 

@@ -1,4 +1,5 @@
 import db from '../models/index.js';
+import { toProductDto } from '../utils/productDto.js';
 
 const { Category, Product, Shop } = db;
 
@@ -39,6 +40,7 @@ export const index = async (req, res) => {
 export const getProductsByCategory = async (req, res) => {
   try {
     const { id } = req.params;
+    const { page, limit: limitParam, per_page } = req.query;
 
     // Verify category exists
     const category = await Category.findByPk(id);
@@ -50,20 +52,37 @@ export const getProductsByCategory = async (req, res) => {
       });
     }
 
-    // Get all products for this category
-    const products = await Product.findAll({
+    const perPage = Math.min(parseInt(limitParam || per_page, 10) || 30, 100);
+    const currentPage = Math.max(parseInt(page, 10) || 1, 1);
+    const offset = (currentPage - 1) * perPage;
+
+    const { count, rows: products } = await Product.findAndCountAll({
       where: { category_id: id },
       include: [
         { model: Category, as: 'category' },
         { model: Shop, as: 'shop' }
       ],
-      order: [['id', 'DESC']]
+      order: [['id', 'DESC']],
+      limit: perPage,
+      offset
     });
+
+    const totalPages = Math.ceil(count / perPage);
 
     return res.json({
       success: true,
-      message: 'Products retrieved',
-      data: products
+      message: 'Products retrieved successfully',
+      data: {
+        products: (products || []).map((p) => toProductDto(p)),
+        pagination: {
+          current_page: currentPage,
+          per_page: perPage,
+          total_items: count,
+          total_pages: totalPages,
+          has_next: currentPage < totalPages,
+          has_prev: currentPage > 1
+        }
+      }
     });
   } catch (error) {
     console.error('Get products by category error:', error);

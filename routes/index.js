@@ -26,6 +26,7 @@ import webhookRoutes from './webhooks.js';
 import courierServicesRoutes from './courier-services.js';
 import deliveryAgentRoutes from './delivery-agents.js';
 import onboardingRoutes from './onboarding.js';
+import subscriptionPackageRoutes from './subscription-packages.js';
 
 const router = express.Router();
 
@@ -56,6 +57,7 @@ router.use('/webhooks', webhookRoutes);
 router.use('/courier-services', courierServicesRoutes);
 router.use('/delivery-agents', deliveryAgentRoutes);
 router.use('/onboarding', onboardingRoutes);
+router.use('/subscription-packages', subscriptionPackageRoutes);
 
 export default router;
 

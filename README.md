@@ -77,14 +77,17 @@ The server will start on `http://localhost:8000` (or the port specified in `.env
 - `POST /api/user/avatar` - Upload avatar
 - `POST /api/user/change-password` - Change password
 
+### Seller subscriptions (admin + seller)
+- Public: `GET /api/subscription-packages` — list active plans
+- Admin: `GET|POST|PATCH|DELETE /api/admin/subscription-packages` — manage plans; `GET|PATCH /api/admin/shop-subscriptions` — all shop subscriptions
+- Seller: `GET /api/sellers/:shopId/subscription`, `POST .../subscription/subscribe`, `POST .../subscription/cancel`, `POST .../subscription/resume`
+- See `docs/SUBSCRIPTION_PACKAGES.md`
+
 ### Products
-- `GET /api/products` - Get all products
-- `GET /api/products/featured` - Get featured products
-- `GET /api/products/hot-sales` - Get hot products
-- `GET /api/products/special-offers` - Get special offers
-- `GET /api/products/search?q=query` - Search products
-- `GET /api/products/category/:id` - Get products by category
-- `GET /api/products/:id` - Get product by ID
+- `GET /api/products?page=&limit=` - Paginated list (filter featured/hot/new/special on the client)
+- `GET /api/products/search?q=` - Search (paginated)
+- `GET /api/products/category/:id` - Products by category (paginated)
+- `GET /api/products/:id` - Product by ID
 
 ### Categories
 - `GET /api/categories` - Get all categories

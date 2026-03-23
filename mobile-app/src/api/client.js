@@ -71,9 +71,6 @@ export const user = {
 export const products = {
   getAll: (params) => client.get('/products', { params }),
   getById: (id) => client.get(`/products/${id}`),
-  getFeatured: () => client.get('/products/featured'),
-  getHotSales: () => client.get('/products/hot-sales'),
-  getSpecialOffers: () => client.get('/products/special-offers'),
   search: (params) => client.get('/products/search', { params }),
   getByCategory: (id, params) => client.get(`/products/category/${id}`, { params }),
 };

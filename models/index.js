@@ -25,6 +25,8 @@ import DeliveryJob from './DeliveryJob.js';
 import PaymentMethod from './PaymentMethod.js';
 import MalipoTransaction from './MalipoTransaction.js';
 import OnboardingSlide from './OnboardingSlide.js';
+import SubscriptionPackage from './SubscriptionPackage.js';
+import ShopSubscription from './ShopSubscription.js';
 
 // Define associations
 Product.belongsTo(Category, { foreignKey: 'category_id', as: 'category' });
@@ -40,6 +42,15 @@ Order.hasMany(Notification, { foreignKey: 'order_id', as: 'notifications' });
 // Shop ownership / seller assignment
 User.belongsTo(Shop, { foreignKey: 'shop_id', as: 'shop' });
 Shop.hasMany(User, { foreignKey: 'shop_id', as: 'users' });
+
+// Seller subscription packages (admin-defined plans; shops subscribe)
+ShopSubscription.belongsTo(Shop, { foreignKey: 'shop_id', as: 'shop' });
+ShopSubscription.belongsTo(SubscriptionPackage, { foreignKey: 'package_id', as: 'package' });
+Shop.hasMany(ShopSubscription, { foreignKey: 'shop_id', as: 'subscriptions' });
+SubscriptionPackage.hasMany(ShopSubscription, {
+  foreignKey: 'package_id',
+  as: 'shop_subscriptions'
+});
 
 // Shop categories (optional per-shop)
 Category.belongsTo(Shop, { foreignKey: 'shop_id', as: 'shop' });
@@ -164,7 +175,9 @@ const db = {
   DeliveryJob,
   PaymentMethod,
   MalipoTransaction,
-  OnboardingSlide
+  OnboardingSlide,
+  SubscriptionPackage,
+  ShopSubscription
 };
 
 export default db;

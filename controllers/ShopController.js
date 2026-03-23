@@ -1,5 +1,6 @@
 import db from '../models/index.js';
 import { logAudit, auditContext } from '../utils/audit.js';
+import { toProductDto } from '../utils/productDto.js';
 
 const { Shop, Product, Category, User } = db;
 
@@ -101,6 +102,7 @@ export const show = async (req, res) => {
 export const products = async (req, res) => {
   try {
     const { id } = req.params;
+    const { page, limit: limitParam, per_page } = req.query;
     const shop = await Shop.findByPk(id);
 
     if (!shop) {
@@ -111,37 +113,37 @@ export const products = async (req, res) => {
       });
     }
 
-    const products = await Product.findAll({
+    const perPage = Math.min(parseInt(limitParam || per_page, 10) || 30, 100);
+    const currentPage = Math.max(parseInt(page, 10) || 1, 1);
+    const offset = (currentPage - 1) * perPage;
+
+    const { count, rows: productRows } = await Product.findAndCountAll({
       where: { shop_id: id },
       include: [
         { model: Category, as: 'category' },
         { model: Shop, as: 'shop' }
-      ]
+      ],
+      order: [['id', 'DESC']],
+      limit: perPage,
+      offset
     });
 
-    const formatted = (products || []).map((p) => ({
-      id: p.id,
-      name: p.name,
-      description: p.description,
-      price: parseFloat(p.price),
-      original_price: p.original_price != null ? parseFloat(p.original_price) : null,
-      discount: p.discount,
-      image: p.image,
-      rating: parseFloat(p.rating) || 0,
-      total_reviews: p.total_reviews || 0,
-      stock: p.stock || 0,
-      is_featured: !!p.is_featured,
-      is_hot: !!p.is_hot,
-      is_special: !!p.is_special,
-      category_id: p.category_id,
-      shop_id: p.shop_id,
-      vendor: p.vendor || (p.shop && p.shop.name) || null,
-      created_at: p.createdAt || p.created_at
-    }));
+    const totalPages = Math.ceil(count / perPage);
+
     return res.json({
       success: true,
-      message: 'Products retrieved',
-      data: formatted
+      message: 'Products retrieved successfully',
+      data: {
+        products: (productRows || []).map((p) => toProductDto(p)),
+        pagination: {
+          current_page: currentPage,
+          per_page: perPage,
+          total_items: count,
+          total_pages: totalPages,
+          has_next: currentPage < totalPages,
+          has_prev: currentPage > 1
+        }
+      }
     });
   } catch (error) {
     console.error('Shop products error:', error);

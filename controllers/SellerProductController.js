@@ -1,7 +1,14 @@
 import db from '../models/index.js';
 import { logAudit, auditContext } from '../utils/audit.js';
+import { toProductDto, parseVariantsInput } from '../utils/productDto.js';
 
 const { Product, Category, Shop } = db;
+
+const asBool = (v) => v === true || v === 'true';
+
+/** Accept API-style flags or legacy is_hot / is_special */
+const pickHot = (body) => body.is_hot_sale ?? body.is_hot;
+const pickSpecial = (body) => body.is_special_offer ?? body.is_special;
 
 export const create = async (req, res) => {
   try {
@@ -18,11 +25,14 @@ export const create = async (req, res) => {
       discount,
       vendor,
       is_featured,
-      is_hot,
-      is_special,
       specifications,
-      points
+      points,
+      variants,
+      is_new_arrival
     } = req.body;
+
+    const isHot = pickHot(req.body);
+    const isSpecial = pickSpecial(req.body);
 
     // Validation
     if (!name) {
@@ -87,6 +97,19 @@ export const create = async (req, res) => {
       }
     }
 
+    let variantsPayload = null;
+    if (variants !== undefined && variants !== null) {
+      try {
+        const parsed = parseVariantsInput(variants);
+        variantsPayload = parsed.length ? parsed : null;
+      } catch (e) {
+        return res.status(400).json({
+          success: false,
+          message: e.message || 'Invalid variants format'
+        });
+      }
+    }
+
     const product = await Product.create({
       shop_id: shop.id,
       category_id: parseInt(category_id),
@@ -99,10 +122,12 @@ export const create = async (req, res) => {
       description: description || null,
       stock: stock ? parseInt(stock) : 0,
       vendor: vendor || shop.name,
-      is_featured: is_featured === true || is_featured === 'true',
-      is_hot: is_hot === true || is_hot === 'true',
-      is_special: is_special === true || is_special === 'true',
+      is_featured: asBool(is_featured),
+      is_hot: asBool(isHot),
+      is_special: asBool(isSpecial),
+      is_new_arrival: is_new_arrival !== undefined ? asBool(is_new_arrival) : false,
       specifications: specificationsObj,
+      variants: variantsPayload,
       points: points != null ? parseInt(points, 10) || 0 : 0
     });
 
@@ -119,10 +144,20 @@ export const create = async (req, res) => {
       metadata: { shop_id: shop.id, product_name: name, category_id, price }
     });
 
+    const full = await Product.findByPk(product.id, {
+      include: [
+        { model: Category, as: 'category' },
+        { model: Shop, as: 'shop' }
+      ]
+    });
+
     return res.json({
       success: true,
       message: 'Product created successfully',
-      data: { product_id: `prod_${String(product.id).padStart(3, '0')}` }
+      data: {
+        product: toProductDto(full),
+        product_id: `prod_${String(product.id).padStart(3, '0')}`
+      }
     });
   } catch (error) {
     console.error('Seller create product error:', error);
@@ -133,6 +168,7 @@ export const create = async (req, res) => {
 export const listForShop = async (req, res) => {
   try {
     const { shopId } = req.params;
+    const { page, limit: limitParam, per_page } = req.query;
 
     // Verify shop exists
     const shop = await Shop.findByPk(shopId);
@@ -140,25 +176,38 @@ export const listForShop = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Shop not found' });
     }
 
-    const products = await Product.findAll({
+    const perPage = Math.min(parseInt(limitParam || per_page, 10) || 30, 100);
+    const currentPage = Math.max(parseInt(page, 10) || 1, 1);
+    const offset = (currentPage - 1) * perPage;
+
+    const { count, rows: products } = await Product.findAndCountAll({
       where: { shop_id: shopId },
       include: [
         { model: Category, as: 'category' },
         { model: Shop, as: 'shop' }
       ],
-      order: [['id', 'DESC']]
+      order: [['id', 'DESC']],
+      limit: perPage,
+      offset
     });
 
-    // Add category_id explicitly to each product
-    const productsWithCategoryId = products.map(product => {
-      const productData = product.toJSON();
-      return {
-        ...productData,
-        category_id: product.category_id
-      };
-    });
+    const totalPages = Math.ceil(count / perPage);
 
-    return res.json({ success: true, message: 'Products retrieved', data: productsWithCategoryId });
+    return res.json({
+      success: true,
+      message: 'Products retrieved successfully',
+      data: {
+        products: (products || []).map((p) => toProductDto(p)),
+        pagination: {
+          current_page: currentPage,
+          per_page: perPage,
+          total_items: count,
+          total_pages: totalPages,
+          has_next: currentPage < totalPages,
+          has_prev: currentPage > 1
+        }
+      }
+    });
   } catch (error) {
     console.error('Seller list products error:', error);
     return res.status(500).json({ success: false, message: 'Failed to fetch products', error: error.message });
@@ -195,11 +244,14 @@ export const update = async (req, res) => {
       discount,
       vendor,
       is_featured,
-      is_hot,
-      is_special,
       specifications,
-      points
+      points,
+      variants,
+      is_new_arrival
     } = req.body;
+
+    const isHot = pickHot(req.body);
+    const isSpecial = pickSpecial(req.body);
 
     // Update fields if provided
     if (name != null) product.name = name;
@@ -230,9 +282,25 @@ export const update = async (req, res) => {
     if (original_price != null) product.original_price = original_price ? parseFloat(original_price) : null;
     if (discount != null) product.discount = discount ? parseInt(discount) : null;
     if (vendor != null) product.vendor = vendor;
-    if (is_featured !== undefined) product.is_featured = is_featured === true || is_featured === 'true';
-    if (is_hot !== undefined) product.is_hot = is_hot === true || is_hot === 'true';
-    if (is_special !== undefined) product.is_special = is_special === true || is_special === 'true';
+    if (is_featured !== undefined) product.is_featured = asBool(is_featured);
+    if (req.body.is_hot !== undefined || req.body.is_hot_sale !== undefined) {
+      product.is_hot = asBool(isHot);
+    }
+    if (req.body.is_special !== undefined || req.body.is_special_offer !== undefined) {
+      product.is_special = asBool(isSpecial);
+    }
+    if (is_new_arrival !== undefined) product.is_new_arrival = asBool(is_new_arrival);
+    if (variants !== undefined) {
+      try {
+        const parsed = parseVariantsInput(variants);
+        product.variants = parsed.length ? parsed : null;
+      } catch (e) {
+        return res.status(400).json({
+          success: false,
+          message: e.message || 'Invalid variants format'
+        });
+      }
+    }
     if (specifications !== undefined) {
       try {
         product.specifications = typeof specifications === 'string' 
@@ -263,7 +331,18 @@ export const update = async (req, res) => {
       metadata: { shop_id: shop.id, product_name: product.name }
     });
 
-    return res.json({ success: true, message: 'Product updated successfully', data: product });
+    const full = await Product.findByPk(product.id, {
+      include: [
+        { model: Category, as: 'category' },
+        { model: Shop, as: 'shop' }
+      ]
+    });
+
+    return res.json({
+      success: true,
+      message: 'Product updated successfully',
+      data: { product: toProductDto(full) }
+    });
   } catch (error) {
     console.error('Seller update product error:', error);
     return res.status(500).json({ success: false, message: 'Failed to update product', error: error.message });

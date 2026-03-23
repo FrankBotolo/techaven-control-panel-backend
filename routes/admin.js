@@ -11,6 +11,8 @@ import * as AdminMalipoController from '../controllers/AdminMalipoController.js'
 import * as AdminOnboardingSlideController from '../controllers/AdminOnboardingSlideController.js';
 import * as AdminBannerController from '../controllers/AdminBannerController.js';
 import * as AdminAuditLogController from '../controllers/AdminAuditLogController.js';
+import * as AdminSubscriptionPackageController from '../controllers/AdminSubscriptionPackageController.js';
+import * as AdminShopSubscriptionController from '../controllers/AdminShopSubscriptionController.js';
 
 const router = express.Router();
 
@@ -69,6 +71,17 @@ router.get('/banners/:id', AdminBannerController.getOne);
 router.post('/banners', AdminBannerController.create);
 router.patch('/banners/:id', AdminBannerController.update);
 router.delete('/banners/:id', AdminBannerController.remove);
+
+// Subscription packages (seller plans) & shop subscriptions
+router.get('/subscription-packages', AdminSubscriptionPackageController.list);
+router.get('/subscription-packages/:id', AdminSubscriptionPackageController.getOne);
+router.post('/subscription-packages', AdminSubscriptionPackageController.create);
+router.patch('/subscription-packages/:id', AdminSubscriptionPackageController.update);
+router.delete('/subscription-packages/:id', AdminSubscriptionPackageController.remove);
+
+router.get('/shop-subscriptions', AdminShopSubscriptionController.list);
+router.get('/shop-subscriptions/:id', AdminShopSubscriptionController.getOne);
+router.patch('/shop-subscriptions/:id', AdminShopSubscriptionController.update);
 
 // Audit logs - System activity for support, fraud detection, compliance
 router.get('/audit-logs', AdminAuditLogController.list);

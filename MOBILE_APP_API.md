@@ -290,67 +290,37 @@ All require `Authorization: Bearer <access_token>`.
 ## 3. Products
 
 ### 3.1 List Products
-**GET** `/products?category_id=1&per_page=20&sort=price_asc`
+**GET** `/products?page=1&limit=30&category_id=1&sort=price_asc`
 
 **Query params:**
 | Param        | Type   | Description                          |
 |--------------|--------|--------------------------------------|
+| page         | number | Page (default 1)                     |
+| limit / per_page | number | Page size (default 30, max 100) |
 | category_id  | number | Filter by category                   |
 | min_price    | number | Min price (MWK)                      |
 | max_price    | number | Max price (MWK)                      |
 | sort         | string | `price_asc`, `price_desc`, `newest`, `rating` |
-| per_page     | number | 1–100, default 20                    |
 
-**Response (200):**
-```json
-{
-  "success": true,
-  "message": "Products retrieved",
-  "data": [
-    {
-      "id": 1,
-      "name": "Samsung Galaxy A54",
-      "description": "5G smartphone, 128GB",
-      "price": 450000,
-      "original_price": null,
-      "discount": null,
-      "image": "https://...",
-      "rating": 4.5,
-      "total_reviews": 12,
-      "stock": 10,
-      "is_featured": true,
-      "is_hot": false,
-      "is_special": false,
-      "points": 45,
-      "category_id": 1,
-      "shop_id": 1,
-      "vendor": "Tech Haven Electronics",
-      "created_at": "2025-03-16T10:00:00.000Z"
-    }
-  ]
-}
-```
+Use `is_featured`, `is_hot_sale`, `is_new_arrival`, `is_special_offer` on each product to build UI sections (no separate featured/hot/new APIs).
+
+**Response (200):** `data.products` + `data.pagination`
 
 ---
 
-### 3.2 Featured Products
-**GET** `/products/featured`
-
----
-
-### 3.3 Product Detail
+### 3.2 Product Detail
 **GET** `/products/:id`
 
 **Response (200):** Single product object (same shape as list item)
 
 ---
 
-### 3.4 Search
+### 3.3 Search
 **GET** `/products/search?q=samsung&per_page=20`
 
 ---
 
-### 3.5 Products by Category
+### 3.4 Products by Category
 **GET** `/products/category/:id`
 
 ---
