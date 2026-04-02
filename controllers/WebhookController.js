@@ -85,7 +85,7 @@ export const malipo = async (req, res) => {
     }
 
     const subscriptionId = parseSubscriptionMerchantRef(orderRef);
-    if (subscriptionId) {
+    if (subscriptionId != null) {
       const sub = await ShopSubscription.findByPk(subscriptionId, {
         include: [{ model: db.SubscriptionPackage, as: 'package' }]
       });

@@ -56,7 +56,13 @@ export function subscriptionMalipoMerchantRef(subscriptionId) {
 
 /** Extract shop_subscription id from SUB-42 or SUB-42-{suffix} (case-insensitive SUB prefix). */
 export function parseSubscriptionMerchantRef(merchantTxnId) {
-  const m = String(merchantTxnId || '').match(/^SUB-(\d+)(?:-.+)?$/i);
+  let s = String(merchantTxnId ?? '').trim();
+  if (s.charCodeAt(0) === 0xfeff) {
+    s = s.slice(1);
+  }
+  // Relaxed: id first, optional suffix; avoids anchor issues with stray whitespace variants
+  const m = s.match(/^SUB-(\d+)/i);
   if (!m) return null;
-  return parseInt(m[1], 10);
+  const id = parseInt(m[1], 10);
+  return Number.isFinite(id) && id > 0 ? id : null;
 }
