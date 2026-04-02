@@ -1,23 +1,8 @@
-import db from '../models/index.js';
-
-const { PaymentMethod } = db;
+import { getMalipoPaymentOptions } from '../utils/malipoProviders.js';
 
 export const getPaymentMethods = async (req, res) => {
   try {
-    const methods = await PaymentMethod.findAll({
-      where: { is_active: true },
-      order: [['sort_order', 'ASC']],
-      attributes: ['id', 'name', 'slug', 'psp_id', 'provider', 'icon']
-    });
-
-    const availableProviders = methods.map((m) => ({
-      id: m.id,
-      name: m.name,
-      slug: m.slug,
-      psp_id: m.psp_id,
-      provider: m.provider,
-      icon: m.icon || m.slug
-    }));
+    const availableProviders = await getMalipoPaymentOptions();
 
     return res.json({
       success: true,

@@ -27,6 +27,7 @@ import courierServicesRoutes from './courier-services.js';
 import deliveryAgentRoutes from './delivery-agents.js';
 import onboardingRoutes from './onboarding.js';
 import subscriptionPackageRoutes from './subscription-packages.js';
+import subscriptionAccessRoutes from './subscription-access.js';
 
 const router = express.Router();
 
@@ -58,6 +59,7 @@ router.use('/courier-services', courierServicesRoutes);
 router.use('/delivery-agents', deliveryAgentRoutes);
 router.use('/onboarding', onboardingRoutes);
 router.use('/subscription-packages', subscriptionPackageRoutes);
+router.use('/', subscriptionAccessRoutes);
 
 export default router;
 

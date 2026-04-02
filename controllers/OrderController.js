@@ -2,6 +2,7 @@ import db from '../models/index.js';
 import { Op } from 'sequelize';
 import { logAudit, auditContext } from '../utils/audit.js';
 import { sendNotificationEmail } from '../utils/notificationHelper.js';
+import { getMalipoCredentials, postMalipoCollect } from '../utils/malipoCollect.js';
 
 const { Order, OrderItem, Cart, Product, User, Notification, Shop, Escrow, Wallet, WalletTransaction, ShippingAddress, CourierService } = db;
 
@@ -1479,8 +1480,7 @@ export const payWithMalipo = async (req, res) => {
       });
     }
 
-    const apiKey = process.env.MALIPO_API_KEY;
-    const appId = process.env.MALIPO_APP_ID;
+    const { apiKey, appId } = getMalipoCredentials();
     if (!apiKey || !appId) {
       return res.status(500).json({
         success: false,
@@ -1490,25 +1490,13 @@ export const payWithMalipo = async (req, res) => {
     }
 
     const amount = Math.round(parseFloat(order.total_amount) || 0);
-    const malipoPayload = {
+    const { response, data } = await postMalipoCollect({
       order_id: order.order_number,
-      merchant_txn_id: order.order_number, // Malipo webhook echoes this back
-      msisdn: String(msisdn).replace(/^\+265/, '0').replace(/^265/, '0'),
+      merchant_txn_id: order.order_number,
+      msisdn,
       amount,
       psp_id: pspId
-    };
-
-    const response = await fetch('https://gateway.malipo.mw/api/v2/transactions/collect', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'x-app-id': appId
-      },
-      body: JSON.stringify(malipoPayload)
     });
-
-    const data = await response.json().catch(() => ({}));
 
     if (response.ok) {
       await logAudit({

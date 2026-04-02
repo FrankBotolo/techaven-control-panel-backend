@@ -1,7 +1,7 @@
 import db from '../models/index.js';
 import { Op } from 'sequelize';
 
-const { MalipoTransaction, Order, User } = db;
+const { MalipoTransaction, Order, User, ShopSubscription } = db;
 
 /**
  * GET /api/admin/malipo-transactions
@@ -28,7 +28,14 @@ export const listMalipoTransactions = async (req, res) => {
           model: Order,
           as: 'order',
           attributes: ['id', 'order_number', 'total_amount', 'payment_status', 'status', 'user_id'],
+          required: false,
           include: [{ model: User, as: 'user', attributes: ['id', 'name', 'email', 'phone_number'] }]
+        },
+        {
+          model: ShopSubscription,
+          as: 'shop_subscription',
+          attributes: ['id', 'shop_id', 'status', 'payment_status', 'package_id'],
+          required: false
         }
       ],
       order: [['createdAt', 'DESC']],
@@ -41,6 +48,16 @@ export const listMalipoTransactions = async (req, res) => {
       transaction_id: t.transaction_id,
       merchant_txn_id: t.merchant_txn_id,
       order_id: t.order_id,
+      shop_subscription_id: t.shop_subscription_id,
+      shop_subscription: t.shop_subscription
+        ? {
+            id: t.shop_subscription.id,
+            shop_id: t.shop_subscription.shop_id,
+            status: t.shop_subscription.status,
+            payment_status: t.shop_subscription.payment_status,
+            package_id: t.shop_subscription.package_id
+          }
+        : null,
       order: t.order ? {
         id: t.order.id,
         order_number: t.order.order_number,

@@ -36,6 +36,7 @@ router.get('/withdrawals', SellerEarningsController.getWithdrawals);
 // Subscription (shop must match authenticated seller)
 router.get('/:shopId/subscription', shopOwner, SellerSubscriptionController.getCurrent);
 router.post('/:shopId/subscription/subscribe', shopOwner, SellerSubscriptionController.subscribe);
+router.post('/:shopId/subscription/pay/malipo', shopOwner, SellerSubscriptionController.payWithMalipo);
 router.post('/:shopId/subscription/cancel', shopOwner, SellerSubscriptionController.cancel);
 router.post('/:shopId/subscription/resume', shopOwner, SellerSubscriptionController.resume);
 

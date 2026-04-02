@@ -484,6 +484,7 @@ export const login = async (req, res) => {
           avatar: user.avatar_url || null,
           is_verified: user.is_verified,
           role: user.role,
+          shop_id: user.shop_id ?? null,
           member_since: memberSince,
           created_at: user.createdAt || user.created_at || new Date()
         }
@@ -640,6 +641,7 @@ export const verifyOtp = async (req, res) => {
         avatar: u.avatar_url || null,
         is_verified: u.is_verified,
         role: u.role,
+        shop_id: u.shop_id ?? null,
         member_since: memberSince,
         created_at: u.createdAt || u.created_at || new Date()
       };
@@ -972,7 +974,8 @@ export const refreshToken = async (req, res) => {
         access_token: accessToken,
         refresh_token: newRefreshToken,
         token_type: 'Bearer',
-        expires_in: 3600
+        expires_in: 3600,
+        shop_id: user.shop_id ?? null
       }
     });
   } catch (error) {

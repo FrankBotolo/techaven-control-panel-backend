@@ -6,6 +6,16 @@ import {
   computePeriodEnd,
   whereActiveSubscriptions
 } from '../utils/subscriptionHelpers.js';
+import {
+  getMalipoCredentials,
+  postMalipoCollect,
+  subscriptionMalipoMerchantRef
+} from '../utils/malipoCollect.js';
+import {
+  finalizePendingShopSubscriptionFromMalipo,
+  malipoCollectResponseIndicatesPaid
+} from '../utils/subscriptionMalipoActivate.js';
+import { getMalipoPaymentOptions, resolveMalipoPspId } from '../utils/malipoProviders.js';
 
 const { ShopSubscription, SubscriptionPackage, Shop } = db;
 
@@ -43,12 +53,15 @@ export const getCurrent = async (req, res) => {
       offset: 0
     });
 
+    const malipo_payment_options = await getMalipoPaymentOptions();
+
     return res.json({
       success: true,
       message: 'Subscription retrieved',
       data: {
         subscription: latest ? toShopSubscriptionDto(latest) : null,
-        recent_subscriptions: (history || []).map((s) => toShopSubscriptionDto(s))
+        recent_subscriptions: (history || []).map((s) => toShopSubscriptionDto(s)),
+        malipo_payment_options
       }
     });
   } catch (error) {
@@ -64,7 +77,7 @@ export const getCurrent = async (req, res) => {
 /**
  * Subscribe shop to a package.
  * - Replaces any current active-like subscription (canceled immediately).
- * - Auto-activates when SUBSCRIPTION_AUTO_ACTIVATE is not 'false' or payment_reference is sent.
+ * - Default: pending_payment until Malipo (or admin). Active+paid only if SUBSCRIPTION_AUTO_ACTIVATE=true (dev) or payment_reference is non-empty.
  */
 export const subscribe = async (req, res) => {
   try {
@@ -108,9 +121,8 @@ export const subscribe = async (req, res) => {
     }
 
     const autoActivate =
-      process.env.SUBSCRIPTION_AUTO_ACTIVATE !== 'false' ||
-      !!payment_reference ||
-      req.body.confirm_payment === true;
+      process.env.SUBSCRIPTION_AUTO_ACTIVATE === 'true' ||
+      !!String(payment_reference || '').trim();
 
     const start = new Date();
     const periodEnd = computePeriodEnd(start, pkg);
@@ -143,13 +155,16 @@ export const subscribe = async (req, res) => {
       metadata: { shop_id: check.shop.id, package_id: pkg.id, package_slug: pkg.slug }
     });
 
+    const malipo_payment_options = await getMalipoPaymentOptions();
+
     return res.status(201).json({
       success: true,
       message: autoActivate
         ? 'Subscription activated'
         : 'Subscription created — complete payment to activate',
       data: {
-        subscription: toShopSubscriptionDto(full)
+        subscription: toShopSubscriptionDto(full),
+        ...(!autoActivate ? { malipo_payment_options } : {})
       }
     });
   } catch (error) {
@@ -269,6 +284,170 @@ export const resume = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to resume subscription',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * POST /api/sellers/:shopId/subscription/pay/malipo
+ * Pay for a pending subscription via Malipo (Airtel / TNM). Webhook activates the row.
+ * Body: { subscription_id, msisdn, and one of: psp_id | payment_method_id | provider_slug } — same as order pay/malipo.
+ */
+export const payWithMalipo = async (req, res) => {
+  try {
+    const { shopId } = req.params;
+    const check = await assertShop(shopId, req.user);
+    if (check.error) {
+      return res.status(check.error.status).json({ success: false, message: check.error.message });
+    }
+
+    const { subscription_id, msisdn } = req.body;
+    const malipo_payment_options = await getMalipoPaymentOptions();
+
+    if (!subscription_id) {
+      return res.status(400).json({
+        success: false,
+        message: 'subscription_id is required',
+        data: { malipo_payment_options }
+      });
+    }
+
+    if (!msisdn) {
+      return res.status(400).json({
+        success: false,
+        message:
+          'msisdn is required (mobile number for Airtel Money or TNM Mpamba). Pick a network using psp_id, payment_method_id, or provider_slug.',
+        data: { malipo_payment_options }
+      });
+    }
+
+    const { pspId, error: pspErr } = await resolveMalipoPspId(req.body);
+    if (pspErr) {
+      return res.status(400).json({
+        success: false,
+        message: pspErr,
+        data: { malipo_payment_options }
+      });
+    }
+    if (pspId === null) {
+      return res.status(400).json({
+        success: false,
+        message:
+          'Choose mobile money network: psp_id (1=Airtel, 2=TNM), payment_method_id from GET /api/payment-methods, or provider_slug (e.g. airtel, tnm).',
+        data: { malipo_payment_options }
+      });
+    }
+
+    const sub = await ShopSubscription.findOne({
+      where: {
+        id: parseInt(subscription_id, 10),
+        shop_id: check.shop.id
+      },
+      include: [{ model: SubscriptionPackage, as: 'package' }]
+    });
+
+    if (!sub) {
+      return res.status(404).json({
+        success: false,
+        message: 'Subscription not found'
+      });
+    }
+
+    if (sub.status !== 'pending_payment' || sub.payment_status !== 'pending') {
+      return res.status(400).json({
+        success: false,
+        message: 'This subscription is not awaiting Malipo payment'
+      });
+    }
+
+    const { apiKey, appId } = getMalipoCredentials();
+    if (!apiKey || !appId) {
+      return res.status(500).json({
+        success: false,
+        message: 'Malipo payment is not configured. Set MALIPO_API_KEY and MALIPO_APP_ID in .env'
+      });
+    }
+
+    const amount = Math.round(parseFloat(sub.package?.price_mwk) || 0);
+    if (amount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Package price must be greater than zero for Malipo payment'
+      });
+    }
+
+    const merchantRef = subscriptionMalipoMerchantRef(sub.id);
+    const { response, data } = await postMalipoCollect({
+      order_id: merchantRef,
+      merchant_txn_id: merchantRef,
+      msisdn,
+      amount,
+      psp_id: pspId
+    });
+
+    if (response.ok) {
+      await logAudit({
+        ...auditContext(req),
+        action: 'seller.subscription.pay_malipo_initiate',
+        actor_user_id: req.user.id,
+        target_type: 'shop_subscription',
+        target_id: sub.id,
+        metadata: { shop_id: check.shop.id, amount, psp_id: pspId, merchant_txn_id: merchantRef },
+        ip_address: req.ip
+      });
+    }
+
+    if (!response.ok) {
+      console.error('Malipo subscription collect error:', response.status, data);
+      return res.status(response.status >= 400 && response.status < 500 ? response.status : 500).json({
+        success: false,
+        message: data?.message || data?.error || 'Malipo payment request failed',
+        data: null,
+        error: data?.message || data?.error
+      });
+    }
+
+    if (malipoCollectResponseIndicatesPaid(data)) {
+      const payBody = {
+        transaction_id: data?.transaction_id ?? data?.keys?.transaction_id,
+        amount: data?.amount,
+        psp_id: data?.psp_id ?? pspId
+      };
+      await finalizePendingShopSubscriptionFromMalipo(sub, payBody, {
+        orderRef: merchantRef,
+        source: 'malipo_collect_response',
+        ip_address: req.ip,
+        actor_user_id: req.user.id
+      });
+    }
+
+    const full = await ShopSubscription.findByPk(sub.id, {
+      include: [{ model: SubscriptionPackage, as: 'package' }]
+    });
+    const activatedNow = full?.status === 'active' && full?.payment_status === 'paid';
+
+    return res.json({
+      success: true,
+      message: activatedNow
+        ? 'Payment successful. Your subscription is now active.'
+        : 'Payment request sent. Confirm on your phone; your subscription activates when Malipo confirms payment.',
+      data: {
+        subscription_id: sub.id,
+        merchant_txn_id: merchantRef,
+        amount,
+        psp_id: pspId,
+        provider: pspId === 1 ? 'airtel' : 'tnm',
+        ...(data?.transaction_id && { transaction_id: data.transaction_id }),
+        ...data,
+        subscription: toShopSubscriptionDto(full)
+      }
+    });
+  } catch (error) {
+    console.error('Subscription pay with Malipo error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Payment initiation failed',
       error: error.message
     });
   }

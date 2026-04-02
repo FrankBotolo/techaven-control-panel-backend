@@ -53,6 +53,8 @@ Every response is JSON:
 - [15. App Info](#15-app-info)
 - [16. SMS](#16-sms)
 - [17. Webhooks](#17-webhooks)
+- [User subscription access (per user)](#user-subscription-access-per-user)
+- [Seller — Shop subscription & Malipo](#seller--shop-subscription--malipo)
 
 **Admin APIs**
 - [Admin - Onboarding Slides](#admin---onboarding-slides)
@@ -102,7 +104,7 @@ Every response is JSON:
 | POST | `/api/auth/resend-otp` | No | Resend OTP. Body: `email` or `phone_number`, `type`. |
 | POST | `/api/auth/forgot-password` | No | Send password-reset OTP. |
 | POST | `/api/auth/reset-password` | No | Reset password. Body: `email` or `phone_number`, `otp`, `new_password`. |
-| POST | `/api/auth/refresh-token` | No | New access token using `refresh_token`. |
+| POST | `/api/auth/refresh-token` | No | New access + refresh tokens. **`data`** includes **`shop_id`** (null for non-sellers). |
 | POST | `/api/auth/logout` | 🔒 | Logout (invalidate token). |
 
 **Register (customer)**  
@@ -123,7 +125,7 @@ Every response is JSON:
 ```
 Or: `{ "phone_number": "+265991234567", "password": "securePassword123" }`
 
-**Response (200):** `data` contains `access_token`, `token_type` ("Bearer"), and `user` object with: id, name, email, phone_number, avatar, is_verified, **role** (customer | seller | admin), member_since, created_at.
+**Response (200):** `data` contains `access_token`, `token_type` ("Bearer"), and `user` object with: id, name, email, phone_number, avatar, is_verified, **role** (customer | seller | admin), **`shop_id`** (integer or `null` — set for assigned sellers), member_since, created_at. The same **`user`** shape (including **`shop_id`**) is returned for **`verify-otp`** when `type` is `signup` or `login`.
 
 **Verify OTP** (4-digit)  
 `POST /api/auth/verify-otp`
@@ -143,7 +145,7 @@ Or: `{ "phone_number": "+265991234567", "password": "securePassword123" }`
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| GET | `/api/user/profile` | 🔒 | Get profile. Data: id, name, email, phone_number, avatar, is_verified, role, member_since, created_at. |
+| GET | `/api/user/profile` | 🔒 | Get profile. Data: id, name, email, phone_number, avatar, is_verified, role, **`shop_id`**, member_since, created_at. |
 | PUT | `/api/user/profile` | 🔒 | Update profile. Body: name, email, phone_number (all optional). |
 | POST | `/api/user/avatar` | 🔒 | Upload avatar (multipart/form-data, field `avatar`). |
 | PUT | `/api/user/password` | 🔒 | Change password. |
@@ -337,7 +339,7 @@ Product reviews (`GET /api/products/:product_id/reviews`): `data` is an array of
 | GET | `/api/orders` | 🔒 | List my orders. |
 | GET | `/api/orders/:order_id` | 🔒 | Single order. |
 | POST | `/api/orders/:id/pay/wallet` | 🔒 | Pay with wallet. No body. Returns order + wallet_balance. |
-| POST | `/api/orders/:id/pay/malipo` | 🔒 | Initiate Malipo mobile money (Airtel Money/Mpamba). Body: msisdn, psp_id (1=Airtel, 2=Mpamba). |
+| POST | `/api/orders/:id/pay/malipo` | 🔒 | Initiate Malipo mobile money (Airtel Money/Mpamba). Body: `msisdn`, `psp_id` (1=Airtel, 2=TNM). |
 | POST | `/api/orders/:id/cancel` | 🔒 | Cancel order (only when status is pending). No body. |
 | POST | `/api/orders/:id/payment/complete` | 🔒 | Mark payment complete (escrow). Body: payment_reference, payment_proof. |
 | POST | `/api/orders/:id/delivery/confirm` | 🔒 | Customer confirm delivery. |
@@ -546,29 +548,29 @@ All under `/api/shipping-addresses` (or `/api/addresses`). Data: id, label, name
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| GET | `/api/payment-methods` | 🔒 | List payment methods. |
-| POST | `/api/payment-methods` | 🔒 | Add payment method. |
-| DELETE | `/api/payment-methods/:id` | 🔒 | Delete payment method. |
+| GET | `/api/payment-methods` | 🔒 | Lists Malipo options in **`data.available_providers`** (`id`, `name`, `slug`, `psp_id`, …). Sellers can use this (or `malipo_payment_options` on subscription endpoints) to pick Airtel vs TNM before **`POST .../subscription/pay/malipo`**. |
+| POST | `/api/payment-methods` | 🔒 | Add payment method (stub). |
+| DELETE | `/api/payment-methods/:id` | 🔒 | Delete payment method (stub). |
+
+**Order** Malipo still uses only **`msisdn`** + **`psp_id`** on **`POST /api/orders/:id/pay/malipo`**. **Seller subscription** Malipo accepts **`psp_id`** or **`payment_method_id`** or **`provider_slug`**.
 
 **Response format (GET)**
 
 | Endpoint | `data` shape |
 |----------|----------------|
-| `GET /api/payment-methods` | Array of payment method objects (e.g. id, type, provider, phone_number, is_default) |
+| `GET /api/payment-methods` | `{ payment_methods: [], available_providers: [{ id, name, slug, psp_id, provider, icon }, ...] }` |
 
 ```json
 {
   "success": true,
   "message": "Payment methods retrieved",
-  "data": [
-    {
-      "id": 1,
-      "type": "mobile_money",
-      "provider": "Airtel Money",
-      "phone_number": "+265991234567",
-      "is_default": true
-    }
-  ]
+  "data": {
+    "payment_methods": [],
+    "available_providers": [
+      { "id": 1, "name": "Airtel Money", "slug": "airtel", "psp_id": 1, "provider": "malipo", "icon": "airtel" },
+      { "id": 2, "name": "TNM Mpamba", "slug": "tnm", "psp_id": 2, "provider": "malipo", "icon": "tnm" }
+    ]
+  }
 }
 ```
 
@@ -793,9 +795,9 @@ Same response as `GET /api/products` (see section 3).
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| POST | `/api/webhooks/malipo` | No | Malipo payment callback. Body: order_id (order_number), status, transaction_id, amount, psp_id. On success: marks order paid, creates escrow, notifies customer/admin/seller. |
+| POST | `/api/webhooks/malipo` | No | Malipo payment callback. **`merchant_txn_id`** (or `order_id` / `reference`, depending on Malipo) routes the event. **Orders:** reference = **`order_number`** (`ORD-…`); on success → order paid, escrow, notifications. **Shop subscriptions:** reference = **`SUB-{subscription_id}`** with an optional unique suffix per collect (e.g. **`SUB-42-ld0abc`**) so retries do not reuse the same Malipo **`order_id`**; on success → row **`status: active`**, **`payment_status: paid`** (same activation rules as **`POST .../subscription/pay/malipo`** when Malipo’s collect response already reports success — shared server logic). Success **`status`** values are matched case-insensitively (e.g. `success`, `successful`, `succeeded`, `completed`, `complete`, `paid`). For subscriptions, **`amount`** is validated against the package price when present (allows ±1 MWK rounding); if **`amount` is omitted** but the callback is a success, the subscription is still activated. **`WEBHOOK_CAPTURE_ONLY=true`** skips all processing — use only when debugging. |
 
-**Malipo webhook payload**
+**Malipo webhook — order payment (example payload)**
 ```json
 {
   "order_id": "ORD-20240316-1234",
@@ -805,6 +807,67 @@ Same response as `GET /api/products` (see section 3).
   "psp_id": 1
 }
 ```
+
+**Malipo webhook — seller subscription (example)**  
+After `POST /api/sellers/:shopId/subscription/pay/malipo`, Malipo echoes the reference sent as `merchant_txn_id`:
+```json
+{
+  "merchant_txn_id": "SUB-42-ld0abc123xyz",
+  "status": "success",
+  "transaction_id": "TXN-MALIPO-456",
+  "amount": 150000,
+  "psp_id": 1
+}
+```
+
+After this, **`GET /api/sellers/:shopId/subscription`** (or **`pay/malipo`** **`data.subscription`**) shows **`subscribed: true`** only when **`status: active`**, **`payment_status: paid`**, and **`current_period_end`** is still in the future (`effective_status` becomes **`expired`** when the period date has passed).
+
+---
+
+## User subscription access (per user)
+
+Separate from **shop + Malipo** subscriptions below. Plans still come from **`subscription_packages`**, but access is stored per **`users.id`** in **`user_subscriptions`** with payments in **`subscription_payments`**. See **`SUBSCRIPTION_API.md`** and **`docs/SUBSCRIPTION_ACCESS_ARCHITECTURE.md`**.
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/plans` | No | Active plans as **`data.plans`**: `{ id, name, price, duration, features }` (`price` MWK, `duration` days). |
+| POST | `/api/subscribe` | 🔒 Seller or admin | Body: **`planId`**, **`method`** (e.g. `simulated`). **User id from JWT only** — do not rely on body `userId` for access control. Flow: **`pending`** payment → provider (simulated; configurable failure via env) → on success **extend or create** **`active`** subscription with **`end_date`**. **402** if payment **`failed`**. |
+| GET | `/api/subscription/transactions` | 🔒 Seller or admin | **`data.transactions`** + **`data.pagination`**. Sellers see only their rows; admins see all, with optional **`?user_id=`**, **`status=`**, **`plan_id=`**, **`from=`**, **`to=`**, **`page=`**, **`limit=`** (max 100). |
+| GET | `/api/subscription/status/:userId` | 🔒 | **`data.has_access`** + **`data.subscription`** if **`active`** and **`end_date` > now. Only **`userId`** = self or **admin**. |
+| GET | `/api/subscription/ping` | 🔒 + active user subscription | Example gated endpoint; **403** without valid subscription. |
+
+**Environment:** `SUBSCRIPTION_PAYMENT_SIMULATE_FAILURE=true` forces simulated decline; `SUBSCRIPTION_EXPIRY_CRON` sets cron for daily expiry updates.
+
+---
+
+## Seller — Shop subscription & Malipo
+
+Seller **JWT**, **approved shop**. `:shopId` must equal the authenticated user’s **`shop_id`**. Full detail: `docs/SUBSCRIPTION_PACKAGES.md`.
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/subscription-packages` | No | Public catalog of plans (MWK, features). |
+| GET | `/api/sellers/:shopId/subscription` | 🔒 Seller | **`data.subscription`** + **`recent_subscriptions`** + **`malipo_payment_options`**. See **Subscription object** below. |
+| POST | `/api/sellers/:shopId/subscription/subscribe` | 🔒 Seller | Body: `package_id`, optional `replace_existing`, `payment_reference`, `auto_renew`. New row is **pending** until Malipo unless **`SUBSCRIPTION_AUTO_ACTIVATE=true`** (dev only) or non-empty **`payment_reference`**; response includes **`malipo_payment_options`** when awaiting payment. |
+| POST | `/api/sellers/:shopId/subscription/pay/malipo` | 🔒 Seller | Body: **`subscription_id`**, **`msisdn`**, and **one of** **`psp_id`** (1=Airtel, 2=TNM), **`payment_method_id`**, or **`provider_slug`**. **Orders** only use **`psp_id`**; subscription accepts all three. On **HTTP 200**, **`data`** includes the latest **`subscription`** object (same shape as **`GET .../subscription`**). **`message`** is *Payment successful. Your subscription is now active.* when the subscription is **`active`** and **`paid`** after this call (e.g. Malipo’s response body already indicated success/paid, or a webhook completed payment before the response was sent); otherwise it asks the customer to confirm on the phone. Errors may return **`data.malipo_payment_options`**. |
+| POST | `/api/sellers/:shopId/subscription/cancel` | 🔒 Seller | Body: optional `immediately`. |
+| POST | `/api/sellers/:shopId/subscription/resume` | 🔒 Seller | Undo cancel-at-period-end. |
+
+**Subscription object** (`data.subscription` and items in `recent_subscriptions`)
+
+| Field | Meaning |
+|-------|---------|
+| `status` | Stored status (`pending_payment`, `active`, `canceled`, …). |
+| `effective_status` | May become `expired` when past `current_period_end` even if DB `status` is still `active`. |
+| `payment_status` | `pending` \| `paid` \| `failed` \| `refunded`. |
+| **`subscribed`** | **`true`** only when **`status`** is **`active`**, **`payment_status`** is **`paid`**, and the period end date has not passed. |
+| `package` | Plan details (`price_mwk`, features, …). |
+
+**Typical Malipo flow**
+
+1. Do not set **`SUBSCRIPTION_AUTO_ACTIVATE=true`** in production (leave unset so subscribe stays pending until payment).
+2. Subscribe → **`subscription.id`** + **`pending_payment`** + **`malipo_payment_options`**.
+3. **`pay/malipo`** → if Malipo’s JSON response already reports success/paid, the server may set **`active`** + **`paid`** immediately and return **`data.subscription.subscribed: true`**; otherwise the customer confirms on the phone → **`POST /api/webhooks/malipo`** → same activation → poll **`GET .../subscription`** (or use **`data.subscription`** on the pay response) until **`subscribed: true`**.
 
 ---
 

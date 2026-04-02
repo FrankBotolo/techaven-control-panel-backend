@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import db from './models/index.js';
 import routes from './routes/index.js';
+import { startSubscriptionExpiryJob } from './jobs/subscriptionExpiryJob.js';
 import { corsMiddleware } from './middleware/cors.js';
 import { requestLogger } from './middleware/requestLogger.js';
 
@@ -64,6 +65,8 @@ const startServer = async () => {
       await db.sequelize.sync({ alter: false });
       console.log('✅ Database synchronized.');
     }
+
+    startSubscriptionExpiryJob();
 
     // Start server
     app.listen(PORT, () => {

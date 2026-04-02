@@ -22,6 +22,11 @@ const MalipoTransaction = sequelize.define('MalipoTransaction', {
     allowNull: true,
     references: { model: 'orders', key: 'id' }
   },
+  shop_subscription_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: { model: 'shop_subscriptions', key: 'id' }
+  },
   amount: {
     type: DataTypes.DECIMAL(12, 2),
     allowNull: true
@@ -61,6 +66,7 @@ const MalipoTransaction = sequelize.define('MalipoTransaction', {
     { fields: ['transaction_id'] },
     { fields: ['merchant_txn_id'] },
     { fields: ['order_id'] },
+    { fields: ['shop_subscription_id'] },
     { fields: ['status'] },
     { fields: ['createdAt'] }
   ]

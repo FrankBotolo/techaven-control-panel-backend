@@ -4,7 +4,6 @@ import * as PaymentMethodController from '../controllers/PaymentMethodController
 
 const router = express.Router();
 
-// All routes require authentication
 router.use(authenticate);
 
 router.get('/', PaymentMethodController.getPaymentMethods);

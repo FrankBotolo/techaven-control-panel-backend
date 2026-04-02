@@ -1,7 +1,114 @@
 import db from '../models/index.js';
-import { Sequelize } from 'sequelize';
+import { Op } from 'sequelize';
+import moment from 'moment';
 
-const { Shop, Product, Category, User, ShopInvitation, AuditLog, Banner, Notification } = db;
+const {
+  Shop,
+  Product,
+  Category,
+  User,
+  ShopInvitation,
+  AuditLog,
+  Banner,
+  Notification,
+  Order,
+  OrderItem,
+  MalipoTransaction
+} = db;
+
+const PAID_ORDER_BASE = {
+  payment_status: 'paid',
+  status: { [Op.ne]: 'cancelled' }
+};
+
+function malipoSubscriptionPaidWhere() {
+  const states = ['success', 'successful', 'succeeded', 'completed', 'complete', 'paid'];
+  return {
+    [Op.or]: states.map((s) =>
+      db.sequelize.where(db.sequelize.fn('LOWER', db.sequelize.col('MalipoTransaction.status')), s)
+    )
+  };
+}
+
+async function aggregatePaidLineRevenue(fromDate, toDate) {
+  const orderWhere = { ...PAID_ORDER_BASE };
+  if (fromDate && toDate) {
+    orderWhere.createdAt = { [Op.between]: [fromDate, toDate] };
+  }
+  const row = await OrderItem.findOne({
+    attributes: [
+      [db.sequelize.fn('SUM', db.sequelize.col('OrderItem.subtotal')), 'revenue'],
+      [db.sequelize.fn('COUNT', db.sequelize.fn('DISTINCT', db.sequelize.col('OrderItem.order_id'))), 'order_count']
+    ],
+    include: [
+      {
+        model: Order,
+        as: 'order',
+        attributes: [],
+        where: orderWhere,
+        required: true
+      }
+    ],
+    raw: true
+  });
+  return {
+    revenue_mwk: parseFloat(row?.revenue) || 0,
+    order_count: parseInt(row?.order_count, 10) || 0
+  };
+}
+
+async function aggregatePaidLineRevenueByShop(fromDate, toDate) {
+  const orderWhere = { ...PAID_ORDER_BASE };
+  if (fromDate && toDate) {
+    orderWhere.createdAt = { [Op.between]: [fromDate, toDate] };
+  }
+  const rows = await OrderItem.findAll({
+    attributes: [
+      [db.sequelize.col('product.shop_id'), 'shop_id'],
+      [db.sequelize.fn('SUM', db.sequelize.col('OrderItem.subtotal')), 'revenue_mwk'],
+      [db.sequelize.fn('COUNT', db.sequelize.fn('DISTINCT', db.sequelize.col('OrderItem.order_id'))), 'order_count']
+    ],
+    include: [
+      {
+        model: Product,
+        as: 'product',
+        attributes: [],
+        required: true
+      },
+      {
+        model: Order,
+        as: 'order',
+        attributes: [],
+        where: orderWhere,
+        required: true
+      }
+    ],
+    group: ['product.shop_id'],
+    raw: true
+  });
+  const map = new Map();
+  for (const r of rows) {
+    const sid = r.shop_id;
+    map.set(sid, {
+      revenue_mwk: parseFloat(r.revenue_mwk) || 0,
+      order_count: parseInt(r.order_count, 10) || 0
+    });
+  }
+  return map;
+}
+
+function mergeShopSalesRows(allShops, byShopMap) {
+  return allShops.map((s) => {
+    const st = byShopMap.get(s.id) || { revenue_mwk: 0, order_count: 0 };
+    return {
+      shop_id: s.id,
+      shop_name: s.name,
+      shop_logo: s.logo,
+      revenue_mwk: st.revenue_mwk,
+      order_count: st.order_count
+    };
+  });
+}
 
 export const getDashboard = async (req, res) => {
   try {
@@ -110,6 +217,47 @@ export const getDashboard = async (req, res) => {
     const totalProductsValueResult = await Product.sum('price');
     const totalProductsValue = parseFloat(totalProductsValueResult) || 0;
 
+    const nowUtc = moment.utc();
+    const now = nowUtc.toDate();
+    const weekStart = nowUtc.clone().startOf('isoWeek').toDate();
+    const monthStart = nowUtc.clone().startOf('month').toDate();
+    const yearStart = nowUtc.clone().startOf('year').toDate();
+
+    const subscriptionMonthWhere = {
+      shop_subscription_id: { [Op.ne]: null },
+      createdAt: { [Op.between]: [monthStart, now] },
+      ...malipoSubscriptionPaidWhere()
+    };
+
+    const [
+      paidAllTime,
+      paidWeek,
+      paidMonth,
+      paidYear,
+      shopMapAllTime,
+      shopMapMonth,
+      allShopsList,
+      subscriptionIncomeMonth,
+      subscriptionTxCountMonth
+    ] = await Promise.all([
+      aggregatePaidLineRevenue(),
+      aggregatePaidLineRevenue(weekStart, now),
+      aggregatePaidLineRevenue(monthStart, now),
+      aggregatePaidLineRevenue(yearStart, now),
+      aggregatePaidLineRevenueByShop(),
+      aggregatePaidLineRevenueByShop(monthStart, now),
+      Shop.findAll({ attributes: ['id', 'name', 'logo'], order: [['name', 'ASC']] }),
+      MalipoTransaction.sum('amount', { where: subscriptionMonthWhere }),
+      MalipoTransaction.count({ where: subscriptionMonthWhere })
+    ]);
+
+    const byShopAllTime = mergeShopSalesRows(allShopsList, shopMapAllTime).sort(
+      (a, b) => b.revenue_mwk - a.revenue_mwk
+    );
+    const byShopMonthToDate = mergeShopSalesRows(allShopsList, shopMapMonth).sort(
+      (a, b) => b.revenue_mwk - a.revenue_mwk
+    );
+
     // Format response
     const dashboardData = {
       overview: {
@@ -148,11 +296,54 @@ export const getDashboard = async (req, res) => {
           total: totalNotifications
         },
         sales: {
-          total: totalSales
+          total: totalSales,
+          paid_orders_revenue_mwk: paidAllTime.revenue_mwk,
+          paid_orders_count: paidAllTime.order_count
         },
         products_value: {
           total: parseFloat(totalProductsValue) || 0
         }
+      },
+      sales_analytics: {
+        currency: 'MWK',
+        timezone: 'UTC',
+        basis:
+          'Paid, non-cancelled orders; revenue is sum of order line subtotals (product sales) per shop.',
+        periods: {
+          week_to_date: {
+            start: weekStart.toISOString(),
+            end: now.toISOString(),
+            label: 'ISO week to date (UTC, week starts Monday)',
+            ...paidWeek
+          },
+          month_to_date: {
+            start: monthStart.toISOString(),
+            end: now.toISOString(),
+            label: 'Calendar month to date (UTC)',
+            ...paidMonth
+          },
+          year_to_date: {
+            start: yearStart.toISOString(),
+            end: now.toISOString(),
+            label: 'Calendar year to date (UTC)',
+            ...paidYear
+          },
+          all_time: {
+            ...paidAllTime
+          }
+        },
+        by_shop: {
+          all_time: byShopAllTime,
+          month_to_date: byShopMonthToDate
+        }
+      },
+      monthly_income: {
+        month: nowUtc.format('YYYY-MM'),
+        timezone: 'UTC',
+        basis:
+          'Malipo payments linked to shop subscriptions (successful webhook statuses only), month to date.',
+        subscription_payments_mwk: parseFloat(subscriptionIncomeMonth) || 0,
+        subscription_transaction_count: subscriptionTxCountMonth
       },
       recent: {
         activities: recentActivities.map(activity => ({

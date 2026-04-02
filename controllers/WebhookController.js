@@ -3,8 +3,19 @@ import { Op } from 'sequelize';
 import { sendNotificationEmail } from '../utils/notificationHelper.js';
 import { logAudit } from '../utils/audit.js';
 import { captureWebhook } from '../utils/webhookCapture.js';
+import { parseSubscriptionMerchantRef } from '../utils/malipoCollect.js';
+import { finalizePendingShopSubscriptionFromMalipo } from '../utils/subscriptionMalipoActivate.js';
 
-const { Order, Wallet, WalletTransaction, Escrow, User, Notification, MalipoTransaction } = db;
+const {
+  Order,
+  Wallet,
+  WalletTransaction,
+  Escrow,
+  User,
+  Notification,
+  MalipoTransaction,
+  ShopSubscription
+} = db;
 
 /**
  * POST /api/webhooks/malipo
@@ -61,9 +72,84 @@ export const malipo = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Missing merchant_txn_id or order reference' });
     }
 
-    if (status !== 'success' && status !== 'completed' && status !== 'paid') {
-      console.log('[Malipo webhook] Ignored: status is not success/completed/paid:', status);
+    const isPaidStatus =
+      status === 'success' ||
+      status === 'successful' ||
+      status === 'succeeded' ||
+      status === 'completed' ||
+      status === 'complete' ||
+      status === 'paid';
+    if (!isPaidStatus) {
+      console.log('[Malipo webhook] Ignored: status is not a success paid state:', status);
       return res.status(200).json({ success: true, message: 'Webhook received (non-success)' });
+    }
+
+    const subscriptionId = parseSubscriptionMerchantRef(orderRef);
+    if (subscriptionId) {
+      const sub = await ShopSubscription.findByPk(subscriptionId, {
+        include: [{ model: db.SubscriptionPackage, as: 'package' }]
+      });
+      if (!sub) {
+        console.log('[Malipo webhook] Shop subscription not found for:', orderRef);
+        return res.status(200).json({ success: true, message: 'Webhook received (subscription not found)' });
+      }
+
+      const expected = Math.round(parseFloat(sub.package?.price_mwk) || 0);
+      const rawAmount = body.amount;
+      const hasAmount =
+        rawAmount != null &&
+        rawAmount !== '' &&
+        !Number.isNaN(parseFloat(String(rawAmount).replace(/,/g, '')));
+      if (expected > 0 && !hasAmount) {
+        console.log(
+          '[Malipo webhook] Subscription activating without amount in payload (trust Malipo success):',
+          orderRef
+        );
+      }
+
+      const result = await finalizePendingShopSubscriptionFromMalipo(sub, body, {
+        orderRef,
+        source: 'malipo_webhook',
+        ip_address: req.ip,
+        actor_user_id: null
+      });
+
+      if (result.alreadyActive) {
+        console.log('[Malipo webhook] Subscription already subscribed (active + paid):', orderRef);
+        return res.status(200).json({ success: true, message: 'Webhook received' });
+      }
+      if (!result.ok) {
+        if (result.reason === 'not_pending_payment') {
+          console.log(
+            '[Malipo webhook] Subscription not pending_payment:',
+            orderRef,
+            sub.status,
+            sub.payment_status
+          );
+          return res.status(200).json({ success: true, message: 'Webhook received (subscription state)' });
+        }
+        if (result.reason === 'payment_state') {
+          console.log(
+            '[Malipo webhook] Subscription payment state not payable:',
+            orderRef,
+            sub.payment_status
+          );
+          return res.status(200).json({ success: true, message: 'Webhook received (subscription state)' });
+        }
+        if (result.reason === 'amount_mismatch') {
+          console.log('[Malipo webhook] Subscription amount mismatch:', {
+            orderRef,
+            expected: result.expected,
+            paid: result.paid
+          });
+          return res.status(200).json({ success: true, message: 'Webhook received (amount mismatch)' });
+        }
+        console.log('[Malipo webhook] Subscription finalize skipped:', orderRef, result);
+        return res.status(200).json({ success: true, message: 'Webhook received (subscription state)' });
+      }
+
+      console.log('[Malipo webhook] Subscription activated:', orderRef, 'id:', sub.id);
+      return res.status(200).json({ success: true, message: 'Webhook processed (subscription)' });
     }
 
     const order = await Order.findOne({

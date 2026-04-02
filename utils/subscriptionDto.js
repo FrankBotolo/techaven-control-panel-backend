@@ -25,6 +25,26 @@ export function toPackageDto(p, { admin = false } = {}) {
   };
 }
 
+function primarySellerFromShop(shopAssoc) {
+  if (!shopAssoc) return null;
+  const rawUsers = shopAssoc.users || shopAssoc.Users;
+  if (!rawUsers || !rawUsers.length) return null;
+  const list = [...rawUsers].sort((a, b) => {
+    const ida = a.get ? a.get('id') : a.id;
+    const idb = b.get ? b.get('id') : b.id;
+    return ida - idb;
+  });
+  const u = list[0];
+  const pl = u.get ? u.get({ plain: true }) : u;
+  return {
+    id: pl.id,
+    name: pl.name,
+    email: pl.email || null,
+    phone_number: pl.phone_number || null,
+    role: pl.role
+  };
+}
+
 export function toShopSubscriptionDto(sub, pkg = null) {
   if (!sub) return null;
   const row = sub.get ? sub.get({ plain: true }) : sub;
@@ -39,14 +59,43 @@ export function toShopSubscriptionDto(sub, pkg = null) {
     effective_status = 'expired';
   }
 
+  const shopAssoc = sub.shop || sub.Shop || row.shop || row.Shop;
+  let shop_name = null;
+  let shop = null;
+  let seller = null;
+  if (shopAssoc) {
+    const sp = shopAssoc.get ? shopAssoc.get({ plain: true }) : shopAssoc;
+    shop_name = sp.name ?? null;
+    shop = {
+      id: sp.id,
+      name: sp.name,
+      status: sp.status,
+      application_status: sp.application_status,
+      email: sp.email || null,
+      phone: sp.phone || null
+    };
+    seller = primarySellerFromShop(shopAssoc);
+  }
+
+  /** True only after payment succeeded and the row is active (Malipo webhook/collect, admin, or dev bypass). */
+  const subscribed =
+    row.status === 'active' &&
+    row.payment_status === 'paid' &&
+    !expiredByDate;
+
   return {
     id: row.id,
     shop_id: row.shop_id,
+    shop_name,
+    shop,
+    seller,
     package_id: row.package_id,
     package: pack ? toPackageDto(pack, { admin: false }) : null,
     status: row.status,
     effective_status,
     payment_status: row.payment_status,
+    /** True when status is active, payment is paid, and the period has not ended. */
+    subscribed,
     trial_ends_at: row.trial_ends_at || null,
     current_period_start: row.current_period_start || null,
     current_period_end: row.current_period_end || null,

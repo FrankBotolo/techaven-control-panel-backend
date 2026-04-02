@@ -28,6 +28,7 @@ export const profile = async (req, res) => {
         avatar: user.avatar_url || null,
         is_verified: user.is_verified,
         role: user.role,
+        shop_id: user.shop_id ?? null,
         points: user.points || 0,
         member_since: memberSince(user.createdAt || user.created_at),
         created_at: user.createdAt || user.created_at || null

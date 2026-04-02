@@ -3,7 +3,7 @@ import { logAudit, auditContext } from '../utils/audit.js';
 import { toShopSubscriptionDto } from '../utils/subscriptionDto.js';
 import { computePeriodEnd } from '../utils/subscriptionHelpers.js';
 
-const { ShopSubscription, Shop, SubscriptionPackage } = db;
+const { ShopSubscription, Shop, SubscriptionPackage, User } = db;
 
 export const list = async (req, res) => {
   try {
@@ -28,7 +28,20 @@ export const list = async (req, res) => {
       where,
       include: [
         { model: SubscriptionPackage, as: 'package' },
-        { model: Shop, as: 'shop', attributes: ['id', 'name', 'status', 'application_status'] }
+        {
+          model: Shop,
+          as: 'shop',
+          attributes: ['id', 'name', 'status', 'application_status', 'email', 'phone'],
+          include: [
+            {
+              model: User,
+              as: 'users',
+              attributes: ['id', 'name', 'email', 'phone_number', 'role'],
+              where: { role: 'seller' },
+              required: false
+            }
+          ]
+        }
       ],
       order: [['id', 'DESC']],
       limit: perPage,
@@ -68,7 +81,20 @@ export const getOne = async (req, res) => {
     const row = await ShopSubscription.findByPk(id, {
       include: [
         { model: SubscriptionPackage, as: 'package' },
-        { model: Shop, as: 'shop', attributes: ['id', 'name', 'status', 'application_status', 'email', 'phone'] }
+        {
+          model: Shop,
+          as: 'shop',
+          attributes: ['id', 'name', 'status', 'application_status', 'email', 'phone'],
+          include: [
+            {
+              model: User,
+              as: 'users',
+              attributes: ['id', 'name', 'email', 'phone_number', 'role'],
+              where: { role: 'seller' },
+              required: false
+            }
+          ]
+        }
       ]
     });
     if (!row) {
@@ -142,7 +168,23 @@ export const update = async (req, res) => {
     });
 
     const fresh = await ShopSubscription.findByPk(row.id, {
-      include: [{ model: SubscriptionPackage, as: 'package' }]
+      include: [
+        { model: SubscriptionPackage, as: 'package' },
+        {
+          model: Shop,
+          as: 'shop',
+          attributes: ['id', 'name', 'status', 'application_status', 'email', 'phone'],
+          include: [
+            {
+              model: User,
+              as: 'users',
+              attributes: ['id', 'name', 'email', 'phone_number', 'role'],
+              where: { role: 'seller' },
+              required: false
+            }
+          ]
+        }
+      ]
     });
 
     return res.json({

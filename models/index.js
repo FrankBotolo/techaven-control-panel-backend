@@ -27,6 +27,8 @@ import MalipoTransaction from './MalipoTransaction.js';
 import OnboardingSlide from './OnboardingSlide.js';
 import SubscriptionPackage from './SubscriptionPackage.js';
 import ShopSubscription from './ShopSubscription.js';
+import SubscriptionPayment from './SubscriptionPayment.js';
+import UserSubscription from './UserSubscription.js';
 
 // Define associations
 Product.belongsTo(Category, { foreignKey: 'category_id', as: 'category' });
@@ -51,6 +53,19 @@ SubscriptionPackage.hasMany(ShopSubscription, {
   foreignKey: 'package_id',
   as: 'shop_subscriptions'
 });
+
+// User-centric subscription access (payment → user_subscriptions; plans = subscription_packages)
+SubscriptionPayment.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+SubscriptionPayment.belongsTo(SubscriptionPackage, { foreignKey: 'plan_id', as: 'plan' });
+User.hasMany(SubscriptionPayment, { foreignKey: 'user_id', as: 'subscription_payments' });
+SubscriptionPackage.hasMany(SubscriptionPayment, { foreignKey: 'plan_id', as: 'subscription_payments' });
+
+UserSubscription.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+UserSubscription.belongsTo(SubscriptionPackage, { foreignKey: 'plan_id', as: 'plan' });
+UserSubscription.belongsTo(SubscriptionPayment, { foreignKey: 'payment_id', as: 'payment' });
+User.hasMany(UserSubscription, { foreignKey: 'user_id', as: 'user_subscriptions' });
+SubscriptionPackage.hasMany(UserSubscription, { foreignKey: 'plan_id', as: 'user_subscriptions' });
+SubscriptionPayment.hasMany(UserSubscription, { foreignKey: 'payment_id', as: 'user_subscriptions' });
 
 // Shop categories (optional per-shop)
 Category.belongsTo(Shop, { foreignKey: 'shop_id', as: 'shop' });
@@ -146,6 +161,11 @@ DeliveryAgent.hasMany(DeliveryJob, { foreignKey: 'agent_id', as: 'jobs' });
 
 MalipoTransaction.belongsTo(Order, { foreignKey: 'order_id', as: 'order' });
 Order.hasMany(MalipoTransaction, { foreignKey: 'order_id', as: 'malipo_transactions' });
+MalipoTransaction.belongsTo(ShopSubscription, { foreignKey: 'shop_subscription_id', as: 'shop_subscription' });
+ShopSubscription.hasMany(MalipoTransaction, {
+  foreignKey: 'shop_subscription_id',
+  as: 'malipo_transactions'
+});
 
 const db = {
   sequelize,
@@ -177,7 +197,9 @@ const db = {
   MalipoTransaction,
   OnboardingSlide,
   SubscriptionPackage,
-  ShopSubscription
+  ShopSubscription,
+  SubscriptionPayment,
+  UserSubscription
 };
 
 export default db;
