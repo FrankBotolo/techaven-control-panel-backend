@@ -9,6 +9,7 @@
 
 import db from '../models/index.js';
 import dotenv from 'dotenv';
+import { buildTechavenSmartphoneRows } from './data/techavenShopSmartphonesSeed.js';
 
 dotenv.config();
 
@@ -278,7 +279,26 @@ const seedDatabase = async () => {
         defaults: p
       });
     }
-    console.log('       ✅ Products created for Buyer to browse.\n');
+
+    const smartphoneCategory = categories.find((c) => c.name === 'Smartphones');
+    const techavenPhones = buildTechavenSmartphoneRows({ vendorName: 'Tech Haven Electronics' });
+    for (const p of techavenPhones) {
+      await Product.findOrCreate({
+        where: { name: p.name, shop_id: shop.id },
+        defaults: {
+          ...p,
+          category_id: smartphoneCategory.id,
+          shop_id: shop.id
+        }
+      });
+    }
+
+    const shopProductCount = await Product.count({ where: { shop_id: shop.id } });
+    await shop.update({ total_products: shopProductCount });
+
+    console.log(
+      `       ✅ Products created for Buyer to browse (incl. ${techavenPhones.length} smartphones, MWK pricing).\n`
+    );
 
     // Buyer Shipping Address (required for Checkout – Step 5)
     console.log('  [3.2] Buyer: Shipping Address for Checkout...');
