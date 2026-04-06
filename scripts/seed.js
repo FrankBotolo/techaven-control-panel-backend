@@ -12,6 +12,10 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+/** Xiaomi Redmi 13: use Cloudinary when no catalog JPG is linked for this model. */
+const REDMI_13_IMAGE_FALLBACK =
+  'https://res.cloudinary.com/dd1raaqnh/image/upload/v1773906889/techaven/products/laa7p73dfobk2zsduwn0.jpg';
+
 const {
   User,
   Category,
