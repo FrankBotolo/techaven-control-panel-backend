@@ -856,7 +856,10 @@ const seedDatabase = async () => {
 
 
 
-    ];
+    ].map((p) => ({
+      ...p,
+      category_id: p.category_id ?? categories[0].id
+    }));
     for (const p of productsData) {
       await Product.findOrCreate({
         where: { name: p.name, shop_id: shop.id },
