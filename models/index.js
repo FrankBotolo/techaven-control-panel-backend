@@ -29,6 +29,7 @@ import SubscriptionPackage from './SubscriptionPackage.js';
 import ShopSubscription from './ShopSubscription.js';
 import SubscriptionPayment from './SubscriptionPayment.js';
 import UserSubscription from './UserSubscription.js';
+import PlatformSetting from './PlatformSetting.js';
 
 // Define associations
 Product.belongsTo(Category, { foreignKey: 'category_id', as: 'category' });
@@ -199,7 +200,8 @@ const db = {
   SubscriptionPackage,
   ShopSubscription,
   SubscriptionPayment,
-  UserSubscription
+  UserSubscription,
+  PlatformSetting
 };
 
 export default db;

@@ -118,6 +118,21 @@ const Order = sequelize.define('Order', {
     type: DataTypes.DECIMAL(12, 2),
     allowNull: true
   },
+  /** Sum of seller line items before platform commission */
+  seller_gross_subtotal: {
+    type: DataTypes.DECIMAL(12, 2),
+    allowNull: true
+  },
+  /** Commission % snapshot at checkout */
+  platform_commission_percent: {
+    type: DataTypes.DECIMAL(5, 2),
+    allowNull: true
+  },
+  /** MWK retained by platform from seller gross */
+  platform_fee_amount: {
+    type: DataTypes.DECIMAL(12, 2),
+    allowNull: true
+  },
   delivery_confirmed_at: {
     type: DataTypes.DATE,
     allowNull: true

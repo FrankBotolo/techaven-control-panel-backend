@@ -3,6 +3,7 @@ import { Op } from 'sequelize';
 import { logAudit, auditContext } from '../utils/audit.js';
 import { sendNotificationEmail } from '../utils/notificationHelper.js';
 import { getMalipoCredentials, postMalipoCollect } from '../utils/malipoCollect.js';
+import { getSellerCommissionPercent, computeSellerEscrowSplit } from '../utils/sellerCommission.js';
 
 const { Order, OrderItem, Cart, Product, User, Notification, Shop, Escrow, Wallet, WalletTransaction, ShippingAddress, CourierService } = db;
 
@@ -160,6 +161,20 @@ export const createOrder = async (req, res) => {
       const shippingFee = 0;
       const total = subtotal + shippingFee;
       const orderNumber = generateOrderNumber();
+
+      let escrowNet = sellerAmount > 0 ? sellerAmount : total;
+      let sellerGrossSubtotal = null;
+      let platformCommissionPercent = null;
+      let platformFeeAmount = null;
+      if (sellerAmount > 0) {
+        const commissionPct = await getSellerCommissionPercent();
+        const split = computeSellerEscrowSplit(sellerAmount, commissionPct);
+        escrowNet = split.netToSeller;
+        sellerGrossSubtotal = split.gross;
+        platformCommissionPercent = split.percent;
+        platformFeeAmount = split.platformFee;
+      }
+
       const order = await Order.create({
         user_id: userId,
         order_number: orderNumber,
@@ -177,7 +192,10 @@ export const createOrder = async (req, res) => {
         shipping_phone: addr.phone,
         seller_id: sellerId,
         escrow_status: 'pending',
-        escrow_amount: sellerAmount || total,
+        escrow_amount: escrowNet,
+        seller_gross_subtotal: sellerGrossSubtotal,
+        platform_commission_percent: platformCommissionPercent,
+        platform_fee_amount: platformFeeAmount,
         notes: notes || null
       });
 
@@ -330,7 +348,10 @@ export const createOrder = async (req, res) => {
     }
 
     const sellerId = seller.id;
-    const sellerAmount = sellerMap.get(firstShopId);
+    const sellerGross = sellerMap.get(firstShopId);
+    const commissionPct = await getSellerCommissionPercent();
+    const split = computeSellerEscrowSplit(sellerGross, commissionPct);
+    const sellerAmount = split.netToSeller;
 
     // Calculate shipping (placeholder - should be calculated based on address)
     const shipping = 5000; // MWK
@@ -357,6 +378,9 @@ export const createOrder = async (req, res) => {
       seller_id: sellerId,
       escrow_status: 'pending',
       escrow_amount: sellerAmount,
+      seller_gross_subtotal: split.gross,
+      platform_commission_percent: split.percent,
+      platform_fee_amount: split.platformFee,
       notes: notes || null
     });
 

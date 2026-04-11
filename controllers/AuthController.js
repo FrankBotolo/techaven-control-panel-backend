@@ -5,8 +5,21 @@ import { sendOtpSms, sendPasswordResetOtpSms } from '../services/smsService.js';
 import moment from 'moment';
 import { Op } from 'sequelize';
 import { logAudit, auditContext } from '../utils/audit.js';
+import { ACCOUNT_DEACTIVATED_MESSAGE } from '../middleware/auth.js';
 
 const { User, Otp, ShopInvitation, Shop, DeliveryAgent } = db;
+
+const assertActiveUser = (user, res) => {
+  if (!user || !user.is_active) {
+    res.status(403).json({
+      success: false,
+      message: ACCOUNT_DEACTIVATED_MESSAGE,
+      data: null
+    });
+    return false;
+  }
+  return true;
+};
 
 const generateAccessToken = (user) => {
   return jwt.sign(
@@ -436,6 +449,8 @@ export const login = async (req, res) => {
       });
     }
 
+    if (!assertActiveUser(user, res)) return;
+
     if (!user.is_verified) {
       return res.status(403).json({
         success: false,
@@ -540,6 +555,7 @@ export const sendLoginOtp = async (req, res) => {
         data: null
       });
     }
+    if (!assertActiveUser(user, res)) return;
     const otpCode = await sendOtp(user, 'login');
 
     // For mobile clients following the doc, prefer identifier + expires_at.
@@ -662,6 +678,8 @@ export const verifyOtp = async (req, res) => {
         user.email_verified_at = new Date();
         await user.save();
 
+        if (!assertActiveUser(user, res)) return;
+
         const accessToken = generateAccessToken(user);
         return res.json({
           success: true,
@@ -685,6 +703,7 @@ export const verifyOtp = async (req, res) => {
         }
       });
       if (user) {
+        if (!assertActiveUser(user, res)) return;
         const accessToken = generateAccessToken(user);
         return res.json({
           success: true,
@@ -699,6 +718,15 @@ export const verifyOtp = async (req, res) => {
     }
 
     if (type === 'password_reset') {
+      const user = await User.findOne({
+        where: {
+          [Op.or]: [
+            { email: lookupIdentifier },
+            { phone_number: lookupIdentifier }
+          ]
+        }
+      });
+      if (user && !assertActiveUser(user, res)) return;
       return res.json({
         success: true,
         message: 'OTP verified',
@@ -757,6 +785,8 @@ export const resendOtp = async (req, res) => {
       });
     }
 
+    if (!assertActiveUser(user, res)) return;
+
     const validTypes = ['signup', 'login', 'password_reset'];
     const otpType = validTypes.includes(type) ? type : 'signup';
     await sendOtp(user, otpType);
@@ -804,6 +834,8 @@ export const forgotPassword = async (req, res) => {
         message: 'User not found'
       });
     }
+
+    if (!assertActiveUser(user, res)) return;
 
     const otpCode = await sendOtp(user, 'password_reset');
 
@@ -900,6 +932,8 @@ export const resetPassword = async (req, res) => {
       });
     }
 
+    if (!assertActiveUser(user, res)) return;
+
     // Optional confirmation check (matches docs)
     if (password_confirmation !== undefined && finalNewPassword !== password_confirmation) {
       return res.status(400).json({
@@ -963,6 +997,8 @@ export const refreshToken = async (req, res) => {
         message: 'User not found'
       });
     }
+
+    if (!assertActiveUser(user, res)) return;
 
     const accessToken = generateAccessToken(user);
     const newRefreshToken = generateRefreshToken(user);

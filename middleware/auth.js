@@ -3,6 +3,9 @@ import db from '../models/index.js';
 
 const { User, Shop } = db;
 
+export const ACCOUNT_DEACTIVATED_MESSAGE =
+  'Your account has been deactivated. Contact support if you believe this is an error.';
+
 export const authenticate = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
@@ -23,6 +26,13 @@ export const authenticate = async (req, res, next) => {
       return res.status(401).json({
         success: false,
         message: 'User not found'
+      });
+    }
+
+    if (!user.is_active) {
+      return res.status(403).json({
+        success: false,
+        message: ACCOUNT_DEACTIVATED_MESSAGE
       });
     }
 

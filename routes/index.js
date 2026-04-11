@@ -28,6 +28,7 @@ import deliveryAgentRoutes from './delivery-agents.js';
 import onboardingRoutes from './onboarding.js';
 import subscriptionPackageRoutes from './subscription-packages.js';
 import subscriptionAccessRoutes from './subscription-access.js';
+import platformSettingsRoutes from './platform-settings.js';
 
 const router = express.Router();
 
@@ -53,6 +54,7 @@ router.use('/payment-methods', paymentMethodRoutes);
 router.use('/search', searchRoutes);
 router.use('/help', helpRoutes);
 router.use('/app', appRoutes);
+router.use('/platform-settings', platformSettingsRoutes);
 router.use('/sms', smsRoutes);
 router.use('/webhooks', webhookRoutes);
 router.use('/courier-services', courierServicesRoutes);

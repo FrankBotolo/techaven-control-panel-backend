@@ -13,6 +13,9 @@ import * as AdminBannerController from '../controllers/AdminBannerController.js'
 import * as AdminAuditLogController from '../controllers/AdminAuditLogController.js';
 import * as AdminSubscriptionPackageController from '../controllers/AdminSubscriptionPackageController.js';
 import * as AdminShopSubscriptionController from '../controllers/AdminShopSubscriptionController.js';
+import * as AdminPlatformSettingController from '../controllers/AdminPlatformSettingController.js';
+import * as AdminPlatformDeductionController from '../controllers/AdminPlatformDeductionController.js';
+import * as AdminUserController from '../controllers/AdminUserController.js';
 
 const router = express.Router();
 
@@ -41,6 +44,20 @@ router.delete('/categories/:categoryId', AdminCategoryController.deleteCategory)
 
 // Products
 router.delete('/products/:productId', AdminProductController.deleteProduct);
+
+// Platform-wide settings (e.g. seller commission %)
+router.get('/platform-settings', AdminPlatformSettingController.getSettings);
+router.patch('/platform-settings', AdminPlatformSettingController.updateSettings);
+router.get('/platform-deductions/summary', AdminPlatformDeductionController.getSummary);
+router.get('/platform-deductions/by-seller', AdminPlatformDeductionController.listBySeller);
+
+// Users
+router.get('/users', AdminUserController.listUsers);
+router.get('/users/:id', AdminUserController.getUser);
+router.patch('/users/:id', AdminUserController.updateUser);
+router.delete('/users/:id', AdminUserController.deleteUser);
+router.patch('/users/:id/activate', AdminUserController.activateUser);
+router.patch('/users/:id/deactivate', AdminUserController.deactivateUser);
 
 // Dashboard
 router.get('/dashboard', DashboardController.getDashboard);

@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "techaven-api-collection",
 		"name": "Techaven API",
-		"description": "Complete API documentation for Techaven e-commerce platform (Flow Diagram v1.0).\n\n**Seed credentials** (run `npm run seed` first):\n- Admin: admin@techaven.mw / admin12345\n- Buyer: buyer@techaven.mw / password123\n- Seller: seller@techaven.mw / seller12345\n- Delivery Agent: agent@techaven.mw / agent12345\n\n**Response envelope:** All endpoints return JSON with `success`, `message`, `data`. Use `Authorization: Bearer {{access_token}}` for protected routes.\n\n**Organization:**\n- **Mobile App:** Onboarding, Auth, User, Products (paginated `data.products`), public **subscription packages**, Categories, Cart, Orders, Wishlist, Addresses, Wallet, Payment Methods, Notifications, Shops, Search, Help, App Info, SMS, Webhooks\n- **Admin:** Dashboard, Malipo, **Subscription packages** & **Shop subscriptions**, Shops, Orders, Courier Services, Onboarding Slides, Banners, Audit Logs, Withdrawals, Notifications, Categories\n- **Seller:** Products (paginated + variants), Orders, Dashboard, **Subscription** (subscribe, **pay/malipo**, cancel, resume), Earnings, Notifications\n- **Delivery Agent:** Jobs, Profile\n\n**Notes:** Featured/hot/new product segment endpoints were removed — filter client-side from `GET /api/products`. See `docs/SUBSCRIPTION_PACKAGES.md` for seller plans.",
+		"description": "Complete API documentation for Techaven e-commerce platform (Flow Diagram v1.0).\n\n**Seed credentials** (run `npm run seed` first):\n- Admin: admin@techaven.mw / admin12345\n- Buyer: buyer@techaven.mw / password123\n- Seller: seller@techaven.mw / seller12345\n- Delivery Agent: agent@techaven.mw / agent12345\n\n**Response envelope:** All endpoints return JSON with `success`, `message`, `data`. Use `Authorization: Bearer {{access_token}}` for protected routes.\n\n**Organization:**\n- **Mobile App:** Onboarding, Auth, User, Products (paginated `data.products`), public **subscription packages**, Categories, Cart, Orders, Wishlist, Addresses, Wallet, Payment Methods, Notifications, Shops, Search, Help, App Info, public **platform settings** (seller commission %), SMS, Webhooks\n- **Admin:** Dashboard, **Platform settings** (seller commission %, deduction summary & by-seller), Malipo, **Subscription packages** & **Shop subscriptions**, Shops, Orders, Courier Services, Onboarding Slides, Banners, Audit Logs, Withdrawals, Notifications, Categories\n- **Seller:** Products (paginated + variants), Orders, Dashboard, **Subscription** (subscribe, **pay/malipo**, cancel, resume), Earnings, Notifications\n- **Delivery Agent:** Jobs, Profile\n\n**Notes:** Featured/hot/new product segment endpoints were removed — filter client-side from `GET /api/products`. See `docs/SUBSCRIPTION_PACKAGES.md` for seller plans.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"auth": {
@@ -1612,6 +1612,23 @@
 								"description": "Get app information including version, terms, privacy, support contacts."
 							},
 							"response": []
+						},
+						{
+							"name": "Get platform settings (public)",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/platform-settings",
+									"host": ["{{base_url}}"],
+									"path": ["api", "platform-settings"]
+								},
+								"description": "No auth. Returns `data.seller_commission_percent` (0–100): portion of each seller’s item subtotal retained by the platform. Checkout stores per-order snapshot fields (`seller_gross_subtotal`, `platform_fee_amount`, `escrow_amount` net to seller)."
+							},
+							"response": []
 						}
 					]
 				},
@@ -1711,6 +1728,132 @@
 											"path": ["api", "admin", "dashboard"]
 										},
 										"description": "Get admin dashboard statistics. Requires admin role."
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Platform settings",
+							"description": "Admin configures seller commission (platform fee) as a percentage of the seller item subtotal at checkout. Deduction reports aggregate `platform_fee_amount` on orders (per seller and totals).",
+							"item": [
+								{
+									"name": "Get platform settings",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/platform-settings",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "platform-settings"]
+										},
+										"description": "Requires admin JWT. Returns `data.seller_commission_percent` and `data.updated_at`."
+									},
+									"response": []
+								},
+								{
+									"name": "Update platform settings",
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"seller_commission_percent\": 5\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/api/admin/platform-settings",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "platform-settings"]
+										},
+										"description": "Requires admin JWT. Body: `seller_commission_percent` (number, required, 0–100). Only affects new orders; each order stores `seller_gross_subtotal`, `platform_commission_percent`, `platform_fee_amount`, and net `escrow_amount`."
+									},
+									"response": []
+								},
+								{
+									"name": "Platform deductions summary",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/platform-deductions/summary?only_with_fee=false",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "platform-deductions", "summary"],
+											"query": [
+												{
+													"key": "date_from",
+													"value": "",
+													"disabled": true,
+													"description": "ISO date — include orders created on/after"
+												},
+												{
+													"key": "date_to",
+													"value": "",
+													"disabled": true,
+													"description": "ISO date — include orders created on/before"
+												},
+												{
+													"key": "payment_status",
+													"value": "paid",
+													"disabled": true,
+													"description": "pending | paid | failed | refunded"
+												},
+												{
+													"key": "only_with_fee",
+													"value": "false",
+													"description": "true = only orders with platform_fee_amount > 0"
+												}
+											]
+										},
+										"description": "Requires admin JWT. Sum of all platform deductions (`total_deductions_mwk`), order count, sum of seller gross subtotals, and distinct sellers count. Optional query filters as in URL."
+									},
+									"response": []
+								},
+								{
+									"name": "Platform deductions by seller",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/platform-deductions/by-seller?page=1&limit=20",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "platform-deductions", "by-seller"],
+											"query": [
+												{
+													"key": "page",
+													"value": "1"
+												},
+												{
+													"key": "limit",
+													"value": "20"
+												},
+												{
+													"key": "date_from",
+													"value": "",
+													"disabled": true
+												},
+												{
+													"key": "date_to",
+													"value": "",
+													"disabled": true
+												},
+												{
+													"key": "payment_status",
+													"value": "paid",
+													"disabled": true
+												},
+												{
+													"key": "only_with_fee",
+													"value": "false",
+													"disabled": true
+												}
+											]
+										},
+										"description": "Requires admin JWT. Paginated list: per seller `total_deductions_mwk`, `orders_count`, `total_gross_subtotal_mwk`, plus seller name/email/shop. Same optional filters as summary."
 									},
 									"response": []
 								}
