@@ -207,6 +207,47 @@ const seedDatabase = async () => {
     }
     console.log('       ✅ Categories seeded.\n');
 
+    const categoryIds = {
+      smartphones: categories[0].id,
+      laptops: categories[1].id,
+      audio: categories[2].id,
+      wearables: categories[3].id,
+      gaming: categories[4].id,
+      accessories: categories[5].id
+    };
+
+    /** Assign category from name/description when not set on the product row. */
+    function resolveProductCategoryId(p) {
+      if (p.category_id != null) return p.category_id;
+      const name = (p.name || '').toLowerCase();
+      const text = `${p.name || ''} ${p.description || ''}`.toLowerCase();
+
+      if (
+        /\b(apple watch|galaxy watch|smartwatch|smart watch|watch se|watch series|watch ultra|watchos)\b/i.test(text) ||
+        (/\bwatch\b/i.test(name) && /\b(apple|galaxy|fitbit|garmin|amazfit)\b/i.test(name))
+      ) {
+        return categoryIds.wearables;
+      }
+      if (/\b(laptop|macbook|notebook|chromebook|\bipad\b|tablet\b)\b/i.test(text)) {
+        return categoryIds.laptops;
+      }
+      if (/\b(playstation|ps5|ps4|xbox|nintendo switch|steam deck)\b/i.test(text)) {
+        return categoryIds.gaming;
+      }
+      if (/charging case/i.test(name) && !/\bwith\b/i.test(name)) {
+        return categoryIds.accessories;
+      }
+      if (
+        /\b(airpods|earbuds?|earbud|headphone|headset|\bbuds\b|beats |sony wh-|soundcore|jbl |\bspeaker\b)\b/i.test(text)
+      ) {
+        return categoryIds.audio;
+      }
+      if (/\b(case\b|charger|cable|adapter|power bank|screen protector|magsafe|mount|stand)\b/i.test(name)) {
+        return categoryIds.accessories;
+      }
+      return categoryIds.smartphones;
+    }
+
     // 4. SELLER FLOW – Create Product Listing (Section 4, Step 6)
     // Seller creates listings: title, brand, condition, price, stock, images
     console.log('  [4.1] Seller: Create Product Listings...');
@@ -1004,6 +1045,2190 @@ const seedDatabase = async () => {
         }
       },
       {
+        name: 'AirPods 2',
+        description: 'Wireless earbuds with H1 chip, hands-free "Hey Siri", and 24-hour battery life.',
+        price: 349650,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/apple-airpods-2.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: 'N/A',
+          chipset: 'Apple H1',
+          ram_storage: 'N/A',
+          main_camera: 'None',
+          battery: '24 hours with case',
+          os: 'N/A'
+        }
+      },
+      {
+        name: 'AirPods 3',
+        description: 'Spatial audio, adaptive EQ, sweat and water resistant earbuds.',
+        price: 384650,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/apple-airpods-3.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: 'N/A',
+          chipset: 'Apple H1',
+          ram_storage: 'N/A',
+          main_camera: 'None',
+          battery: '30 hours with case',
+          os: 'N/A'
+        }
+      },
+      {
+        name: 'AirPods 4',
+        description: 'Redesigned for all-day comfort, improved sound quality.',
+        price: 419650,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/apple-airpods-4.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: true,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: 'N/A',
+          chipset: 'Apple H2',
+          ram_storage: 'N/A',
+          main_camera: 'None',
+          battery: '30 hours with case',
+          os: 'N/A'
+        }
+      },
+      {
+        name: 'AirPods 4 (ANC)',
+        description: 'Active Noise Cancellation, Transparency mode, and enhanced bass.',
+        price: 489650,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/apple-airpods-4.jpg',
+        stock: 0,
+        is_featured: true,
+        is_hot: true,
+        is_special: false,
+        is_new_arrival: true,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: 'N/A',
+          chipset: 'Apple H2',
+          ram_storage: 'N/A',
+          main_camera: 'None',
+          battery: '30 hours with case',
+          os: 'N/A'
+        }
+      },
+      {
+        name: 'AirPods Max 1 (Lightning)',
+        description: 'Over-ear headphones with high-fidelity audio and computational audio.',
+        price: 939750,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/apple-airpods-max-1.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: 'N/A',
+          chipset: 'Apple H1',
+          ram_storage: 'N/A',
+          main_camera: 'None',
+          battery: '20 hours',
+          os: 'N/A'
+        }
+      },
+      {
+        name: 'AirPods Max 1 (USB-C)',
+        description: 'Over-ear headphones with USB-C charging and spatial audio.',
+        price: 939750,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/apple-airpods-max-1.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: 'N/A',
+          chipset: 'Apple H1',
+          ram_storage: 'N/A',
+          main_camera: 'None',
+          battery: '20 hours',
+          os: 'N/A'
+        }
+      },
+      {
+        name: 'AirPods Max 2',
+        description: 'Next-gen over-ear headphones with H2 chip and improved noise cancellation.',
+        price: 999250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/apple-airpods-max-2.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: true,
+        is_special: false,
+        is_new_arrival: true,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: 'N/A',
+          chipset: 'Apple H2',
+          ram_storage: 'N/A',
+          main_camera: 'None',
+          battery: '24 hours',
+          os: 'N/A'
+        }
+      },
+      {
+        name: 'AirPods Pro 1',
+        description: 'Active Noise Cancellation, Transparency mode, customizable fit.',
+        price: 419650,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/apple-airpods-pro-1.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: 'N/A',
+          chipset: 'Apple H1',
+          ram_storage: 'N/A',
+          main_camera: 'None',
+          battery: '24 hours with case',
+          os: 'N/A'
+        }
+      },
+      {
+        name: 'AirPods Pro 1 Charging Case',
+        description: 'Wireless charging case compatible with Qi-certified chargers.',
+        price: 174650,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/apple-airpods-pro-1-charging-case.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: 'N/A',
+          chipset: 'N/A',
+          ram_storage: 'N/A',
+          main_camera: 'None',
+          battery: 'N/A',
+          os: 'N/A'
+        }
+      },
+      {
+        name: 'AirPods Pro 2 with MagSafe Charging Case (Lightning)',
+        description: 'H2 chip, 2x noise cancellation, personalized spatial audio.',
+        price: 419650,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/apple-airpods-pro-2-with-magsafe-charging-case.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: 'N/A',
+          chipset: 'Apple H2',
+          ram_storage: 'N/A',
+          main_camera: 'None',
+          battery: '30 hours with case',
+          os: 'N/A'
+        }
+      },
+      {
+        name: 'AirPods Pro 2 with MagSafe Charging Case (USB-C)',
+        description: 'H2 chip with USB-C charging, advanced noise cancellation.',
+        price: 419650,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/apple-airpods-pro-2-with-magsafe-charging-case.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: 'N/A',
+          chipset: 'Apple H2',
+          ram_storage: 'N/A',
+          main_camera: 'None',
+          battery: '30 hours with case',
+          os: 'N/A'
+        }
+      },
+      {
+        name: 'AirPods Pro 3',
+        description: 'Next-gen Pro earbuds with enhanced ANC and heart rate monitoring.',
+        price: 489650,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/apple-airpods-pro-3.jpg',
+        stock: 0,
+        is_featured: true,
+        is_hot: true,
+        is_special: false,
+        is_new_arrival: true,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: 'N/A',
+          chipset: 'Apple H3',
+          ram_storage: 'N/A',
+          main_camera: 'None',
+          battery: '36 hours with case',
+          os: 'N/A'
+        }
+      },
+    
+      // ==================== iPADS ====================
+      {
+        name: 'iPad 10.2" 7th Gen (Wi-Fi Only)',
+        description: '10.2" Retina display with A10 Fusion chip and 8MP camera.',
+        price: 575750,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/ipad-10-2-7th-gen.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '10.2" Retina, 2160x1620 (264 ppi)',
+          chipset: 'Apple A10 Fusion (4 Cores, 2.33 GHz)',
+          ram_storage: '3GB / 32GB or 128GB',
+          main_camera: '8 Megapixels',
+          battery: '10 hours',
+          os: 'iPadOS 13.1'
+        }
+      },
+      {
+        name: 'iPad 10.2" 8th Gen (Wi-Fi Only)',
+        description: '10.2" Retina display with A12 Bionic chip and 8MP camera.',
+        price: 575750,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/ipad-10-2-8th-gen.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '10.2" Retina, 2160x1620 (264 ppi)',
+          chipset: 'Apple A12 Bionic (6 Cores, 2.49 GHz)',
+          ram_storage: '3GB / 32GB or 128GB',
+          main_camera: '8 Megapixels',
+          battery: '10 hours',
+          os: 'iPadOS 14.0'
+        }
+      },
+      {
+        name: 'iPad 10.2" 9th Gen (Wi-Fi Only)',
+        description: '10.2" Retina display with A13 Bionic chip and 12MP camera.',
+        price: 575750,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/ipad-10-2-9th-gen.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '10.2" Retina, 2160x1620 (264 ppi)',
+          chipset: 'Apple A13 Bionic (6 Cores, 2.6 GHz)',
+          ram_storage: '3GB / 64GB or 256GB',
+          main_camera: '12 Megapixels',
+          battery: '10 hours',
+          os: 'iPadOS 15.0'
+        }
+      },
+      {
+        name: 'iPad 10.9" 10th Gen (Wi-Fi Only)',
+        description: '10.9" Liquid Retina display with A14 Bionic chip and 12MP camera.',
+        price: 785750,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/ipad-10-9-10th-gen.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '10.9" Liquid Retina, 2360x1640 (264 ppi)',
+          chipset: 'Apple A14 Bionic (6 Cores, 3.0 GHz)',
+          ram_storage: '4GB / 64GB or 256GB',
+          main_camera: '12 Megapixels',
+          battery: '10 hours',
+          os: 'iPadOS 16.1'
+        }
+      },
+      {
+        name: 'iPad A16 - 11th Gen (Wi-Fi Only)',
+        description: '11" Liquid Retina display with A16 chip and 12MP camera. Current model.',
+        price: 610750,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/ipad-a16-11th-gen.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: true,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '11" Liquid Retina, 2360x1640 (264 ppi)',
+          chipset: 'Apple A16 (5 Cores, 3.4 GHz)',
+          ram_storage: '6GB / 128GB, 256GB, or 512GB',
+          main_camera: '12 Megapixels',
+          battery: '10 hours',
+          os: 'iPadOS 18.3'
+        }
+      },
+      {
+        name: 'iPad Air 3rd Gen (Wi-Fi Only)',
+        description: '10.5" Retina display with A12 Bionic chip, supports Apple Pencil.',
+        price: 873250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/ipad-air-3rd-gen.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '10.5" Retina, 2224x1668 (264 ppi)',
+          chipset: 'Apple A12 Bionic (6 Cores, 2.49 GHz)',
+          ram_storage: '3GB / 64GB or 256GB',
+          main_camera: '8 Megapixels',
+          battery: '10 hours',
+          os: 'iOS 12.2'
+        }
+      },
+      {
+        name: 'iPad Air 4th Gen (Wi-Fi Only)',
+        description: '10.9" Liquid Retina with A14 Bionic, USB-C, supports Magic Keyboard.',
+        price: 1048250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/ipad-air-4th-gen.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '10.9" Liquid Retina, 2360x1640 (264 ppi)',
+          chipset: 'Apple A14 Bionic (6 Cores, 3.0 GHz)',
+          ram_storage: '4GB / 64GB or 256GB',
+          main_camera: '12 Megapixels',
+          battery: '10 hours',
+          os: 'iPadOS 14.1'
+        }
+      },
+      {
+        name: 'iPad Air M1 5th Gen (Wi-Fi Only)',
+        description: 'M1 chip performance, 10.9" Liquid Retina, Center Stage camera.',
+        price: 1048250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/ipad-air-m1-5th-gen.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '10.9" Liquid Retina, 2360x1640 (264 ppi)',
+          chipset: 'Apple M1 (8 Cores, 3.2 GHz)',
+          ram_storage: '8GB / 64GB or 256GB',
+          main_camera: '12 Megapixels',
+          battery: '10 hours',
+          os: 'iPadOS 15.4'
+        }
+      },
+      {
+        name: 'iPad Air M2 11" (Wi-Fi Only)',
+        description: 'M2 chip, 11" Liquid Retina, supports Apple Pencil hover.',
+        price: 1048250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/ipad-air-m2-11.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '11" Liquid Retina, 2360x1640 (264 ppi)',
+          chipset: 'Apple M2 (8 Cores, 3.49 GHz)',
+          ram_storage: '8GB / 128GB, 256GB, 512GB, or 1TB',
+          main_camera: '12 Megapixels',
+          battery: '10 hours',
+          os: 'iPadOS 17.5'
+        }
+      },
+      {
+        name: 'iPad Air M2 13" (Wi-Fi Only)',
+        description: 'M2 chip, 13" Liquid Retina, perfect for multitasking.',
+        price: 1398250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/ipad-air-m2-13.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '13" Liquid Retina, 2732x2048 (264 ppi)',
+          chipset: 'Apple M2 (8 Cores, 3.49 GHz)',
+          ram_storage: '8GB / 128GB, 256GB, 512GB, or 1TB',
+          main_camera: '12 Megapixels',
+          battery: '10 hours',
+          os: 'iPadOS 17.5'
+        }
+      },
+      {
+        name: 'iPad Air M3 11" (Wi-Fi Only)',
+        description: 'M3 chip power, 11" Liquid Retina, ray tracing graphics.',
+        price: 1048250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/ipad-air-m3-11.jpg',
+        stock: 0,
+        is_featured: true,
+        is_hot: true,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '11" Liquid Retina, 2360x1640 (264 ppi)',
+          chipset: 'Apple M3 (8 Cores, 4.05 GHz)',
+          ram_storage: '8GB / 128GB, 256GB, 512GB, or 1TB',
+          main_camera: '12 Megapixels',
+          battery: '10 hours',
+          os: 'iPadOS 18.3'
+        }
+      },
+      {
+        name: 'iPad Air M3 13" (Wi-Fi Only)',
+        description: 'M3 chip, 13" Liquid Retina, pro-level performance.',
+        price: 1398250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/ipad-air-m3-13.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: true,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '13" Liquid Retina, 2732x2048 (264 ppi)',
+          chipset: 'Apple M3 (8 Cores, 4.05 GHz)',
+          ram_storage: '8GB / 128GB, 256GB, 512GB, or 1TB',
+          main_camera: '12 Megapixels',
+          battery: '10 hours',
+          os: 'iPadOS 18.3'
+        }
+      },
+      {
+        name: 'iPad Air M4 11" (Wi-Fi Only)',
+        description: 'M4 chip with Wi-Fi 7, 11" Liquid Retina, 12GB RAM.',
+        price: 1048250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/ipad-air-m4-11.jpg',
+        stock: 0,
+        is_featured: true,
+        is_hot: true,
+        is_special: false,
+        is_new_arrival: true,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '11" Liquid Retina, 2360x1640 (264 ppi)',
+          chipset: 'Apple M4 (8 Cores, 4.1 GHz)',
+          ram_storage: '12GB / 128GB, 256GB, 512GB, or 1TB',
+          main_camera: '12 Megapixels',
+          battery: '10 hours',
+          os: 'iPadOS 26.3.1'
+        }
+      },
+      {
+        name: 'iPad Air M4 13" (Wi-Fi Only)',
+        description: 'M4 chip, 13" Liquid Retina, Wi-Fi 7 connectivity.',
+        price: 1398250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/ipad-air-m4-13.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: true,
+        is_special: false,
+        is_new_arrival: true,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '13" Liquid Retina, 2732x2048 (264 ppi)',
+          chipset: 'Apple M4 (8 Cores, 4.1 GHz)',
+          ram_storage: '12GB / 128GB, 256GB, 512GB, or 1TB',
+          main_camera: '12 Megapixels',
+          battery: '10 hours',
+          os: 'iPadOS 26.3.1'
+        }
+      },
+      {
+        name: 'iPad mini 5th Gen (Wi-Fi Only)',
+        description: '7.9" Retina display with A12 Bionic, Apple Pencil support.',
+        price: 698250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/ipad-mini-5th-gen.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '7.9" Retina, 2048x1536 (326 ppi)',
+          chipset: 'Apple A12 Bionic (6 Cores, 2.49 GHz)',
+          ram_storage: '3GB / 64GB or 256GB',
+          main_camera: '8 Megapixels',
+          battery: '10 hours',
+          os: 'iOS 12.2'
+        }
+      },
+      {
+        name: 'iPad mini 6th Gen (Wi-Fi Only)',
+        description: '8.3" Liquid Retina with A15 Bionic, USB-C, 5G ready.',
+        price: 873250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/ipad-mini-6th-gen.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '8.3" Liquid Retina, 2266x1488 (326 ppi)',
+          chipset: 'Apple A15 Bionic (6 Cores, 2.9 GHz)',
+          ram_storage: '4GB / 64GB or 256GB',
+          main_camera: '12 Megapixels',
+          battery: '10 hours',
+          os: 'iPadOS 15.0'
+        }
+      },
+      {
+        name: 'iPad mini A17 Pro - 7th Gen (Wi-Fi Only)',
+        description: 'A17 Pro chip, 8.3" Liquid Retina, AI-powered performance.',
+        price: 873250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/ipad-mini-a17-pro-7th-gen.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: true,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '8.3" Liquid Retina, 2266x1488 (326 ppi)',
+          chipset: 'Apple A17 Pro (6 Cores, 3.78 GHz)',
+          ram_storage: '8GB / 128GB, 256GB, or 512GB',
+          main_camera: '12 Megapixels',
+          battery: '10 hours',
+          os: 'iPadOS 18'
+        }
+      },
+      {
+        name: 'iPad Pro 11" (Wi-Fi Only)',
+        description: '11" Liquid Retina with A12X Bionic, Face ID, ProMotion.',
+        price: 1398250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/ipad-pro-11.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '11" Liquid Retina, 2388x1668 (264 ppi)',
+          chipset: 'Apple A12X Bionic (8 Cores, 2.5 GHz)',
+          ram_storage: '4GB or 6GB / 64GB to 1TB',
+          main_camera: '12 Megapixels',
+          battery: '10 hours',
+          os: 'iOS 12.1'
+        }
+      },
+      {
+        name: 'iPad Pro 11" (Wi-Fi Only - 2nd Gen)',
+        description: '11" Liquid Retina with A12Z Bionic, LiDAR scanner.',
+        price: 1398250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/ipad-pro-11.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '11" Liquid Retina, 2388x1668 (264 ppi)',
+          chipset: 'Apple A12Z Bionic (8 Cores, 2.5 GHz)',
+          ram_storage: '6GB / 128GB, 256GB, 512GB, or 1TB',
+          main_camera: '12 Megapixels',
+          battery: '10 hours',
+          os: 'iPadOS 13.4'
+        }
+      },
+      {
+        name: 'iPad Pro 11" (Wi-Fi Only - 3rd Gen)',
+        description: 'M1 chip, Thunderbolt port, 11" Liquid Retina.',
+        price: 1398250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/ipad-pro-11.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '11" Liquid Retina, 2388x1668 (264 ppi)',
+          chipset: 'Apple M1 (8 Cores, 3.2 GHz)',
+          ram_storage: '8GB or 16GB / 128GB to 2TB',
+          main_camera: '12 Megapixels',
+          battery: '10 hours',
+          os: 'iPadOS 14.5.1'
+        }
+      },
+      {
+        name: 'iPad Pro 11" (Wi-Fi Only - 4th Gen)',
+        description: 'M2 chip, Wi-Fi 6E, 11" Liquid Retina display.',
+        price: 1398250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/ipad-pro-11.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '11" Liquid Retina, 2388x1668 (264 ppi)',
+          chipset: 'Apple M2 (8 Cores, 3.49 GHz)',
+          ram_storage: '8GB or 16GB / 128GB to 2TB',
+          main_camera: '12 Megapixels',
+          battery: '10 hours',
+          os: 'iPadOS 16.1'
+        }
+      },
+      {
+        name: 'iPad Pro 12.9" (Wi-Fi Only - 3rd Gen)',
+        description: '12.9" Liquid Retina with A12X Bionic, Face ID.',
+        price: 1748250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/ipad-pro-12-9.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '12.9" Liquid Retina, 2732x2048 (264 ppi)',
+          chipset: 'Apple A12X Bionic (8 Cores, 2.5 GHz)',
+          ram_storage: '4GB or 6GB / 64GB to 1TB',
+          main_camera: '12 Megapixels',
+          battery: '10 hours',
+          os: 'iOS 12.1'
+        }
+      },
+      {
+        name: 'iPad Pro 12.9" (Wi-Fi Only - 4th Gen)',
+        description: '12.9" Liquid Retina with A12Z Bionic, LiDAR.',
+        price: 1748250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/ipad-pro-12-9.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '12.9" Liquid Retina, 2732x2048 (264 ppi)',
+          chipset: 'Apple A12Z Bionic (8 Cores, 2.5 GHz)',
+          ram_storage: '6GB / 128GB, 256GB, 512GB, or 1TB',
+          main_camera: '12 Megapixels',
+          battery: '10 hours',
+          os: 'iPadOS 13.4'
+        }
+      },
+      {
+        name: 'iPad Pro 12.9" (Wi-Fi Only - 5th Gen)',
+        description: 'M1 chip, Liquid Retina XDR display, Thunderbolt.',
+        price: 1923250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/ipad-pro-12-9.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '12.9" Liquid Retina XDR, 2732x2048 (264 ppi)',
+          chipset: 'Apple M1 (8 Cores, 3.2 GHz)',
+          ram_storage: '8GB or 16GB / 128GB to 2TB',
+          main_camera: '12 Megapixels',
+          battery: '10 hours',
+          os: 'iPadOS 14.5.1'
+        }
+      },
+      {
+        name: 'iPad Pro 12.9" (Wi-Fi Only - 6th Gen)',
+        description: 'M2 chip, Liquid Retina XDR, Wi-Fi 6E.',
+        price: 1923250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/ipad-pro-12-9.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '12.9" Liquid Retina XDR, 2732x2048 (264 ppi)',
+          chipset: 'Apple M2 (8 Cores, 3.49 GHz)',
+          ram_storage: '8GB or 16GB / 128GB to 2TB',
+          main_camera: '12 Megapixels',
+          battery: '10 hours',
+          os: 'iPadOS 16.1'
+        }
+      },
+      {
+        name: 'iPad Pro M4 11" (Wi-Fi Only)',
+        description: 'M4 chip, Ultra Retina XDR display, tandem OLED technology.',
+        price: 1748250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/ipad-pro-m4-11.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '11" Ultra Retina XDR, 2420x1668 (264 ppi)',
+          chipset: 'Apple M4 (9-10 Cores, 4.4 GHz)',
+          ram_storage: '8GB or 16GB / 256GB to 2TB',
+          main_camera: '12 Megapixels',
+          battery: '10 hours',
+          os: 'iPadOS 17.5'
+        }
+      },
+      {
+        name: 'iPad Pro M4 13" (Wi-Fi Only)',
+        description: 'M4 chip, 13" Ultra Retina XDR, thinnest iPad ever.',
+        price: 2273250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/ipad-pro-m4-13.jpg',
+        stock: 0,
+        is_featured: true,
+        is_hot: true,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '13" Ultra Retina XDR, 2752x2064 (264 ppi)',
+          chipset: 'Apple M4 (9-10 Cores, 4.4 GHz)',
+          ram_storage: '8GB or 16GB / 256GB to 2TB',
+          main_camera: '12 Megapixels',
+          battery: '10 hours',
+          os: 'iPadOS 17.5'
+        }
+      },
+      {
+        name: 'iPad Pro M5 11" (Wi-Fi Only)',
+        description: 'M5 chip, Wi-Fi 7, 11" Ultra Retina XDR display.',
+        price: 1748250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/ipad-pro-m5-11.jpg',
+        stock: 0,
+        is_featured: true,
+        is_hot: true,
+        is_special: false,
+        is_new_arrival: true,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '11" Ultra Retina XDR, 2420x1668 (264 ppi)',
+          chipset: 'Apple M5 (9-10 Cores, 4.4 GHz)',
+          ram_storage: '12GB or 16GB / 256GB to 2TB',
+          main_camera: '12 Megapixels',
+          battery: '10 hours',
+          os: 'iPadOS 26.0'
+        }
+      },
+      {
+        name: 'iPad Pro M5 13" (Wi-Fi Only)',
+        description: 'M5 chip, 13" Ultra Retina XDR, ultimate iPad experience.',
+        price: 2273250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/ipad-pro-m5-13.jpg',
+        stock: 0,
+        is_featured: true,
+        is_hot: true,
+        is_special: false,
+        is_new_arrival: true,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '13" Ultra Retina XDR, 2752x2064 (264 ppi)',
+          chipset: 'Apple M5 (9-10 Cores, 4.4 GHz)',
+          ram_storage: '12GB or 16GB / 256GB to 2TB',
+          main_camera: '12 Megapixels',
+          battery: '10 hours',
+          os: 'iPadOS 26.0'
+        }
+      },
+    
+      // ==================== iPHONES ====================
+      {
+        name: 'iPhone 11 (US/Canada/A2111)',
+        description: '6.1" Liquid Retina HD, A13 Bionic, dual-camera system.',
+        price: 1223250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/iphone-11.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '6.1" Liquid Retina HD, 1792x828 (326 ppi)',
+          chipset: 'Apple A13 Bionic (6 Cores, 2.66 GHz)',
+          ram_storage: '4GB / 64GB, 128GB, or 256GB',
+          main_camera: '12.0 Megapixels (Dual)',
+          battery: '65 hours audio',
+          os: 'iOS 13.0'
+        }
+      },
+      {
+        name: 'iPhone 11 Pro (US/Canada/A2160)',
+        description: '5.8" Super Retina XDR, triple-camera system, stainless steel.',
+        price: 1748250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/iphone-11-pro.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '5.8" Super Retina XDR, 2436x1125 (458 ppi)',
+          chipset: 'Apple A13 Bionic (6 Cores, 2.66 GHz)',
+          ram_storage: '4GB / 64GB, 256GB, or 512GB',
+          main_camera: '12.0 Megapixels (Triple)',
+          battery: '65 hours audio',
+          os: 'iOS 13.0'
+        }
+      },
+      {
+        name: 'iPhone 11 Pro Max (US/CA/A2161)',
+        description: '6.5" Super Retina XDR, triple-camera, best battery life of its time.',
+        price: 1923250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/iphone-11-pro-max.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '6.5" Super Retina XDR, 2688x1242 (458 ppi)',
+          chipset: 'Apple A13 Bionic (6 Cores, 2.66 GHz)',
+          ram_storage: '4GB / 64GB, 256GB, or 512GB',
+          main_camera: '12.0 Megapixels (Triple)',
+          battery: '80 hours audio',
+          os: 'iOS 13.0'
+        }
+      },
+      {
+        name: 'iPhone 12 (US/A2172)',
+        description: '6.1" Super Retina XDR, A14 Bionic, 5G capable.',
+        price: 1450750,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/iphone-12.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '6.1" Super Retina XDR, 2532x1170 (460 ppi)',
+          chipset: 'Apple A14 Bionic (6 Cores, 3.0 GHz)',
+          ram_storage: '4GB / 64GB, 128GB, or 256GB',
+          main_camera: '12.0 Megapixels (Dual)',
+          battery: '65 hours audio',
+          os: 'iOS 14.1'
+        }
+      },
+      {
+        name: 'iPhone 12 mini (US/A2176)',
+        description: '5.4" Super Retina XDR, smallest 5G iPhone, A14 Bionic.',
+        price: 1275750,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/iphone-12-mini.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '5.4" Super Retina XDR, 2340x1080 (476 ppi)',
+          chipset: 'Apple A14 Bionic (6 Cores, 3.0 GHz)',
+          ram_storage: '4GB / 64GB, 128GB, or 256GB',
+          main_camera: '12.0 Megapixels (Dual)',
+          battery: '50 hours audio',
+          os: 'iOS 14.2'
+        }
+      },
+      {
+        name: 'iPhone 12 Pro (US/A2341)',
+        description: '6.1" Super Retina XDR, triple-camera with LiDAR, stainless steel.',
+        price: 1748250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/iphone-12-pro.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '6.1" Super Retina XDR, 2532x1170 (460 ppi)',
+          chipset: 'Apple A14 Bionic (6 Cores, 3.0 GHz)',
+          ram_storage: '6GB / 128GB, 256GB, or 512GB',
+          main_camera: '12.0 Megapixels (Triple + LiDAR)',
+          battery: '65 hours audio',
+          os: 'iOS 14.1'
+        }
+      },
+      {
+        name: 'iPhone 12 Pro Max (US/A2342)',
+        description: '6.7" Super Retina XDR, best camera system, stainless steel.',
+        price: 1923250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/iphone-12-pro-max.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '6.7" Super Retina XDR, 2778x1284 (458 ppi)',
+          chipset: 'Apple A14 Bionic (6 Cores, 3.0 GHz)',
+          ram_storage: '6GB / 128GB, 256GB, or 512GB',
+          main_camera: '12.0 Megapixels (Triple + LiDAR)',
+          battery: '80 hours audio',
+          os: 'iOS 14.2'
+        }
+      },
+      {
+        name: 'iPhone 13 (US/A2482)',
+        description: '6.1" Super Retina XDR, A15 Bionic, advanced dual-camera.',
+        price: 1398250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/iphone-13.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '6.1" Super Retina XDR, 2532x1170 (460 ppi)',
+          chipset: 'Apple A15 Bionic (6 Cores, 3.2 GHz)',
+          ram_storage: '4GB / 128GB, 256GB, or 512GB',
+          main_camera: '12.0 Megapixels (Dual)',
+          battery: '75 hours audio',
+          os: 'iOS 15.0'
+        }
+      },
+      {
+        name: 'iPhone 13 mini (US/A2481)',
+        description: '5.4" Super Retina XDR, A15 Bionic, compact power.',
+        price: 1223250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/iphone-13-mini.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '5.4" Super Retina XDR, 2340x1080 (476 ppi)',
+          chipset: 'Apple A15 Bionic (6 Cores, 3.2 GHz)',
+          ram_storage: '4GB / 128GB, 256GB, or 512GB',
+          main_camera: '12.0 Megapixels (Dual)',
+          battery: '55 hours audio',
+          os: 'iOS 15.0'
+        }
+      },
+      {
+        name: 'iPhone 13 Pro (US/A2483)',
+        description: '6.1" Super Retina XDR with ProMotion, triple-camera, stainless steel.',
+        price: 1748250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/iphone-13-pro.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '6.1" Super Retina XDR with ProMotion, 2532x1170 (460 ppi)',
+          chipset: 'Apple A15 Bionic (6 Cores, 3.2 GHz)',
+          ram_storage: '6GB / 128GB to 1TB',
+          main_camera: '12.0 Megapixels (Triple + LiDAR)',
+          battery: '75 hours audio',
+          os: 'iOS 15.0'
+        }
+      },
+      {
+        name: 'iPhone 13 Pro Max (US/A2484)',
+        description: '6.7" Super Retina XDR with ProMotion, best battery life.',
+        price: 1923250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/iphone-13-pro-max.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '6.7" Super Retina XDR with ProMotion, 2778x1284 (458 ppi)',
+          chipset: 'Apple A15 Bionic (6 Cores, 3.2 GHz)',
+          ram_storage: '6GB / 128GB to 1TB',
+          main_camera: '12.0 Megapixels (Triple + LiDAR)',
+          battery: '95 hours audio',
+          os: 'iOS 15.0'
+        }
+      },
+      {
+        name: 'iPhone 14 (US/A2649)',
+        description: '6.1" Super Retina XDR, A15 Bionic, crash detection.',
+        price: 1398250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/iphone-14.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '6.1" Super Retina XDR, 2532x1170 (460 ppi)',
+          chipset: 'Apple A15 Bionic (6 Cores, 3.2 GHz)',
+          ram_storage: '6GB / 128GB, 256GB, or 512GB',
+          main_camera: '12.0 Megapixels (Dual)',
+          battery: '80 hours audio',
+          os: 'iOS 16.0'
+        }
+      },
+      {
+        name: 'iPhone 14 Plus (US/A2632)',
+        description: '6.7" Super Retina XDR, A15 Bionic, big screen.',
+        price: 1573250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/iphone-14-plus.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '6.7" Super Retina XDR, 2778x1284 (458 ppi)',
+          chipset: 'Apple A15 Bionic (6 Cores, 3.2 GHz)',
+          ram_storage: '6GB / 128GB, 256GB, or 512GB',
+          main_camera: '12.0 Megapixels (Dual)',
+          battery: '100 hours audio',
+          os: 'iOS 16.0'
+        }
+      },
+      {
+        name: 'iPhone 14 Pro (US/A2650)',
+        description: '6.1" Super Retina XDR with Dynamic Island, A16 Bionic, 48MP camera.',
+        price: 1748250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/iphone-14-pro.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '6.1" Super Retina XDR with ProMotion, 2556x1179 (460 ppi)',
+          chipset: 'Apple A16 Bionic (6 Cores, 3.5 GHz)',
+          ram_storage: '6GB / 128GB to 1TB',
+          main_camera: '48 Megapixels (Triple + LiDAR)',
+          battery: '75 hours audio',
+          os: 'iOS 16.0'
+        }
+      },
+      {
+        name: 'iPhone 14 Pro Max (US/A2651)',
+        description: '6.7" Super Retina XDR, Dynamic Island, A16 Bionic.',
+        price: 1923250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/iphone-14-pro-max.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '6.7" Super Retina XDR with ProMotion, 2796x1290 (460 ppi)',
+          chipset: 'Apple A16 Bionic (6 Cores, 3.5 GHz)',
+          ram_storage: '6GB / 128GB to 1TB',
+          main_camera: '48 Megapixels (Triple + LiDAR)',
+          battery: '95 hours audio',
+          os: 'iOS 16.0'
+        }
+      },
+      {
+        name: 'iPhone 15 (US/A2846)',
+        description: '6.1" Super Retina XDR, Dynamic Island, USB-C, 48MP main camera.',
+        price: 1398250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/iphone-15.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '6.1" Super Retina XDR, 2556x1179 (460 ppi)',
+          chipset: 'Apple A16 Bionic (6 Cores, 3.5 GHz)',
+          ram_storage: '6GB / 128GB, 256GB, or 512GB',
+          main_camera: '48 Megapixels (Dual)',
+          battery: '80 hours audio',
+          os: 'iOS 17.0.2'
+        }
+      },
+      {
+        name: 'iPhone 15 Plus (US/A2847)',
+        description: '6.7" Super Retina XDR, Dynamic Island, USB-C.',
+        price: 1573250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/iphone-15-plus.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '6.7" Super Retina XDR, 2796x1290 (460 ppi)',
+          chipset: 'Apple A16 Bionic (6 Cores, 3.5 GHz)',
+          ram_storage: '6GB / 128GB, 256GB, or 512GB',
+          main_camera: '48 Megapixels (Dual)',
+          battery: '100 hours audio',
+          os: 'iOS 17.0.2'
+        }
+      },
+      {
+        name: 'iPhone 15 Pro (US/A2848)',
+        description: '6.1" Super Retina XDR, titanium design, A17 Pro, Action button.',
+        price: 1748250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/iphone-15-pro.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '6.1" Super Retina XDR with ProMotion, 2556x1179 (460 ppi)',
+          chipset: 'Apple A17 Pro (6 Cores, 3.78 GHz)',
+          ram_storage: '8GB / 128GB, 256GB, 512GB, or 1TB',
+          main_camera: '48 Megapixels (Triple + LiDAR)',
+          battery: '75 hours audio',
+          os: 'iOS 17.0.2'
+        }
+      },
+      {
+        name: 'iPhone 15 Pro Max (US/A2849)',
+        description: '6.7" Super Retina XDR, titanium, 5x optical zoom, A17 Pro.',
+        price: 2098250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/iphone-15-pro-max.jpg',
+        stock: 0,
+        is_featured: true,
+        is_hot: true,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '6.7" Super Retina XDR with ProMotion, 2796x1290 (460 ppi)',
+          chipset: 'Apple A17 Pro (6 Cores, 3.78 GHz)',
+          ram_storage: '8GB / 256GB, 512GB, or 1TB',
+          main_camera: '48 Megapixels (Triple + LiDAR)',
+          battery: '95 hours audio',
+          os: 'iOS 17.0.2'
+        }
+      },
+      {
+        name: 'iPhone 16 (US/A3081)',
+        description: '6.1" Super Retina XDR, A18 chip, Camera Control button.',
+        price: 1398250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/iphone-16.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: true,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '6.1" Super Retina XDR, 2556x1179 (460 ppi)',
+          chipset: 'Apple A18 (6 Cores, 4.0 GHz)',
+          ram_storage: '8GB / 128GB, 256GB, or 512GB',
+          main_camera: '48 Megapixels (Dual)',
+          battery: '80 hours audio',
+          os: 'iOS 18.0'
+        }
+      },
+      {
+        name: 'iPhone 16 Plus (US/A3082)',
+        description: '6.7" Super Retina XDR, A18 chip, Camera Control.',
+        price: 1573250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/iphone-16-plus.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: true,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '6.7" Super Retina XDR, 2796x1290 (460 ppi)',
+          chipset: 'Apple A18 (6 Cores, 4.0 GHz)',
+          ram_storage: '8GB / 128GB, 256GB, or 512GB',
+          main_camera: '48 Megapixels (Dual)',
+          battery: '80 hours audio',
+          os: 'iOS 18.0'
+        }
+      },
+      {
+        name: 'iPhone 16 Pro (US/A3083)',
+        description: '6.3" Super Retina XDR, A18 Pro, titanium, 5x optical zoom.',
+        price: 1748250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/iphone-16-pro.jpg',
+        stock: 0,
+        is_featured: true,
+        is_hot: true,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '6.3" Super Retina XDR with ProMotion, 2622x1206 (460 ppi)',
+          chipset: 'Apple A18 Pro (6 Cores, 4.0 GHz)',
+          ram_storage: '8GB / 128GB to 1TB',
+          main_camera: '48 Megapixels (Triple + LiDAR)',
+          battery: '85 hours audio',
+          os: 'iOS 18.0'
+        }
+      },
+      {
+        name: 'iPhone 16 Pro Max (US/A3084)',
+        description: '6.9" Super Retina XDR, A18 Pro, longest battery life ever.',
+        price: 2098250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/iphone-16-pro-max.jpg',
+        stock: 0,
+        is_featured: true,
+        is_hot: true,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '6.9" Super Retina XDR with ProMotion, 2868x1320 (460 ppi)',
+          chipset: 'Apple A18 Pro (6 Cores, 4.0 GHz)',
+          ram_storage: '8GB / 256GB, 512GB, or 1TB',
+          main_camera: '48 Megapixels (Triple + LiDAR)',
+          battery: '105 hours audio',
+          os: 'iOS 18.0'
+        }
+      },
+      {
+        name: 'iPhone 16e (US/A3212)',
+        description: '6.1" Super Retina XDR, A18 chip, affordable entry.',
+        price: 1048250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/iphone-16e.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '6.1" Super Retina XDR, 2532x1170 (460 ppi)',
+          chipset: 'Apple A18 (6 Cores, 4.0 GHz)',
+          ram_storage: '8GB / 128GB, 256GB, or 512GB',
+          main_camera: '48 Megapixels (Single)',
+          battery: '90 hours audio',
+          os: 'iOS 18.3.1'
+        }
+      },
+      {
+        name: 'iPhone 17 (US/A3258)',
+        description: '6.3" Super Retina XDR, A19 chip, new design language.',
+        price: 1398250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/iphone-17.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: true,
+        is_special: false,
+        is_new_arrival: true,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '6.3" Super Retina XDR with ProMotion, 2622x1206 (460 ppi)',
+          chipset: 'Apple A19 (6 Cores, 4.25 GHz)',
+          ram_storage: '8GB / 256GB or 512GB',
+          main_camera: '48 Megapixels (Dual)',
+          battery: '30 hours video',
+          os: 'iOS 26.0'
+        }
+      },
+      {
+        name: 'iPhone 17 Pro (US/A3256)',
+        description: '6.3" Super Retina XDR, A19 Pro, 12GB RAM, enhanced cameras.',
+        price: 1923250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/iphone-17-pro.jpg',
+        stock: 0,
+        is_featured: true,
+        is_hot: true,
+        is_special: false,
+        is_new_arrival: true,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '6.3" Super Retina XDR with ProMotion, 2622x1206 (460 ppi)',
+          chipset: 'Apple A19 Pro (6 Cores, 4.25 GHz)',
+          ram_storage: '12GB / 256GB, 512GB, or 1TB',
+          main_camera: '48 Megapixels (Triple + LiDAR)',
+          battery: '33 hours video',
+          os: 'iOS 26.0'
+        }
+      },
+      {
+        name: 'iPhone 17 Pro Max (US/A3257)',
+        description: '6.9" Super Retina XDR, A19 Pro, up to 2TB storage.',
+        price: 2098250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/iphone-17-pro-max.jpg',
+        stock: 0,
+        is_featured: true,
+        is_hot: true,
+        is_special: false,
+        is_new_arrival: true,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '6.9" Super Retina XDR with ProMotion, 2868x1320 (460 ppi)',
+          chipset: 'Apple A19 Pro (6 Cores, 4.25 GHz)',
+          ram_storage: '12GB / 256GB to 2TB',
+          main_camera: '48 Megapixels (Triple + LiDAR)',
+          battery: '39 hours video',
+          os: 'iOS 26.0'
+        }
+      },
+      {
+        name: 'iPhone Air (US/CA/MX/SA/A3260)',
+        description: '6.5" Super Retina XDR, ultra-thin design, A19 Pro chip.',
+        price: 1748250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/iphone-air.jpg',
+        stock: 0,
+        is_featured: true,
+        is_hot: true,
+        is_special: true,
+        is_new_arrival: true,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '6.5" Super Retina XDR with ProMotion, 2736x1260 (460 ppi)',
+          chipset: 'Apple A19 Pro (6 Cores, 4.25 GHz)',
+          ram_storage: '12GB / 256GB, 512GB, or 1TB',
+          main_camera: '48 Megapixels (Dual)',
+          battery: '27 hours video',
+          os: 'iOS 26.0'
+        }
+      },
+      {
+        name: 'iPhone SE (2nd Gen) (US/CA/A2275)',
+        description: '4.7" Retina HD, A13 Bionic, Touch ID, affordable classic.',
+        price: 698250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/iphone-se.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '4.7" Retina HD, 1334x750 (326 ppi)',
+          chipset: 'Apple A13 Bionic (6 Cores, 2.66 GHz)',
+          ram_storage: '3GB / 64GB, 128GB, or 256GB',
+          main_camera: '12.0 Megapixels (Single)',
+          battery: '40 hours audio',
+          os: 'iOS 13.4.1'
+        }
+      },
+      {
+        name: 'iPhone SE (3rd Gen) (US/CA/A2595)',
+        description: '4.7" Retina HD, A15 Bionic, 5G, Touch ID.',
+        price: 750750,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/iphone-se.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '4.7" Retina HD, 1334x750 (326 ppi)',
+          chipset: 'Apple A15 Bionic (6 Cores, 3.2 GHz)',
+          ram_storage: '4GB / 64GB, 128GB, or 256GB',
+          main_camera: '12.0 Megapixels (Single)',
+          battery: '50 hours audio',
+          os: 'iOS 15.4'
+        }
+      },
+      {
+        name: 'iPhone XR (US/Canada/A1984)',
+        description: '6.1" Liquid Retina HD, A12 Bionic, colorful design.',
+        price: 1310750,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/iphone-xr.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '6.1" Liquid Retina HD, 1792x828 (326 ppi)',
+          chipset: 'Apple A12 Bionic (6 Cores, 2.49 GHz)',
+          ram_storage: '3GB / 64GB, 128GB, or 256GB',
+          main_camera: '12.0 Megapixels (Single)',
+          battery: '65 hours audio',
+          os: 'iOS 12.0'
+        }
+      },
+      {
+        name: 'iPhone Xs (US/Canada/Hong Kong/A1920)',
+        description: '5.8" Super Retina, A12 Bionic, dual-camera, stainless steel.',
+        price: 1748250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/iphone-xs.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '5.8" Super Retina, 2436x1125 (458 ppi)',
+          chipset: 'Apple A12 Bionic (6 Cores, 2.49 GHz)',
+          ram_storage: '4GB / 64GB, 256GB, or 512GB',
+          main_camera: '12.0 Megapixels (Dual)',
+          battery: '60 hours audio',
+          os: 'iOS 12.0'
+        }
+      },
+      {
+        name: 'iPhone Xs Max (US/Canada/A1921)',
+        description: '6.5" Super Retina, A12 Bionic, largest iPhone of its generation.',
+        price: 1923250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/iphone-xs-max.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '6.5" Super Retina, 2688x1242 (458 ppi)',
+          chipset: 'Apple A12 Bionic (6 Cores, 2.49 GHz)',
+          ram_storage: '4GB / 64GB, 256GB, or 512GB',
+          main_camera: '12.0 Megapixels (Dual)',
+          battery: '65 hours audio',
+          os: 'iOS 12.0'
+        }
+      },
+    
+      // ==================== WATCHES ====================
+      {
+        name: 'Apple Watch SE (GPS, 40 mm)',
+        description: 'Essential features, large Retina display, crash detection.',
+        price: 488250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/apple-watch-se.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '1.8" OLED Retina, 324x394',
+          chipset: 'Apple S5',
+          ram_storage: '1GB / 32GB',
+          main_camera: 'None',
+          battery: '18 hours',
+          os: 'watchOS 7.0'
+        }
+      },
+      {
+        name: 'Apple Watch SE (GPS, 44 mm)',
+        description: 'Larger display, essential features, family setup.',
+        price: 540750,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/apple-watch-se.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '2.0" OLED Retina, 368x448',
+          chipset: 'Apple S5',
+          ram_storage: '1GB / 32GB',
+          main_camera: 'None',
+          battery: '18 hours',
+          os: 'watchOS 7.0'
+        }
+      },
+      {
+        name: 'Apple Watch SE 2 (GPS, 40 mm)',
+        description: 'S8 chip, crash detection, affordable smartwatch.',
+        price: 435750,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/apple-watch-se-2.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '1.8" OLED Retina, 324x394',
+          chipset: 'Apple S8',
+          ram_storage: '1GB / 32GB',
+          main_camera: 'None',
+          battery: '18 hours',
+          os: 'watchOS 9'
+        }
+      },
+      {
+        name: 'Apple Watch SE 2 (GPS, 44 mm)',
+        description: 'S8 chip, larger display, all-day battery life.',
+        price: 488250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/apple-watch-se-2.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '2.0" OLED Retina, 368x448',
+          chipset: 'Apple S8',
+          ram_storage: '1GB / 32GB',
+          main_camera: 'None',
+          battery: '18 hours',
+          os: 'watchOS 9'
+        }
+      },
+      {
+        name: 'Apple Watch SE 3 (GPS, 40 mm)',
+        description: 'S10 chip, 64GB storage, brighter display.',
+        price: 435750,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/apple-watch-se-3.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: true,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '1.8" OLED Retina, 324x394',
+          chipset: 'Apple S10',
+          ram_storage: '1GB / 64GB',
+          main_camera: 'None',
+          battery: '18 hours',
+          os: 'watchOS 26.0'
+        }
+      },
+      {
+        name: 'Apple Watch SE 3 (GPS, 44 mm)',
+        description: 'S10 chip, larger screen, 64GB storage.',
+        price: 488250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/bigpic/apple-watch-se-3.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: true,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '2.0" OLED Retina, 368x448',
+          chipset: 'Apple S10',
+          ram_storage: '1GB / 64GB',
+          main_camera: 'None',
+          battery: '18 hours',
+          os: 'watchOS 26.0'
+        }
+      },
+      {
+        name: 'Apple Watch Series 4 (Aluminum, GPS, 40 mm)',
+        description: 'First with ECG, larger display, faster S4 chip.',
+        price: 698250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/pics/apple/apple-watch-series-4-steel-1.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '1.8" OLED Retina, 324x394',
+          chipset: 'Apple S4',
+          ram_storage: '1GB / 8GB',
+          main_camera: 'None',
+          battery: '18 hours',
+          os: 'watchOS 5.0'
+        }
+      },
+      {
+        name: 'Apple Watch Series 4 (Aluminum, GPS, 44 mm)',
+        description: 'ECG app, fall detection, larger 44mm case.',
+        price: 750750,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/pics/apple/apple-watch-series-4-steel-1.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '2.0" OLED Retina, 368x448',
+          chipset: 'Apple S4',
+          ram_storage: '1GB / 8GB',
+          main_camera: 'None',
+          battery: '18 hours',
+          os: 'watchOS 5.0'
+        }
+      },
+      {
+        name: 'Apple Watch Series 5 (Aluminum, GPS, 40 mm)',
+        description: 'Always-On Retina display, compass, elevation.',
+        price: 698250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/pics/apple/apple-watch-5-ss.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '1.8" OLED Retina, 324x394',
+          chipset: 'Apple S5',
+          ram_storage: '1GB / 32GB',
+          main_camera: 'None',
+          battery: '18 hours',
+          os: 'watchOS 6.0'
+        }
+      },
+      {
+        name: 'Apple Watch Series 5 (Aluminum, GPS, 44 mm)',
+        description: 'Always-On display, built-in compass, 32GB storage.',
+        price: 750750,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/pics/apple/apple-watch-5-ss.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '2.0" OLED Retina, 368x448',
+          chipset: 'Apple S5',
+          ram_storage: '1GB / 32GB',
+          main_camera: 'None',
+          battery: '18 hours',
+          os: 'watchOS 6.0'
+        }
+      },
+      {
+        name: 'Apple Watch Series 6 (Aluminum, GPS, 40 mm)',
+        description: 'Blood Oxygen sensor, always-on altimeter, S6 chip.',
+        price: 698250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/pics/apple/apple-watch-s6-steel-1.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '1.8" OLED Retina, 324x394',
+          chipset: 'Apple S6',
+          ram_storage: '1GB / 32GB',
+          main_camera: 'None',
+          battery: '18 hours',
+          os: 'watchOS 7.0'
+        }
+      },
+      {
+        name: 'Apple Watch Series 6 (Aluminum, GPS, 44 mm)',
+        description: 'Blood Oxygen monitoring, fast charging, U1 chip.',
+        price: 750750,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/pics/apple/apple-watch-s6-steel-1.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '2.0" OLED Retina, 368x448',
+          chipset: 'Apple S6',
+          ram_storage: '1GB / 32GB',
+          main_camera: 'None',
+          battery: '18 hours',
+          os: 'watchOS 7.0'
+        }
+      },
+      {
+        name: 'Apple Watch Series 7 (Aluminum, GPS, 41 mm)',
+        description: 'Largest display yet, faster charging, crack-resistant glass.',
+        price: 698250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/pics/apple/apple-watch-series-7-stainless-steel-1.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '1.8" OLED Retina, 352x430',
+          chipset: 'Apple S7',
+          ram_storage: '1GB / 32GB',
+          main_camera: 'None',
+          battery: '18 hours',
+          os: 'watchOS 8'
+        }
+      },
+      {
+        name: 'Apple Watch Series 7 (Aluminum, GPS, 45 mm)',
+        description: 'Nearly 20% larger screen, durable design, fast charging.',
+        price: 750750,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/pics/apple/apple-watch-series-7-stainless-steel-1.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '1.9" OLED Retina, 396x484',
+          chipset: 'Apple S7',
+          ram_storage: '1GB / 32GB',
+          main_camera: 'None',
+          battery: '18 hours',
+          os: 'watchOS 8'
+        }
+      },
+      {
+        name: 'Apple Watch Series 8 (Aluminum, GPS, 41 mm)',
+        description: 'Temperature sensing, crash detection, ovulation tracking.',
+        price: 698250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/pics/apple/apple-watch-8-2.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '1.8" OLED Retina, 352x430',
+          chipset: 'Apple S8',
+          ram_storage: '1GB / 32GB',
+          main_camera: 'None',
+          battery: '18 hours',
+          os: 'watchOS 9'
+        }
+      },
+      {
+        name: 'Apple Watch Series 8 (Aluminum, GPS, 45 mm)',
+        description: 'Advanced health sensors, crash detection, low power mode.',
+        price: 750750,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/pics/apple/apple-watch-8-2.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '1.9" OLED Retina, 396x484',
+          chipset: 'Apple S8',
+          ram_storage: '1GB / 32GB',
+          main_camera: 'None',
+          battery: '18 hours',
+          os: 'watchOS 9'
+        }
+      },
+      {
+        name: 'Apple Watch Series 9 (Aluminum, GPS, 41 mm)',
+        description: 'S9 chip, double tap gesture, brighter display.',
+        price: 698250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/pics/apple/apple-watch-series9-1.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '1.8" OLED Retina, 352x430',
+          chipset: 'Apple S9',
+          ram_storage: '1GB / 64GB',
+          main_camera: 'None',
+          battery: '18 hours',
+          os: 'watchOS 10.0.1'
+        }
+      },
+      {
+        name: 'Apple Watch Series 9 (Aluminum, GPS, 45 mm)',
+        description: 'S9 chip, on-device Siri, 2000 nits brightness.',
+        price: 750750,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/pics/apple/apple-watch-series9-1.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '1.9" OLED Retina, 396x484',
+          chipset: 'Apple S9',
+          ram_storage: '1GB / 64GB',
+          main_camera: 'None',
+          battery: '18 hours',
+          os: 'watchOS 10.0.1'
+        }
+      },
+      {
+        name: 'Apple Watch Series 10 (Aluminum, GPS, 42 mm)',
+        description: 'Thinner design, larger display, S10 chip.',
+        price: 698250,
+        original_price: null,
+        discount: null,
+        image: 'https://cdsassets.apple.com/live/7WUAS350/images/tech-specs/121202-apple-watch-series-10.png',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '2.0" OLED Retina, 374x446 (326 ppi)',
+          chipset: 'Apple S10',
+          ram_storage: '1GB / 64GB',
+          main_camera: 'None',
+          battery: '18 hours',
+          os: 'watchOS 11'
+        }
+      },
+      {
+        name: 'Apple Watch Series 10 (Aluminum, GPS, 46 mm)',
+        description: 'Largest Apple Watch display, S10 chip, thin design.',
+        price: 750750,
+        original_price: null,
+        discount: null,
+        image: 'https://cdsassets.apple.com/live/7WUAS350/images/tech-specs/121202-apple-watch-series-10.png',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '2.1" OLED Retina, 416x496 (326 ppi)',
+          chipset: 'Apple S10',
+          ram_storage: '1GB / 64GB',
+          main_camera: 'None',
+          battery: '18 hours',
+          os: 'watchOS 11'
+        }
+      },
+      {
+        name: 'Apple Watch Series 11 (Aluminum, GPS, 42 mm)',
+        description: '24-hour battery, S10 chip, improved health features.',
+        price: 698250,
+        original_price: null,
+        discount: null,
+        image: 'https://www.apple.com/v/apple-watch-series-11/c/images/overview/health/health_sleep_score__d4pcoy8v0cwi_large_2x.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: true,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '2.0" OLED Retina, 374x446 (326 ppi)',
+          chipset: 'Apple S10',
+          ram_storage: '1GB / 64GB',
+          main_camera: 'None',
+          battery: '24 hours',
+          os: 'watchOS 26.0'
+        }
+      },
+      {
+        name: 'Apple Watch Series 11 (Aluminum, GPS, 46 mm)',
+        description: '24-hour battery, largest display, advanced sensors.',
+        price: 838250,
+        original_price: null,
+        discount: null,
+        image: 'https://www.apple.com/v/apple-watch-series-11/c/images/overview/health/health_sleep_score__d4pcoy8v0cwi_large_2x.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: true,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '2.1" OLED Retina, 416x496 (326 ppi)',
+          chipset: 'Apple S10',
+          ram_storage: '1GB / 64GB',
+          main_camera: 'None',
+          battery: '24 hours',
+          os: 'watchOS 26.0'
+        }
+      },
+      {
+        name: 'Apple Watch Ultra (US/CA, 49 mm)',
+        description: 'Titanium case, 49mm, action button, 100m water resistant.',
+        price: 1398250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/pics/apple/apple-watch-ultra-1.jpg',
+        stock: 0,
+        is_featured: false,
+        is_hot: false,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '1.92" OLED Retina, 410x502',
+          chipset: 'Apple S8',
+          ram_storage: '1GB / 32GB',
+          main_camera: 'None',
+          battery: '36 hours',
+          os: 'watchOS 9'
+        }
+      },
+      {
+        name: 'Apple Watch Ultra 2 (US/CA, 49 mm)',
+        description: 'S9 chip, 3000 nits brightness, double tap gesture.',
+        price: 1398250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/pics/apple/apple-watch-ultra2-black.jpg',
+        stock: 0,
+        is_featured: true,
+        is_hot: true,
+        is_special: false,
+        is_new_arrival: false,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '1.92" OLED Retina, 410x502',
+          chipset: 'Apple S9',
+          ram_storage: '1GB / 64GB',
+          main_camera: 'None',
+          battery: '36 hours',
+          os: 'watchOS 10.0.1'
+        }
+      },
+      {
+        name: 'Apple Watch Ultra 3 (49 mm)',
+        description: 'S10 chip, 42-hour battery, thinner profile, advanced diving.',
+        price: 1398250,
+        original_price: null,
+        discount: null,
+        image: 'https://fdn2.gsmarena.com/vv/pics/apple/apple-watch-ultra3-1.jpg',
+        stock: 0,
+        is_featured: true,
+        is_hot: true,
+        is_special: false,
+        is_new_arrival: true,
+        vendor: 'Apple Inc.',
+        specifications: {
+          display: '1.95" OLED Retina, 422x514',
+          chipset: 'Apple S10',
+          ram_storage: '1GB / 64GB',
+          main_camera: 'None',
+          battery: '42 hours',
+          os: 'watchOS 26.0'
+        }
+      },
+      {
         name: 'Samsung Galaxy S24',
         description: 'Compact flagship with bright LTPO display and AI-assisted features.',
         price: 2189000,
@@ -1408,7 +3633,7 @@ const seedDatabase = async () => {
 
     ].map((p) => ({
       ...p,
-      category_id: p.category_id ?? categories[0].id
+      category_id: resolveProductCategoryId(p)
     }));
     for (const p of productsData) {
       await Product.findOrCreate({
