@@ -10,7 +10,7 @@ async function followerCountByShopIds(shopIds) {
   const rows = await ShopFollow.findAll({
     attributes: [
       'shop_id',
-      [sequelize.fn('COUNT', sequelize.col('shop_follows.id')), 'cnt']
+      [sequelize.fn('COUNT', sequelize.col('id')), 'cnt']
     ],
     where: { shop_id: { [Op.in]: shopIds } },
     group: ['shop_id'],
