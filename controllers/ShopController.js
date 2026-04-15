@@ -1,8 +1,23 @@
+import { Op } from 'sequelize';
 import db from '../models/index.js';
 import { logAudit, auditContext } from '../utils/audit.js';
 import { toProductDto } from '../utils/productDto.js';
 
-const { Shop, Product, Category, User } = db;
+const { Shop, Product, Category, User, ShopFollow, sequelize } = db;
+
+async function followerCountByShopIds(shopIds) {
+  if (!shopIds.length) return new Map();
+  const rows = await ShopFollow.findAll({
+    attributes: [
+      'shop_id',
+      [sequelize.fn('COUNT', sequelize.col('shop_follows.id')), 'cnt']
+    ],
+    where: { shop_id: { [Op.in]: shopIds } },
+    group: ['shop_id'],
+    raw: true
+  });
+  return new Map(rows.map((r) => [r.shop_id, parseInt(r.cnt, 10) || 0]));
+}
 
 export const index = async (req, res) => {
   try {
@@ -22,6 +37,8 @@ export const index = async (req, res) => {
       return shopData;
     });
 
+    const followerMap = await followerCountByShopIds(shopsWithCount.map((s) => s.id));
+
     const formatted = shopsWithCount.map((s) => ({
       id: s.id,
       name: s.name,
@@ -33,7 +50,10 @@ export const index = async (req, res) => {
       location: s.location || s.address || null,
       phone: s.phone || null,
       email: s.email || null,
-      is_verified: !!s.is_verified
+      is_verified: !!s.is_verified,
+      joined_date: s.joined_date || null,
+      total_products: s.total_products,
+      followers_count: followerMap.get(s.id) || 0
     }));
     return res.json({
       success: true,
@@ -70,6 +90,18 @@ export const show = async (req, res) => {
     }
 
     const s = shop.toJSON();
+    const productCount =
+      Array.isArray(s.products) ? s.products.length : await Product.count({ where: { shop_id: id } });
+    const followers_count = await ShopFollow.count({ where: { shop_id: id } });
+
+    let is_following = false;
+    if (req.user) {
+      const f = await ShopFollow.findOne({
+        where: { user_id: req.user.id, shop_id: parseInt(id, 10) }
+      });
+      is_following = !!f;
+    }
+
     const shopData = {
       id: s.id,
       name: s.name,
@@ -81,7 +113,11 @@ export const show = async (req, res) => {
       location: s.location || s.address || null,
       phone: s.phone || null,
       email: s.email || null,
-      is_verified: !!s.is_verified
+      is_verified: !!s.is_verified,
+      joined_date: s.joined_date || null,
+      total_products: productCount,
+      followers_count,
+      is_following
     };
     return res.json({
       success: true,

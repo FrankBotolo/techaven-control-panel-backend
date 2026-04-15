@@ -46,6 +46,29 @@ export const authenticate = async (req, res, next) => {
   }
 };
 
+/** Sets req.user when a valid Bearer token is sent; otherwise req.user is null. */
+export const optionalAuthenticate = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      req.user = null;
+      return next();
+    }
+    const token = authHeader.substring(7);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-this-in-production');
+    const user = await User.findByPk(decoded.id);
+    if (user && user.is_active) {
+      req.user = user;
+    } else {
+      req.user = null;
+    }
+    return next();
+  } catch {
+    req.user = null;
+    return next();
+  }
+};
+
 export const authorizeRoles = (...allowedRoles) => {
   return (req, res, next) => {
     if (!req.user) {

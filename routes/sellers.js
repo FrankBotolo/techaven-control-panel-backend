@@ -7,6 +7,7 @@ import * as SellerEarningsController from '../controllers/SellerEarningsControll
 import * as SellerOnboardingController from '../controllers/SellerOnboardingController.js';
 import * as SellerOrderController from '../controllers/SellerOrderController.js';
 import * as SellerSubscriptionController from '../controllers/SellerSubscriptionController.js';
+import * as SellerShopFollowController from '../controllers/SellerShopFollowController.js';
 
 const router = express.Router();
 const shopOwner = requireShopOwnerForShopParam('shopId');
@@ -39,6 +40,9 @@ router.post('/:shopId/subscription/subscribe', shopOwner, SellerSubscriptionCont
 router.post('/:shopId/subscription/pay/malipo', shopOwner, SellerSubscriptionController.payWithMalipo);
 router.post('/:shopId/subscription/cancel', shopOwner, SellerSubscriptionController.cancel);
 router.post('/:shopId/subscription/resume', shopOwner, SellerSubscriptionController.resume);
+
+// Shop followers (seller must own :shopId)
+router.get('/:shopId/followers', shopOwner, SellerShopFollowController.listFollowers);
 
 // Category routes (sellers only list admin-created categories to select when adding products)
 router.get('/:shopId/categories', SellerCategoryController.listForShop);

@@ -86,6 +86,9 @@ export const shops = {
   getAll: (params) => client.get('/shops', { params }),
   getById: (id) => client.get(`/shops/${id}`),
   getProducts: (id, params) => client.get(`/shops/${id}/products`, { params }),
+  /** Requires auth. Body optional. */
+  follow: (shopId) => client.post(`/shops/${shopId}/follow`, {}),
+  unfollow: (shopId) => client.delete(`/shops/${shopId}/follow`),
 };
 
 // --- Orders ---
