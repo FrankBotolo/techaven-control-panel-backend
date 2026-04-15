@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "techaven-api-collection",
 		"name": "Techaven API",
-		"description": "Complete API documentation for Techaven e-commerce platform (Flow Diagram v1.0).\n\n**Seed credentials** (run `npm run seed` first):\n- Admin: admin@techaven.mw / admin12345\n- Buyer: buyer@techaven.mw / password123\n- Seller: seller@techaven.mw / seller12345\n- Delivery Agent: agent@techaven.mw / agent12345\n\n**Response envelope:** All endpoints return JSON with `success`, `message`, `data`. Use `Authorization: Bearer {{access_token}}` for protected routes.\n\n**Organization:**\n- **Mobile App:** Onboarding, Auth, User, Products (paginated `data.products`), public **subscription packages**, Categories, Cart, Orders, **Wishlist** (`GET/POST /api/wishlist`, `GET/DELETE /api/wishlist/:productId`), Addresses, Wallet, Payment Methods, Notifications, **Shops** (**`GET /api/shops`** all shops; detail `followers_count`; optional `is_following`; **POST/DELETE** `/api/shops/:id/follow`; **`GET /api/shops/:id/products`**), Search, Help, App Info, public **platform settings** (seller commission %), SMS, Webhooks\n- **Admin:** Dashboard, **Platform settings** (seller commission %, deduction summary & by-seller), Malipo, **Subscription packages** & **Shop subscriptions**, Shops, Orders, Courier Services, Onboarding Slides, Banners, Audit Logs, Withdrawals, Notifications, Categories\n- **Seller:** Products (paginated + variants), Orders, Dashboard, **Subscription** (subscribe, **pay/malipo**, cancel, resume), Earnings, **Shop profile** (`PATCH /api/sellers/:shopId/shop`, **POST** `.../shop/logo` multipart `logo`, web UI `/seller-shop.html`), **Shop followers** (`GET /api/sellers/:shopId/followers`), Notifications\n- **Delivery Agent:** Jobs, Profile\n\n**Notes:** Featured/hot/new product segment endpoints were removed — filter client-side from `GET /api/products`. See `docs/SUBSCRIPTION_PACKAGES.md` for seller plans.",
+		"description": "Complete API documentation for Techaven e-commerce platform (Flow Diagram v1.0).\n\n**Seed credentials** (run `npm run seed` first):\n- Admin: admin@techaven.mw / admin12345\n- Buyer: buyer@techaven.mw / password123\n- Seller: seller@techaven.mw / seller12345\n- Delivery Agent: agent@techaven.mw / agent12345\n\n**Response envelope:** All endpoints return JSON with `success`, `message`, `data`. Use `Authorization: Bearer {{access_token}}` for protected routes.\n\n**Organization:**\n- **Mobile App:** Onboarding, Auth, User (**`GET /api/user/points/balances`**, **`POST /api/user/points/redeem`** → wallet MWK), Products (paginated `data.products`), public **subscription packages**, Categories, Cart, Orders, **Wishlist** (`GET/POST /api/wishlist`, `GET/DELETE /api/wishlist/:productId`), Addresses, Wallet, Payment Methods, Notifications, **Shops** (**`GET /api/shops`** all shops; detail `followers_count`, **`points_mwk_per_point`**; optional `is_following`; **POST/DELETE** `/api/shops/:id/follow`; **`GET /api/shops/:id/products`**), Search, Help, App Info, public **platform settings** (seller commission %, **`default_points_mwk_per_point`** for general loyalty redemptions), SMS, Webhooks\n- **Admin:** Dashboard, **Platform settings** (seller commission %, **`default_points_mwk_per_point`**, deduction summary & by-seller), Malipo, **Subscription packages** & **Shop subscriptions**, Shops, Orders, Courier Services, Onboarding Slides, Banners, Audit Logs, Withdrawals, Notifications, Categories\n- **Seller:** Products (paginated + variants), Orders, Dashboard, **Subscription** (subscribe, **pay/malipo**, cancel, resume), Earnings, **Shop profile** (`PATCH /api/sellers/:shopId/shop` incl. **`points_mwk_per_point`** MWK per loyalty point for buyer redemptions, **POST** `.../shop/logo` multipart `logo`, web UI `/seller-shop.html`), **Shop followers** (`GET /api/sellers/:shopId/followers`), Notifications\n- **Delivery Agent:** Jobs, Profile\n\n**Notes:** Featured/hot/new product segment endpoints were removed — filter client-side from `GET /api/products`. See `docs/SUBSCRIPTION_PACKAGES.md` for seller plans.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"auth": {
@@ -18,7 +18,7 @@
 	"item": [
 		{
 			"name": "Mobile App (Customer APIs)",
-			"description": "Customer-facing mobile app APIs. **Shops:** `GET /api/shops` (all shops, no auth), `GET /api/shops/:id` (detail + `followers_count`; optional Bearer for `is_following`), `GET /api/shops/:id/products`, `POST/DELETE /api/shops/:id/follow` (auth). **Wishlist:** `GET/POST /api/wishlist`, `GET/DELETE /api/wishlist/:productId` (all auth). Set collection **Bearer** (`{{access_token}}`) for protected requests, or override per request (e.g. public shop list uses **noauth**).",
+			"description": "Customer-facing mobile app APIs. **User loyalty:** `GET /api/user/points/balances`, `POST /api/user/points/redeem` (auth). **Shops:** `GET /api/shops` (all shops, no auth), `GET /api/shops/:id` (detail + `followers_count`, `points_mwk_per_point`; optional Bearer for `is_following`), `GET /api/shops/:id/products`, `POST/DELETE /api/shops/:id/follow` (auth). **Wishlist:** `GET/POST /api/wishlist`, `GET/DELETE /api/wishlist/:productId` (all auth). Set collection **Bearer** (`{{access_token}}`) for protected requests, or override per request (e.g. public shop list uses **noauth**).",
 			"item": [
 				{
 					"name": "0. Onboarding",
@@ -415,6 +415,43 @@
 									"path": ["api", "user", "profile"]
 								},
 								"description": "Update profile. Response: id, name, email, phone_number, avatar, is_verified, role, points, member_since, created_at."
+							},
+							"response": []
+						},
+						{
+							"name": "Get point balances",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/user/points/balances",
+									"host": ["{{base_url}}"],
+									"path": ["api", "user", "points", "balances"]
+								},
+								"description": "**Bearer: customer (or any authenticated user).** `GET /api/user/points/balances`. Returns `data.total_points`, `data.currency` (MWK), `data.balances[]` with `shop_id`, `shop_name`, `points`, `points_mwk_per_point` (null if seller has not set a rate), `redeemable_mwk_estimate`. Points are tracked **per shop** (from completed orders); `shop_id` **0** is the **General** bucket for legacy/unallocated totals. Call this before redeem to see rates."
+							},
+							"response": []
+						},
+						{
+							"name": "Redeem points to wallet",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"shop_id\": 1,\n  \"points\": 100\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/user/points/redeem",
+									"host": ["{{base_url}}"],
+									"path": ["api", "user", "points", "redeem"]
+								},
+								"description": "**Bearer: customer.** `POST /api/user/points/redeem`. Body: **`shop_id`** (integer; use **0** for General/legacy bucket), **`points`** (positive integer). Converts points to **MWK** at the shop’s **`points_mwk_per_point`** (set by seller via `PATCH /api/sellers/:shopId/shop`) or, for `shop_id` 0, at **`default_points_mwk_per_point`** from admin platform settings / `GET /api/platform-settings`. Credits **`wallet`** and creates a completed wallet transaction. Response: `points_redeemed`, `mwk_credited`, `wallet_balance`, `remaining_points`."
 							},
 							"response": []
 						},
@@ -1424,7 +1461,7 @@
 				},
 				{
 					"name": "11. Shops",
-					"description": "Shop discovery (mobile & web). **`GET /api/shops`** — list **all** shops in `data` (no auth; includes `followers_count`, `total_products`, `joined_date`, etc.; no server pagination). **`GET /api/shops/:id`** — detail + `is_following` when Bearer sent. **`GET /api/shops/:id/products`** — paginated catalog. **Follow / Unfollow** require customer Bearer.",
+					"description": "Shop discovery (mobile & web). **`GET /api/shops`** — list **all** shops in `data` (no auth; includes `followers_count`, `total_products`, `joined_date`, etc.; no server pagination). **`GET /api/shops/:id`** — detail + `points_mwk_per_point` (MWK per loyalty point when redeeming that shop’s point balance; null if disabled) + `is_following` when Bearer sent. **`GET /api/shops/:id/products`** — paginated catalog. **Follow / Unfollow** require customer Bearer.",
 					"item": [
 						{
 							"name": "Get All Shops",
@@ -1456,7 +1493,7 @@
 									"host": ["{{base_url}}"],
 									"path": ["api", "shops", "1"]
 								},
-								"description": "Single shop in `data`: **`followers_count`**, **`total_products`**, **`joined_date`**, contact/location, `is_verified`, etc. **`is_following`**: `false` when this request uses **noauth**; set collection Bearer (`{{access_token}}`) or inherit auth to get the real follow state for the logged-in user."
+								"description": "Single shop in `data`: **`followers_count`**, **`total_products`**, **`joined_date`**, **`points_mwk_per_point`** (MWK per loyalty point for redemptions from this shop’s balance; null if disabled), contact/location, `is_verified`, etc. **`is_following`**: `false` when this request uses **noauth**; set collection Bearer (`{{access_token}}`) or inherit auth to get the real follow state for the logged-in user."
 							},
 							"response": []
 						},
@@ -1470,7 +1507,7 @@
 									"host": ["{{base_url}}"],
 									"path": ["api", "shops", "1"]
 								},
-								"description": "Same as **Get Shop Details** but uses the collection **Bearer** token so `data.is_following` reflects whether `{{access_token}}` belongs to a user who follows shop `1`. Log in as buyer first and set `access_token`."
+								"description": "Same as **Get Shop Details** (includes **`points_mwk_per_point`**) but uses the collection **Bearer** token so `data.is_following` reflects whether `{{access_token}}` belongs to a user who follows shop `1`. Log in as buyer first and set `access_token`."
 							},
 							"response": []
 						},
@@ -1743,7 +1780,7 @@
 									"host": ["{{base_url}}"],
 									"path": ["api", "platform-settings"]
 								},
-								"description": "No auth. Returns `data.seller_commission_percent` (0–100): portion of each seller’s item subtotal retained by the platform. Checkout stores per-order snapshot fields (`seller_gross_subtotal`, `platform_fee_amount`, `escrow_amount` net to seller)."
+								"description": "No auth. Returns **`data.seller_commission_percent`** (0–100): portion of each seller’s item subtotal retained by the platform. Also **`data.default_points_mwk_per_point`**: MWK per loyalty point when redeeming the **General** bucket (`shop_id` 0); `null` if not configured. Checkout stores per-order snapshot fields (`seller_gross_subtotal`, `platform_fee_amount`, `escrow_amount` net to seller)."
 							},
 							"response": []
 						}
@@ -1852,7 +1889,7 @@
 						},
 						{
 							"name": "Platform settings",
-							"description": "Admin configures seller commission (platform fee) as a percentage of the seller item subtotal at checkout. Deduction reports aggregate `platform_fee_amount` on orders (per seller and totals).",
+							"description": "Admin configures seller commission (platform fee) as a percentage of the seller item subtotal at checkout, and optional **`default_points_mwk_per_point`** (MWK per loyalty point for the **General** bucket `shop_id` 0 when buyers redeem). Deduction reports aggregate `platform_fee_amount` on orders (per seller and totals).",
 							"item": [
 								{
 									"name": "Get platform settings",
@@ -1864,7 +1901,7 @@
 											"host": ["{{base_url}}"],
 											"path": ["api", "admin", "platform-settings"]
 										},
-										"description": "Requires admin JWT. Returns `data.seller_commission_percent` and `data.updated_at`."
+										"description": "Requires admin JWT. Returns `data.seller_commission_percent`, `data.default_points_mwk_per_point` (null if unset), and `data.updated_at`."
 									},
 									"response": []
 								},
@@ -1880,14 +1917,14 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n  \"seller_commission_percent\": 5\n}"
+											"raw": "{\n  \"seller_commission_percent\": 5,\n  \"default_points_mwk_per_point\": 10\n}"
 										},
 										"url": {
 											"raw": "{{base_url}}/api/admin/platform-settings",
 											"host": ["{{base_url}}"],
 											"path": ["api", "admin", "platform-settings"]
 										},
-										"description": "Requires admin JWT. Body: `seller_commission_percent` (number, required, 0–100). Only affects new orders; each order stores `seller_gross_subtotal`, `platform_commission_percent`, `platform_fee_amount`, and net `escrow_amount`."
+										"description": "Requires admin JWT. **Partial update:** send **`seller_commission_percent`** (0–100) and/or **`default_points_mwk_per_point`** (non-negative MWK per point for loyalty redemptions from **shop_id 0**; `null` to disable). At least one field required. Commission only affects new orders (`seller_gross_subtotal`, `platform_fee_amount`, net `escrow_amount`). Use a second request with only `{ \"default_points_mwk_per_point\": 15 }` if you only need to change the loyalty rate."
 									},
 									"response": []
 								},
@@ -3222,7 +3259,7 @@
 						},
 						{
 							"name": "Shop profile",
-							"description": "Seller updates storefront copy and contact info. `:shopId` must match the JWT user's `shop_id`. Verification and approval fields remain admin-only.",
+							"description": "Seller updates storefront copy and contact info, including **`points_mwk_per_point`** (MWK per loyalty point for buyer redemptions from this shop’s balance). `:shopId` must match the JWT user's `shop_id`. Verification and approval fields remain admin-only.",
 							"item": [
 								{
 									"name": "Update my shop",
@@ -3246,14 +3283,14 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n  \"name\": \"My Shop Name\",\n  \"description\": \"Short description for customers\",\n  \"location\": \"Lilongwe\",\n  \"address\": \"123 Main Street\",\n  \"phone\": \"+265991234567\",\n  \"email\": \"shop@example.com\",\n  \"logo_url\": \"https://example.com/logo.png\",\n  \"images\": []\n}"
+											"raw": "{\n  \"name\": \"My Shop Name\",\n  \"description\": \"Short description for customers\",\n  \"location\": \"Lilongwe\",\n  \"address\": \"123 Main Street\",\n  \"phone\": \"+265991234567\",\n  \"email\": \"shop@example.com\",\n  \"logo_url\": \"https://example.com/logo.png\",\n  \"images\": [],\n  \"points_mwk_per_point\": 25\n}"
 										},
 										"url": {
-											"raw": "{{base_url}}/api/sellers/1/shop",
+											"raw": "{{base_url}}/api/sellers/{{shop_id}}/shop",
 											"host": ["{{base_url}}"],
-											"path": ["api", "sellers", "1", "shop"]
+											"path": ["api", "sellers", "{{shop_id}}", "shop"]
 										},
-										"description": "**Bearer: seller JWT** (approved shop). `PATCH /api/sellers/:shopId/shop`. Send only fields to change. Supported: `name` or `shop_name`, `description`, `location`, `address`, `phone`, `email`, `logo` or `logo_url`, `images` (JSON). Response: `success`, `data` = updated shop row. Not accepted: `status`, `application_status`, `is_verified`, license / verification URLs — use **Admin** shop endpoints for those."
+										"description": "**Bearer: seller JWT** (approved shop). `PATCH /api/sellers/:shopId/shop`. Send only fields to change. Supported: `name` or `shop_name`, `description`, `location`, `address`, `phone`, `email`, `logo` or `logo_url`, `images` (JSON), **`points_mwk_per_point`** (non-negative MWK credited per **1** loyalty point when customers redeem **this shop’s** point balance; `null` or empty string to disable). Response: `success`, `data` = updated shop row. Not accepted: `status`, `application_status`, `is_verified`, license / verification URLs — use **Admin** shop endpoints for those. Set collection variable **`shop_id`** to match the JWT user’s shop."
 									},
 									"response": []
 								}

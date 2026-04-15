@@ -12,7 +12,11 @@ export const getPublic = async (req, res) => {
     return res.json({
       success: true,
       data: {
-        seller_commission_percent: parseFloat(row.seller_commission_percent) || 0
+        seller_commission_percent: parseFloat(row.seller_commission_percent) || 0,
+        default_points_mwk_per_point:
+          row.default_points_mwk_per_point != null
+            ? parseFloat(row.default_points_mwk_per_point)
+            : null
       }
     });
   } catch (error) {

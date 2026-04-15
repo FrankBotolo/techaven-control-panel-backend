@@ -5,18 +5,31 @@ import { sendNotificationEmail } from '../utils/notificationHelper.js';
 import { getMalipoCredentials, postMalipoCollect } from '../utils/malipoCollect.js';
 import { getSellerCommissionPercent, computeSellerEscrowSplit } from '../utils/sellerCommission.js';
 
-const { Order, OrderItem, Cart, Product, User, Notification, Shop, Escrow, Wallet, WalletTransaction, ShippingAddress, CourierService } = db;
+const { Order, OrderItem, Cart, Product, User, Notification, Shop, Escrow, Wallet, WalletTransaction, ShippingAddress, CourierService, UserShopPoints } = db;
 
-/** Award points to customer when order is completed (delivery confirmed). Points come from product.points * quantity. */
+/** Award points to customer when order is completed (delivery confirmed). Points come from product.points * quantity, attributed per shop. */
 const awardPointsForOrder = async (orderId, userId) => {
   const items = await OrderItem.findAll({
     where: { order_id: orderId },
-    include: [{ model: Product, as: 'product', attributes: ['id', 'points'] }]
+    include: [{ model: Product, as: 'product', attributes: ['id', 'points', 'shop_id'] }]
   });
-  let totalPoints = 0;
+  const byShop = new Map();
   for (const item of items) {
+    const sid = item.product?.shop_id;
+    if (sid == null || sid === undefined) continue;
     const pts = (item.product?.points || 0) * (item.quantity || 1);
+    if (pts <= 0) continue;
+    byShop.set(sid, (byShop.get(sid) || 0) + pts);
+  }
+  let totalPoints = 0;
+  for (const [shopId, pts] of byShop) {
     totalPoints += pts;
+    const [row] = await UserShopPoints.findOrCreate({
+      where: { user_id: userId, shop_id: shopId },
+      defaults: { points: 0 }
+    });
+    row.points = (row.points || 0) + pts;
+    await row.save();
   }
   if (totalPoints <= 0) return;
   const buyer = await User.findByPk(userId);

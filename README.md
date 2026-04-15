@@ -72,14 +72,17 @@ The server will start on `http://localhost:8000` (or the port specified in `.env
 - `POST /api/auth/reset-password` - Reset password with OTP
 
 ### User (Requires Authentication)
-- `GET /api/user/profile` - Get user profile
+- `GET /api/user/profile` - Get user profile (includes `points`)
 - `PUT /api/user/profile` - Update user profile
+- `GET /api/user/points/balances` - Loyalty points per shop + general bucket (`shop_id` 0)
+- `POST /api/user/points/redeem` - Redeem points to wallet (MWK); body: `shop_id`, `points`
 - `POST /api/user/avatar` - Upload avatar
 - `POST /api/user/change-password` - Change password
 
 ### Subscriptions (admin + seller)
 - **User access (per JWT):** `GET /api/plans`, `POST /api/subscribe`, `GET /api/subscription/transactions`, `GET /api/subscription/status/:userId`, `GET /api/subscription/ping` (gated). Details: `SUBSCRIPTION_API.md`, `docs/SUBSCRIPTION_ACCESS_ARCHITECTURE.md`.
 - **Shop + Malipo:** public `GET /api/subscription-packages`; admin `GET|POST|PATCH|DELETE /api/admin/subscription-packages`, `GET|PATCH /api/admin/shop-subscriptions`; seller `GET …/subscription`, `POST …/subscription/subscribe`, `POST …/subscription/pay/malipo`, cancel, resume.
+- **Loyalty (MWK per point):** seller `PATCH /api/sellers/:shopId/shop` body `points_mwk_per_point`; admin `GET|PATCH /api/admin/platform-settings` field `default_points_mwk_per_point` (general bucket `shop_id` 0). See `API_DOCUMENTATION.md` (sections 2b, 15b, Admin Platform settings).
 - See `docs/SUBSCRIPTION_PACKAGES.md`
 
 ### Products
@@ -93,8 +96,11 @@ The server will start on `http://localhost:8000` (or the port specified in `.env
 
 ### Shops
 - `GET /api/shops` - Get all shops
-- `GET /api/shops/:id` - Get shop by ID
+- `GET /api/shops/:id` - Get shop by ID (includes `points_mwk_per_point` when set)
 - `GET /api/shops/:id/products` - Get shop products
+
+### Platform (public)
+- `GET /api/platform-settings` - `seller_commission_percent`, `default_points_mwk_per_point` (general loyalty bucket rate)
 
 ### Banners
 - `GET /api/banners` - Get all banners

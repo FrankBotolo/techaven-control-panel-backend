@@ -117,7 +117,9 @@ export const show = async (req, res) => {
       joined_date: s.joined_date || null,
       total_products: productCount,
       followers_count,
-      is_following
+      is_following,
+      points_mwk_per_point:
+        s.points_mwk_per_point != null ? parseFloat(s.points_mwk_per_point) : null
     };
     return res.json({
       success: true,

@@ -1,5 +1,6 @@
 import express from 'express';
 import * as UserController from '../controllers/UserController.js';
+import * as PointsController from '../controllers/PointsController.js';
 import { authenticate } from '../middleware/auth.js';
 import { upload } from '../middleware/upload.js';
 
@@ -7,6 +8,9 @@ const router = express.Router();
 
 // All routes require authentication
 router.use(authenticate);
+
+router.get('/points/balances', PointsController.getPointBalances);
+router.post('/points/redeem', PointsController.redeemPoints);
 
 router.get('/profile', UserController.profile);
 router.put('/profile', UserController.updateProfile);

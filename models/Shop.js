@@ -72,6 +72,12 @@ const Shop = sequelize.define('Shop', {
   total_sales: {
     type: DataTypes.INTEGER,
     defaultValue: 0
+  },
+  /** MWK credited per 1 loyalty point when the buyer redeems points earned from this shop's products. Null or 0 disables redemption for that bucket. */
+  points_mwk_per_point: {
+    type: DataTypes.DECIMAL(12, 4),
+    allowNull: true,
+    defaultValue: null
   }
 }, {
   tableName: 'shops',

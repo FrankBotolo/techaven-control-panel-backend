@@ -37,6 +37,7 @@ Every response is JSON:
 - [0. Onboarding](#0-onboarding)
 - [1. Authentication](#1-authentication)
 - [2. User Management](#2-user-management)
+- [2b. Loyalty points & redemption](#2b-loyalty-points--redemption)
 - [3. Products](#3-products)
 - [4. Categories](#4-categories)
 - [5. Cart](#5-cart)
@@ -51,14 +52,17 @@ Every response is JSON:
 - [13. Search](#13-search)
 - [14. Help & Support](#14-help--support)
 - [15. App Info](#15-app-info)
+- [15b. Platform settings (public)](#15b-platform-settings-public)
 - [16. SMS](#16-sms)
 - [17. Webhooks](#17-webhooks)
 - [User subscription access (per user)](#user-subscription-access-per-user)
 - [Seller — Shop subscription & Malipo](#seller--shop-subscription--malipo)
+- [Seller — Shop storefront](#seller--shop-storefront)
 
 **Admin APIs**
 - [Admin - Onboarding Slides](#admin---onboarding-slides)
 - [Admin - Banners](#admin---banners)
+- [Admin - Platform settings](#admin---platform-settings)
 - [Admin - Audit Logs](#admin---audit-logs)
 
 ---
@@ -145,12 +149,14 @@ Or: `{ "phone_number": "+265991234567", "password": "securePassword123" }`
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| GET | `/api/user/profile` | 🔒 | Get profile. Data: id, name, email, phone_number, avatar, is_verified, role, **`shop_id`**, member_since, created_at. |
-| PUT | `/api/user/profile` | 🔒 | Update profile. Body: name, email, phone_number (all optional). |
+| GET | `/api/user/profile` | 🔒 | Get profile. Data: id, name, email, phone_number, avatar, is_verified, role, **`shop_id`**, **`points`** (total loyalty points), member_since, created_at. |
+| PUT | `/api/user/profile` | 🔒 | Update profile. Body: name, email, phone_number (all optional). Response includes **`points`** (total loyalty points), same shape as GET. |
 | POST | `/api/user/avatar` | 🔒 | Upload avatar (multipart/form-data, field `avatar`). |
 | PUT | `/api/user/password` | 🔒 | Change password. |
 | POST | `/api/user/change-password` | 🔒 | Change password (same as above). |
 | DELETE | `/api/user/account` | 🔒 | Delete account. Body: password, reason. |
+| GET | `/api/user/points/balances` | 🔒 | Loyalty point balances **per shop** (and general bucket). See [2b. Loyalty points](#2b-loyalty-points--redemption). |
+| POST | `/api/user/points/redeem` | 🔒 | Redeem points → credit **MWK** to wallet. Body: `shop_id`, `points`. See [2b. Loyalty points](#2b-loyalty-points--redemption). |
 
 **Update Profile**  
 `PUT /api/user/profile`
@@ -186,11 +192,50 @@ Or: `{ "phone_number": "+265991234567", "password": "securePassword123" }`
     "avatar": "https://example.com/avatar.jpg",
     "is_verified": true,
     "role": "customer",
+    "points": 120,
     "member_since": "January 2025",
     "created_at": "2025-01-15T10:00:00.000Z"
   }
 }
 ```
+
+---
+
+### 2b. Loyalty points & redemption
+
+Customers earn points when orders are completed (from each product’s optional `points` field × quantity). Points are stored **per shop** (`shop_id` from the product) so each seller can set their own **MWK per point** redemption rate. Older balances that only existed on `users.points` are synced into a **general** bucket: **`shop_id` `0`**.
+
+**Seller rate (MWK per 1 point)** — `PATCH /api/sellers/:shopId/shop` with body field **`points_mwk_per_point`** (non-negative number). Send **`null`** to disable redemption for that shop’s bucket. See [Seller — Shop storefront](#seller--shop-storefront).
+
+**General / legacy bucket (`shop_id` 0)** — redemption uses **`default_points_mwk_per_point`** from [platform settings](#admin---platform-settings) (admin) and [public platform settings](#15b-platform-settings-public).
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/user/points/balances` | 🔒 | `data.total_points`, `data.currency` (`MWK`), `data.balances[]`: `shop_id`, `shop_name`, `points`, `points_mwk_per_point` (null if not configured), `redeemable_mwk_estimate`. |
+| POST | `/api/user/points/redeem` | 🔒 | Body: **`shop_id`** (integer; use **`0`** for the general/legacy bucket), **`points`** (positive integer). Deducts points and credits the user’s wallet in MWK. Creates a completed wallet transaction. |
+
+**Redeem**  
+`POST /api/user/points/redeem`
+```json
+{ "shop_id": 3, "points": 100 }
+```
+
+**Redeem response (example)**
+```json
+{
+  "success": true,
+  "message": "Points redeemed to wallet",
+  "data": {
+    "points_redeemed": 100,
+    "mwk_credited": 2500,
+    "currency": "MWK",
+    "wallet_balance": 502500,
+    "remaining_points": 20
+  }
+}
+```
+
+**Errors (examples)** — `400` if insufficient points for that bucket, if the shop has not set **`points_mwk_per_point`**, or if **`shop_id` 0** is used but **`default_points_mwk_per_point`** is not set.
 
 ---
 
@@ -253,7 +298,7 @@ Or: `{ "phone_number": "+265991234567", "password": "securePassword123" }`
 
 `GET /api/products/category/:id`, `GET /api/categories/:id/products`, `GET /api/shops/:id/products`, and `GET /api/products/search` use the same paginated shape: `data.products` + `data.pagination`.
 
-**Seller create/update product (POST/PATCH `/api/sellers/:shopId/products`)** — optional `variants` array, each group: `type`, `name`, `options[]` with `value`, `label`, `price_modifier`, `stock`, optional `image`. Use `is_hot_sale` / `is_special_offer` (or legacy `is_hot` / `is_special`), optional `is_new_arrival`.
+**Seller create/update product (POST/PATCH `/api/sellers/:shopId/products`)** — optional **`points`** (loyalty points the buyer earns per unit sold; see [2b. Loyalty points](#2b-loyalty-points--redemption)); optional `variants` array, each group: `type`, `name`, `options[]` with `value`, `label`, `price_modifier`, `stock`, optional `image`. Use `is_hot_sale` / `is_special_offer` (or legacy `is_hot` / `is_special`), optional `is_new_arrival`.
 
 Single product (`GET /api/products/:id`) returns one product object in `data`.
 
@@ -489,7 +534,7 @@ All under `/api/shipping-addresses` (or `/api/addresses`). Data: id, label, name
 |--------|----------|------|-------------|
 | GET | `/api/wallet` | 🔒 | Wallet summary (balance, etc.). |
 | GET | `/api/wallet/balance` | 🔒 | Balance only. Data: { balance, currency }. |
-| GET | `/api/wallet/transactions` | 🔒 | Transactions. Data: array of { id, type, amount, description, status, created_at }. |
+| GET | `/api/wallet/transactions` | 🔒 | Transactions. Data: array of { id, type, amount, description, status, created_at }. Credits may include **loyalty point redemptions** (see [2b. Loyalty points](#2b-loyalty-points--redemption)). |
 | POST | `/api/wallet/topup` | 🔒 | Initiate top-up. Body: { amount }. Returns payment_url, transaction_id, amount. |
 
 **Top Up**  
@@ -627,7 +672,7 @@ All under `/api/shipping-addresses` (or `/api/addresses`). Data: id, label, name
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
 | GET | `/api/shops` | No | List shops. |
-| GET | `/api/shops/:id` | No | Shop details. |
+| GET | `/api/shops/:id` | No | Shop details. Includes **`points_mwk_per_point`** (MWK per loyalty point when redeeming that shop’s bucket; `null` if disabled). |
 | GET | `/api/shops/:id/products` | No | Shop products. |
 
 **Response format (GET)**
@@ -654,11 +699,14 @@ All under `/api/shipping-addresses` (or `/api/addresses`). Data: id, label, name
       "location": "Area 3, Lilongwe",
       "phone": "+265991234567",
       "email": "techshop@example.com",
-      "is_verified": true
+      "is_verified": true,
+      "points_mwk_per_point": 25
     }
   ]
 }
 ```
+
+`GET /api/shops/:id` returns the same fields as list items where applicable, plus **`followers_count`**, optional **`is_following`** (when authenticated), and **`points_mwk_per_point`**.
 
 ---
 
@@ -756,6 +804,24 @@ Same response as `GET /api/products` (see section 3).
     "privacy_url": "https://...",
     "support_email": "support@techaven.mw",
     "support_phone": "+265..."
+  }
+}
+```
+
+---
+
+### 15b. Platform settings (public)
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/platform-settings` | No | **`data.seller_commission_percent`**, **`data.default_points_mwk_per_point`** (MWK per point for the **general** loyalty bucket `shop_id` 0; `null` if not set). |
+
+```json
+{
+  "success": true,
+  "data": {
+    "seller_commission_percent": 5,
+    "default_points_mwk_per_point": 10
   }
 }
 ```
@@ -871,6 +937,21 @@ Seller **JWT**, **approved shop**. `:shopId` must equal the authenticated user�
 
 ---
 
+### Seller — Shop storefront
+
+Seller **JWT**, **approved shop**. `:shopId` must equal the authenticated user’s **`shop_id`**.
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| PATCH | `/api/sellers/:shopId/shop` | 🔒 Seller | Update storefront: **`name`** / **`shop_name`**, **`description`**, **`location`**, **`address`**, **`phone`**, **`email`**, **`logo`** / **`logo_url`**, **`images`**, **`points_mwk_per_point`**. The last is **MWK credited per 1 loyalty point** when a customer redeems points from **this shop’s** balance; send **`null`** or **`""`** to disable. Does **not** change `status`, `application_status`, or verification fields (admin only). |
+
+**Example — set redemption rate**
+```json
+{ "points_mwk_per_point": 50 }
+```
+
+---
+
 ## Admin APIs
 
 All admin endpoints require `Authorization: Bearer <access_token>` and user role `admin`.
@@ -896,6 +977,20 @@ All admin endpoints require `Authorization: Bearer <access_token>` and user role
 | POST | `/api/admin/banners` | Create banner. Body: image (required); title, product_id |
 | PATCH | `/api/admin/banners/:id` | Update banner |
 | DELETE | `/api/admin/banners/:id` | Delete banner |
+
+---
+
+### Admin - Platform settings
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/admin/platform-settings` | Current row: **`seller_commission_percent`**, **`default_points_mwk_per_point`** (MWK per loyalty point for **general** bucket `shop_id` 0; `null` if disabled), **`updated_at`**. |
+| PATCH | `/api/admin/platform-settings` | Partial update. Send **`seller_commission_percent`** (0–100) and/or **`default_points_mwk_per_point`** (non-negative number, or **`null`** to disable general-bucket redemption). At least one field required. |
+
+**PATCH example (general loyalty rate only)**
+```json
+{ "default_points_mwk_per_point": 15 }
+```
 
 ---
 

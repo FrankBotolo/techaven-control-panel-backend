@@ -31,6 +31,7 @@ import SubscriptionPayment from './SubscriptionPayment.js';
 import UserSubscription from './UserSubscription.js';
 import PlatformSetting from './PlatformSetting.js';
 import ShopFollow from './ShopFollow.js';
+import UserShopPoints from './UserShopPoints.js';
 
 // Define associations
 Product.belongsTo(Category, { foreignKey: 'category_id', as: 'category' });
@@ -52,6 +53,11 @@ ShopFollow.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 ShopFollow.belongsTo(Shop, { foreignKey: 'shop_id', as: 'shop' });
 User.hasMany(ShopFollow, { foreignKey: 'user_id', as: 'shop_follows' });
 Shop.hasMany(ShopFollow, { foreignKey: 'shop_id', as: 'followers' });
+
+UserShopPoints.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+User.hasMany(UserShopPoints, { foreignKey: 'user_id', as: 'shop_point_balances' });
+UserShopPoints.belongsTo(Shop, { foreignKey: 'shop_id', as: 'shop', constraints: false });
+Shop.hasMany(UserShopPoints, { foreignKey: 'shop_id', as: 'user_point_balances', constraints: false });
 
 // Seller subscription packages (admin-defined plans; shops subscribe)
 ShopSubscription.belongsTo(Shop, { foreignKey: 'shop_id', as: 'shop' });
@@ -209,7 +215,8 @@ const db = {
   SubscriptionPayment,
   UserSubscription,
   PlatformSetting,
-  ShopFollow
+  ShopFollow,
+  UserShopPoints
 };
 
 export default db;

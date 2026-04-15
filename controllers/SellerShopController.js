@@ -37,7 +37,8 @@ export const updateMyShop = async (req, res) => {
       email,
       logo,
       logo_url,
-      images
+      images,
+      points_mwk_per_point
     } = req.body;
 
     const nextName = name ?? shop_name;
@@ -50,6 +51,21 @@ export const updateMyShop = async (req, res) => {
     const nextLogo = logo !== undefined ? logo : logo_url;
     if (nextLogo !== undefined) shop.logo = nextLogo;
     if (images !== undefined) shop.images = images;
+    if (points_mwk_per_point !== undefined) {
+      if (points_mwk_per_point === null || points_mwk_per_point === '') {
+        shop.points_mwk_per_point = null;
+      } else {
+        const r = parseFloat(points_mwk_per_point);
+        if (Number.isNaN(r) || r < 0) {
+          return res.status(400).json({
+            success: false,
+            message: 'points_mwk_per_point must be a non-negative number (MWK per 1 loyalty point), or null to disable',
+            data: null
+          });
+        }
+        shop.points_mwk_per_point = r;
+      }
+    }
 
     await shop.save();
 
@@ -67,7 +83,8 @@ export const updateMyShop = async (req, res) => {
         phone,
         email,
         logo: nextLogo,
-        images
+        images,
+        points_mwk_per_point
       }
     });
 
