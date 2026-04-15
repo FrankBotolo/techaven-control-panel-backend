@@ -258,49 +258,75 @@ export const getByOwner = async (req, res) => {
 export const updateShop = async (req, res) => {
   try {
     const { id } = req.params;
-    const shop = await Shop.findByPk(id);
-    
-    if (!shop) {
-      return res.status(404).json({
-        status: 'error',
-        message: 'Shop not found'
+    const shopId = parseInt(id, 10);
+    if (!shopId || Number.isNaN(shopId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid shop id',
+        data: null
       });
     }
 
-    const { shop_name, location, address, phone, email, status, logo_url } = req.body;
+    if (
+      !req.user ||
+      req.user.role !== 'seller' ||
+      !req.user.shop_id ||
+      req.user.shop_id !== shopId
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: 'You can only update your own shop. Sellers should use PATCH /api/sellers/:shopId/shop.',
+        data: null
+      });
+    }
 
-    if (shop_name != null) shop.name = shop_name;
+    const shop = await Shop.findByPk(shopId);
+
+    if (!shop) {
+      return res.status(404).json({
+        success: false,
+        message: 'Shop not found',
+        data: null
+      });
+    }
+
+    const { shop_name, name, location, address, phone, email, status, logo_url, logo, description, images } =
+      req.body;
+
+    const nextName = name ?? shop_name;
+    if (nextName != null) shop.name = nextName;
+    if (description !== undefined) shop.description = description;
     if (location != null) shop.location = location;
     if (address != null) shop.address = address;
     if (phone != null) shop.phone = phone;
     if (email != null) shop.email = email;
     if (status != null) shop.status = status;
-    if (logo_url != null) shop.logo = logo_url;
+    const nextLogo = logo !== undefined ? logo : logo_url;
+    if (nextLogo != null) shop.logo = nextLogo;
+    if (images !== undefined) shop.images = images;
 
     await shop.save();
 
-    // Log audit if user is authenticated
-    if (req.user) {
-      await logAudit({
-        ...auditContext(req),
-        action: 'shop.update',
-        actor_user_id: req.user.id,
-        target_type: 'shop',
-        target_id: shop.id,
-        metadata: { shop_name, location, address, phone, email, status, logo_url }
-      });
-    }
+    await logAudit({
+      ...auditContext(req),
+      action: 'shop.update',
+      actor_user_id: req.user.id,
+      target_type: 'shop',
+      target_id: shop.id,
+      metadata: { shop_name: nextName, location, address, phone, email, status, logo_url: nextLogo, description, images }
+    });
 
     return res.json({
-      status: 'success',
+      success: true,
       message: 'Shop updated successfully',
       data: shop
     });
   } catch (error) {
     console.error('Update shop error:', error);
     return res.status(500).json({
-      status: 'error',
+      success: false,
       message: 'Failed to update shop',
+      data: null,
       error: error.message
     });
   }

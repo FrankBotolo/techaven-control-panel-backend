@@ -8,6 +8,7 @@ import * as SellerOnboardingController from '../controllers/SellerOnboardingCont
 import * as SellerOrderController from '../controllers/SellerOrderController.js';
 import * as SellerSubscriptionController from '../controllers/SellerSubscriptionController.js';
 import * as SellerShopFollowController from '../controllers/SellerShopFollowController.js';
+import * as SellerShopController from '../controllers/SellerShopController.js';
 
 const router = express.Router();
 const shopOwner = requireShopOwnerForShopParam('shopId');
@@ -43,6 +44,9 @@ router.post('/:shopId/subscription/resume', shopOwner, SellerSubscriptionControl
 
 // Shop followers (seller must own :shopId)
 router.get('/:shopId/followers', shopOwner, SellerShopFollowController.listFollowers);
+
+// Shop profile / storefront details (seller must own :shopId)
+router.patch('/:shopId/shop', shopOwner, SellerShopController.updateMyShop);
 
 // Category routes (sellers only list admin-created categories to select when adding products)
 router.get('/:shopId/categories', SellerCategoryController.listForShop);

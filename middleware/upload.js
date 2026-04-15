@@ -43,3 +43,22 @@ export const upload = multer({
   fileFilter: fileFilter
 });
 
+/** Shop logo: images only (no PDF). WebP allowed. */
+const shopLogoFileFilter = (req, file, cb) => {
+  const allowedExt = /jpeg|jpg|png|gif|webp$/i;
+  const extOk = allowedExt.test(path.extname(file.originalname).toLowerCase());
+  const mimeOk = /^image\/(jpeg|png|gif|webp)$/i.test(file.mimetype);
+  if (mimeOk && extOk) {
+    return cb(null, true);
+  }
+  cb(new Error('Shop logo must be a JPEG, PNG, GIF, or WebP image.'));
+};
+
+export const uploadShopLogo = multer({
+  storage,
+  limits: {
+    fileSize: parseInt(process.env.MAX_FILE_SIZE) || 5242880
+  },
+  fileFilter: shopLogoFileFilter
+});
+
