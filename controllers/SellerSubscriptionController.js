@@ -452,3 +452,6 @@ export const payWithMalipo = async (req, res) => {
     });
   }
 };
+
+/** Alias for `POST .../subscription/pay/paychangu` — still uses Malipo collect until Pay Changu charge API is wired. */
+export const payWithPayChangu = payWithMalipo;

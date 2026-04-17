@@ -13,7 +13,7 @@ const {
   Notification,
   Order,
   OrderItem,
-  PayChanguTransaction
+  MalipoTransaction
 } = db;
 
 const PAID_ORDER_BASE = {
@@ -21,11 +21,11 @@ const PAID_ORDER_BASE = {
   status: { [Op.ne]: 'cancelled' }
 };
 
-function paychanguSubscriptionPaidWhere() {
+function malipoSubscriptionPaidWhere() {
   const states = ['success', 'successful', 'succeeded', 'completed', 'complete', 'paid'];
   return {
     [Op.or]: states.map((s) =>
-      db.sequelize.where(db.sequelize.fn('LOWER', db.sequelize.col('PayChanguTransaction.status')), s)
+      db.sequelize.where(db.sequelize.fn('LOWER', db.sequelize.col('status')), s)
     )
   };
 }
