@@ -1,5 +1,5 @@
 /**
- * Payment provider boundary (simulated). Swap implementation for Malipo/stripe later.
+ * Payment provider boundary (simulated). Production shop subscriptions use PayChangu.
  * Must NOT touch the database — caller applies status updates in a transaction.
  */
 

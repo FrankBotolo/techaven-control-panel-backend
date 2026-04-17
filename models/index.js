@@ -24,6 +24,7 @@ import DeliveryAgent from './DeliveryAgent.js';
 import DeliveryJob from './DeliveryJob.js';
 import PaymentMethod from './PaymentMethod.js';
 import MalipoTransaction from './MalipoTransaction.js';
+import PayChanguCallback from './PayChanguCallback.js';
 import OnboardingSlide from './OnboardingSlide.js';
 import SubscriptionPackage from './SubscriptionPackage.js';
 import ShopSubscription from './ShopSubscription.js';
@@ -175,6 +176,12 @@ DeliveryAgent.hasMany(DeliveryJob, { foreignKey: 'agent_id', as: 'jobs' });
 
 MalipoTransaction.belongsTo(Order, { foreignKey: 'order_id', as: 'order' });
 Order.hasMany(MalipoTransaction, { foreignKey: 'order_id', as: 'malipo_transactions' });
+PayChanguCallback.belongsTo(Order, { foreignKey: 'order_id', as: 'order' });
+Order.hasMany(PayChanguCallback, { foreignKey: 'order_id', as: 'paychangu_callbacks' });
+PayChanguCallback.belongsTo(ShopSubscription, {
+  foreignKey: 'shop_subscription_id',
+  as: 'shop_subscription'
+});
 MalipoTransaction.belongsTo(ShopSubscription, { foreignKey: 'shop_subscription_id', as: 'shop_subscription' });
 ShopSubscription.hasMany(MalipoTransaction, {
   foreignKey: 'shop_subscription_id',
@@ -209,6 +216,7 @@ const db = {
   DeliveryJob,
   PaymentMethod,
   MalipoTransaction,
+  PayChanguCallback,
   OnboardingSlide,
   SubscriptionPackage,
   ShopSubscription,

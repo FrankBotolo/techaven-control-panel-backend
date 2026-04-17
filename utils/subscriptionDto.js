@@ -77,7 +77,7 @@ export function toShopSubscriptionDto(sub, pkg = null) {
     seller = primarySellerFromShop(shopAssoc);
   }
 
-  /** True only after payment succeeded and the row is active (Malipo webhook/collect, admin, or dev bypass). */
+  /** True only after payment succeeded and the row is active (PayChangu webhook/collect, admin, or dev bypass). */
   const subscribed =
     row.status === 'active' &&
     row.payment_status === 'paid' &&

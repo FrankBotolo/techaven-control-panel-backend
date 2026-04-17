@@ -64,6 +64,10 @@ const Order = sequelize.define('Order', {
     allowNull: false,
     defaultValue: 'pending'
   },
+  paid_at: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
   courier_service: {
     type: DataTypes.STRING,
     allowNull: true

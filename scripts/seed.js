@@ -206,8 +206,7 @@ const seedDatabase = async () => {
       categories.push(cat);
     }
     console.log('       ✅ Categories seeded.\n');
-
-    const categoryIds = {
+   const categoryIds = {
       smartphones: categories[0].id,
       laptops: categories[1].id,
       audio: categories[2].id,
@@ -3681,10 +3680,10 @@ const seedDatabase = async () => {
     console.log('       ✅ Courier services seeded (for checkout delivery_method).\n');
 
     // ═══════════════════════════════════════════════════════════════════
-    // PAYMENT METHODS – Malipo only: Airtel (psp_id=1), TNM (psp_id=2)
+    // PAYMENT METHODS – PayChangu mobile money: Airtel (psp_id=1), TNM (psp_id=2)
     // ═══════════════════════════════════════════════════════════════════
 
-    console.log('─── Payment Methods (Malipo) ───\n');
+    console.log('─── Payment Methods (PayChangu) ───\n');
 
     const paymentMethodsData = [
       { name: 'Airtel Money', slug: 'airtel', psp_id: 1, provider: 'malipo', icon: 'airtel', is_active: true, sort_order: 1 },

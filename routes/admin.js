@@ -7,7 +7,7 @@ import * as DashboardController from '../controllers/DashboardController.js';
 import * as OrderController from '../controllers/OrderController.js';
 import * as AdminWithdrawalController from '../controllers/AdminWithdrawalController.js';
 import * as AdminCourierController from '../controllers/AdminCourierController.js';
-import * as AdminMalipoController from '../controllers/AdminMalipoController.js';
+import * as AdminPayChanguController from '../controllers/AdminPayChanguController.js';
 import * as AdminOnboardingSlideController from '../controllers/AdminOnboardingSlideController.js';
 import * as AdminBannerController from '../controllers/AdminBannerController.js';
 import * as AdminAuditLogController from '../controllers/AdminAuditLogController.js';

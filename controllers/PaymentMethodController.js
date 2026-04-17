@@ -1,8 +1,8 @@
-import { getMalipoPaymentOptions } from '../utils/malipoProviders.js';
+import { getPayChanguPaymentOptions } from '../utils/paychanguProviders.js';
 
 export const getPaymentMethods = async (req, res) => {
   try {
-    const availableProviders = await getMalipoPaymentOptions();
+    const availableProviders = await getPayChanguPaymentOptions();
 
     return res.json({
       success: true,
