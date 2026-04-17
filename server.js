@@ -19,7 +19,13 @@ const PORT = process.env.PORT || 8000;
 
 // Middleware
 app.use(corsMiddleware);
-app.use(express.json());
+app.use(
+  express.json({
+    verify: (req, res, buf) => {
+      req.rawBody = buf;
+    }
+  })
+);
 app.use(express.urlencoded({ extended: true }));
 app.use(requestLogger);
 
