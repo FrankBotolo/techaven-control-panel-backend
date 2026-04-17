@@ -12,6 +12,7 @@ router.post('/', OrderController.createOrder);
 router.get('/', OrderController.getOrders);
 router.get('/:order_id', OrderController.getOrder);
 router.post('/:order_id/pay/malipo', OrderController.payWithMalipo);
+router.post('/:order_id/pay/paychangu', OrderController.payWithPayChangu);
 router.post('/:order_id/cancel', OrderController.cancelOrder);
 router.post('/:order_id/payment/complete', OrderController.completePayment);
 router.post('/:order_id/delivery/confirm', OrderController.confirmDelivery);

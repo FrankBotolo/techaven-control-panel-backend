@@ -4,6 +4,8 @@ import { logAudit, auditContext } from '../utils/audit.js';
 import { sendNotificationEmail } from '../utils/notificationHelper.js';
 import { getMalipoCredentials, postMalipoCollect } from '../utils/malipoCollect.js';
 import { getSellerCommissionPercent, computeSellerEscrowSplit } from '../utils/sellerCommission.js';
+import { verifyPayChanguTxRef, paychanguVerifyDataIndicatesPaid } from '../utils/paychanguVerify.js';
+import { completeOrderPaidWithEscrow } from '../utils/orderEscrowFinalize.js';
 
 const { Order, OrderItem, Cart, Product, User, Notification, Shop, Escrow, Wallet, WalletTransaction, ShippingAddress, CourierService, UserShopPoints } = db;
 
@@ -1388,6 +1390,73 @@ const resolveOrderId = (req) => {
   return raw ? String(raw).replace(/^ord_/, '') : null;
 };
 
+/** Ensure Pay Changu verify payload ties this charge to the order (meta or tx_ref = order_number). */
+function payChanguVerifyMatchesOrder(order, data, clientTxRef) {
+  const m = data?.meta;
+  if (m && typeof m === 'object') {
+    if (m.order_id != null && parseInt(String(m.order_id), 10) !== order.id) {
+      return {
+        ok: false,
+        message: 'This Pay Changu payment is linked to a different order (meta.order_id).'
+      };
+    }
+    if (m.orderId != null && parseInt(String(m.orderId), 10) !== order.id) {
+      return {
+        ok: false,
+        message: 'This Pay Changu payment is linked to a different order (meta.orderId).'
+      };
+    }
+    if (m.order_number != null && String(m.order_number).trim() !== String(order.order_number).trim()) {
+      return {
+        ok: false,
+        message: 'This Pay Changu payment is linked to a different order (meta.order_number).'
+      };
+    }
+    if (m.orderNumber != null && String(m.orderNumber).trim() !== String(order.order_number).trim()) {
+      return {
+        ok: false,
+        message: 'This Pay Changu payment is linked to a different order (meta.orderNumber).'
+      };
+    }
+  }
+  const ordNo = String(order.order_number).trim();
+  const apiTxRef = data?.tx_ref != null ? String(data.tx_ref).trim() : '';
+  if (apiTxRef && apiTxRef === ordNo) return { ok: true };
+  if (clientTxRef && String(clientTxRef).trim() === ordNo) return { ok: true };
+  const hasMetaOrder =
+    m &&
+    typeof m === 'object' &&
+    (m.order_id != null || m.orderId != null || m.order_number != null || m.orderNumber != null);
+  if (hasMetaOrder) return { ok: true };
+  return {
+    ok: false,
+    message:
+      'Pay Changu payment is not linked to this order. When starting checkout, set meta.order_id or meta.order_number to this order, or use this order_number as tx_ref.'
+  };
+}
+
+function payChanguAmountMatchesOrder(order, data) {
+  const expected = Math.round(parseFloat(order.total_amount) || 0);
+  const raw = data?.amount;
+  const hasAmount =
+    raw != null && raw !== '' && !Number.isNaN(parseFloat(String(raw).replace(/,/g, '')));
+  const paid = hasAmount ? Math.round(parseFloat(String(raw).replace(/,/g, ''))) : null;
+  const currency = String(data?.currency || '').toUpperCase();
+  if (currency && currency !== 'MWK') {
+    return { ok: false, message: `Expected currency MWK, verify returned ${data?.currency}` };
+  }
+  if (expected > 0 && paid != null && Math.abs(paid - expected) > 1) {
+    return {
+      ok: false,
+      message: `Amount mismatch: order total ${expected} MWK, payment ${paid} MWK`
+    };
+  }
+  if (expected > 0 && paid == null) {
+    return { ok: false, message: 'Verify response did not include an amount' };
+  }
+  return { ok: true };
+}
+
 /** POST /api/orders/:id/pay/wallet — deduct order total from user wallet */
 export const payWithWallet = async (req, res) => {
   try {
@@ -1575,6 +1644,139 @@ export const payWithMalipo = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Payment initiation failed',
+      data: null,
+      error: error.message
+    });
+  }
+};
+
+/**
+ * POST /api/orders/:order_id/pay/paychangu
+ * Flutter (or web) calls after Pay Changu client-side success. Body: { tx_ref }.
+ * Server re-verifies with Pay Changu, links payment to this order via meta / tx_ref, then marks paid + escrow.
+ */
+export const payWithPayChangu = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const id = resolveOrderId(req);
+    const tx_ref = String(req.body?.tx_ref ?? req.body?.txRef ?? '').trim();
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid order id',
+        data: null
+      });
+    }
+    if (!tx_ref) {
+      return res.status(400).json({
+        success: false,
+        message: 'tx_ref is required',
+        data: null
+      });
+    }
+
+    const order = await Order.findByPk(id, {
+      include: [
+        { model: User, as: 'seller', attributes: ['id', 'name', 'email'] },
+        { model: OrderItem, as: 'items', required: false }
+      ]
+    });
+
+    if (!order || order.user_id !== userId) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found',
+        data: null
+      });
+    }
+
+    if (order.payment_status === 'paid') {
+      const fresh = await Order.findByPk(order.id, {
+        include: [{ model: OrderItem, as: 'items', required: false }]
+      });
+      return res.json({
+        success: true,
+        message: 'Order is already paid',
+        data: { order: formatOrderForApi(fresh) }
+      });
+    }
+
+    const verify = await verifyPayChanguTxRef(tx_ref);
+    if (!verify.ok || !verify.json) {
+      return res.status(502).json({
+        success: false,
+        message: verify.error || 'Could not verify payment with Pay Changu',
+        data: { http_status: verify.httpStatus }
+      });
+    }
+
+    if (!paychanguVerifyDataIndicatesPaid(verify.json)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Pay Changu reports this transaction is not paid',
+        data: null
+      });
+    }
+
+    const data = verify.json.data;
+    const link = payChanguVerifyMatchesOrder(order, data, tx_ref);
+    if (!link.ok) {
+      return res.status(400).json({
+        success: false,
+        message: link.message,
+        data: null
+      });
+    }
+
+    const amt = payChanguAmountMatchesOrder(order, data);
+    if (!amt.ok) {
+      return res.status(400).json({
+        success: false,
+        message: amt.message,
+        data: null
+      });
+    }
+
+    await completeOrderPaidWithEscrow(order, {
+      paymentMethod: 'paychangu',
+      paymentReference: data?.reference != null ? String(data.reference) : null,
+      source: 'paychangu_app_confirm',
+      req
+    });
+
+    await logAudit({
+      ...auditContext(req),
+      action: 'customer.order.pay_paychangu_confirm',
+      actor_user_id: userId,
+      target_type: 'order',
+      target_id: order.id,
+      metadata: {
+        order_number: order.order_number,
+        tx_ref,
+        reference: data?.reference
+      },
+      ip_address: req.ip
+    });
+
+    const orderWithItems = await Order.findByPk(order.id, {
+      include: [{ model: OrderItem, as: 'items', required: false }]
+    });
+
+    return res.json({
+      success: true,
+      message: 'Payment confirmed',
+      data: {
+        order: formatOrderForApi(orderWithItems),
+        tx_ref: data?.tx_ref ?? tx_ref,
+        payment_reference: data?.reference != null ? String(data.reference) : null
+      }
+    });
+  } catch (error) {
+    console.error('Pay with Pay Changu confirm error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Payment confirmation failed',
       data: null,
       error: error.message
     });
