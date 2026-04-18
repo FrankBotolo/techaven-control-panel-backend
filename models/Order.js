@@ -141,6 +141,11 @@ const Order = sequelize.define('Order', {
     type: DataTypes.DATE,
     allowNull: true
   },
+  /** Optional URL to proof file (photo/PDF) when customer confirms delivery; mobile uploads elsewhere and passes URL */
+  delivery_confirmation_proof_url: {
+    type: DataTypes.STRING(2048),
+    allowNull: true
+  },
   funds_released_at: {
     type: DataTypes.DATE,
     allowNull: true

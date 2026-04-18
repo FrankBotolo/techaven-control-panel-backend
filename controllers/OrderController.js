@@ -68,7 +68,12 @@ const formatOrderForApi = (order) => {
     total: parseFloat(order.total_amount) || 0,
     shipping_address_id: order.shipping_address_id || null,
     items,
-    created_at: order.createdAt || order.created_at
+    created_at: order.createdAt || order.created_at,
+    paid_at: order.paid_at || null,
+    escrow_status: order.escrow_status || null,
+    courier_tracking_number: order.courier_tracking_number || null,
+    delivery_confirmed_at: order.delivery_confirmed_at || null,
+    delivery_confirmation_proof_url: order.delivery_confirmation_proof_url || null
   };
 };
 
@@ -516,6 +521,60 @@ export const createOrder = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to process checkout',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * GET /api/orders/mine/paid — current user’s orders with payment_status = paid (mobile).
+ * Must be registered before GET /:order_id.
+ */
+export const getMyPaidOrders = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const orders = await Order.findAll({
+      where: {
+        user_id: userId,
+        payment_status: 'paid'
+      },
+      include: [
+        {
+          model: OrderItem,
+          as: 'items',
+          include: [{ model: Product, as: 'product' }]
+        },
+        {
+          model: User,
+          as: 'user',
+          attributes: ['id', 'name', 'email', 'phone_number']
+        },
+        {
+          model: User,
+          as: 'seller',
+          attributes: ['id', 'name', 'email', 'phone_number'],
+          required: false
+        },
+        {
+          model: Escrow,
+          as: 'escrows',
+          required: false
+        }
+      ],
+      order: [['id', 'DESC']]
+    });
+
+    return res.json({
+      success: true,
+      message: 'Paid orders retrieved',
+      data: orders.map((o) => formatOrderForApi(o))
+    });
+  } catch (error) {
+    console.error('Get my paid orders error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve paid orders',
       error: error.message
     });
   }
@@ -1051,6 +1110,16 @@ export const confirmDelivery = async (req, res) => {
     const { order_id } = req.params;
     const id = order_id.replace('ord_', '');
 
+    const proofRaw =
+      req.body?.proof_url ??
+      req.body?.file_url ??
+      req.body?.delivery_proof_url ??
+      req.body?.confirmation_file_url;
+    const proofUrl =
+      proofRaw != null && String(proofRaw).trim() !== ''
+        ? String(proofRaw).trim().slice(0, 2048)
+        : null;
+
     const order = await Order.findOne({
       where: {
         id: id,
@@ -1093,6 +1162,9 @@ export const confirmDelivery = async (req, res) => {
     order.delivery_confirmed_at = new Date();
     order.escrow_status = 'released';
     order.funds_released_at = new Date();
+    if (proofUrl) {
+      order.delivery_confirmation_proof_url = proofUrl;
+    }
     await order.save();
 
     // Update escrow record
@@ -1202,10 +1274,11 @@ export const confirmDelivery = async (req, res) => {
       actor_user_id: userId,
       target_type: 'order',
       target_id: order.id,
-      metadata: { 
-        order_number: order.order_number, 
+      metadata: {
+        order_number: order.order_number,
         escrow_amount: order.escrow_amount,
-        seller_id: order.seller_id
+        seller_id: order.seller_id,
+        has_delivery_proof_url: Boolean(proofUrl)
       },
       ip_address: req.ip
     });
@@ -1218,7 +1291,8 @@ export const confirmDelivery = async (req, res) => {
         order_number: order.order_number,
         escrow_status: 'released',
         amount_released: order.escrow_amount,
-        released_at: order.funds_released_at
+        released_at: order.funds_released_at,
+        delivery_confirmation_proof_url: order.delivery_confirmation_proof_url || null
       }
     });
   } catch (error) {
