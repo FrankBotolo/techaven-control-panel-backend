@@ -525,7 +525,7 @@ All require authentication.
         "name": "Airtel Money",
         "slug": "airtel",
         "psp_id": 1,
-        "provider": "malipo",
+        "provider": "paychangu",
         "icon": "airtel"
       },
       {
@@ -533,7 +533,7 @@ All require authentication.
         "name": "TNM Mpamba",
         "slug": "tnm",
         "psp_id": 2,
-        "provider": "malipo",
+        "provider": "paychangu",
         "icon": "tnm"
       }
     ]
@@ -634,42 +634,21 @@ All require authentication.
 
 ---
 
-### 8.4 Pay with Malipo
-**POST** `/orders/:order_id/pay/malipo`
+### 8.4 Confirm Pay Changu payment
+**POST** `/orders/:order_id/pay/paychangu`
+
+After Pay Changu checkout succeeds, call with **`tx_ref`** (or **`txRef`**). Server verifies with Pay Changu and sets **payment_status** to **paid** (+ escrow).
 
 **Payload:**
 ```json
 {
-  "msisdn": "0980256737",
-  "psp_id": 1
-}
-```
-| Field   | Type   | Required | Description                    |
-|---------|--------|----------|--------------------------------|
-| msisdn  | string | Yes      | Phone (e.g. 0980256737)        |
-| psp_id  | number | Yes      | 1 = Airtel, 2 = TNM            |
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "message": "Payment request sent. Customer will receive a prompt on their phone to confirm.",
-  "data": {
-    "order_id": "ord_1",
-    "order_number": "ORD-20250316-1234",
-    "amount": 300000,
-    "psp_id": 1,
-    "provider": "airtel",
-    "transaction_id": "TXN-MALIPO-123"
-  }
+  "tx_ref": "YOUR_PAYCHANGU_TX_REF"
 }
 ```
 
-**Flow:**
-1. Call this endpoint.
-2. User gets push on phone and confirms.
-3. Malipo webhook updates order.
-4. Poll `GET /orders/:id` until `payment_status === "paid"`.
+**Response (200):** `data.order` (formatted order, **paid**).
+
+**Also:** **`GET /orders/mine/paid`** — list orders already paid.
 
 ---
 
@@ -683,7 +662,8 @@ All require authentication.
 ### 8.6 Confirm Delivery
 **POST** `/orders/:order_id/delivery/confirm`
 
-- Customer confirms receipt; releases escrow to seller.
+- Customer confirms receipt (order **status** must be **delivered**); releases escrow to seller.
+- **Optional JSON body:** `file_url`, `proof_url`, or `delivery_proof_url` — URL of proof image/PDF.
 
 ---
 
@@ -693,11 +673,11 @@ All require authentication.
 **Payload:**
 ```json
 {
-  "payment_reference": "TXN-MALIPO-123",
+  "payment_reference": "TXN-123456",
   "payment_proof": "https://example.com/receipt.jpg"
 }
 ```
-- Use when webhook is not configured or payment status did not update.
+- Manual fallback when payment did not update automatically.
 
 ---
 
@@ -845,6 +825,6 @@ All require authentication.
 - [ ] Store `access_token` securely after login/verify-otp
 - [ ] Add `Authorization: Bearer <token>` to all protected requests
 - [ ] Handle 401 by redirecting to login or refreshing token
-- [ ] For Malipo: poll `GET /orders/:id` every 2–3s after pay until `payment_status === "paid"`
-- [ ] Use `psp_id` from `GET /payment-methods` when calling pay
+- [ ] After Pay Changu: call `POST /orders/:id/pay/paychangu` with `tx_ref` (or rely on `POST /webhooks/paychangu`)
+- [ ] Use `GET /orders/mine/paid` for paid-order list; `psp_id` from `GET /payment-methods` is for **seller subscription** pay flows
 - [ ] Use `items[].id` from cart for update/delete (e.g. `item_1` or `1`)

@@ -12,7 +12,7 @@ This document summarizes the implementation of the Techaven App Flow Diagram (v1
 ## 2. Buyer Flow
 
 - **Browse, Search, Checkout**: Existing
-- **Payment**: Existing (Wallet, Malipo Airtel Money/Mpamba, `completePayment` for escrow hold)
+- **Payment**: Existing (Wallet, Pay Changu for customer orders, seller subscription mobile-money collect, `completePayment` for escrow hold)
 - **Escrow Holds**: Existing – funds locked when payment completed
 - **Order Tracking**: Existing via order status
 - **Confirm or Dispute**: 

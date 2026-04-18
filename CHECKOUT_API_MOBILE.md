@@ -12,12 +12,12 @@ API documentation for the checkout and order flow in the mobile app (Flutter).
 ```
 1. Get Cart                    → GET /cart
 2. Get Shipping Addresses      → GET /shipping-addresses
-3. Get Payment Methods         → GET /payment-methods  (Airtel psp_id=1, TNM psp_id=2)
+3. Get Payment Methods         → GET /payment-methods (network labels; seller subs use psp_id — customer orders use Pay Changu)
 4. (Optional) Get Couriers     → GET /courier-services
 5. Create Order                → POST /orders
-6. Pay with Malipo             → POST /orders/:id/pay/malipo (msisdn, psp_id)
-7. Poll Order Status           → GET /orders/:id  (until payment_status = 'paid')
-8. (Optional) Confirm Delivery → POST /orders/:id/delivery/confirm
+6. Pay with Pay Changu         → Hosted checkout / SDK, then POST /orders/:id/pay/paychangu { "tx_ref": "..." } (and/or rely on POST /webhooks/paychangu)
+7. (Optional) List paid orders → GET /orders/mine/paid
+8. (Optional) Confirm Delivery → POST /orders/:id/delivery/confirm (optional body: file_url for proof)
 ```
 
 ---
@@ -246,8 +246,8 @@ Content-Type: application/json
 }
 ```
 
-**Valid `payment_method_id` values (Malipo only):**  
-`airtel` (psp_id=1), `tnm` (psp_id=2)
+**Legacy `payment_method_id` on create (if used):**  
+`airtel`, `tnm` — prefer **`courier_service_id`** + Pay Changu for payment.
 
 ---
 
@@ -314,14 +314,34 @@ Use numeric `id` or `ord_123` format.
 
 ---
 
-## 6. Payment (Malipo Only)
+## 6. Payment (Pay Changu — customer orders)
 
-### Get Payment Methods
+Start checkout with Pay Changu (include **`meta.order_id`** / **`meta.order_number`** matching the order). After success, confirm on your backend:
+
+### Confirm Pay Changu payment
+```
+POST /api/orders/:order_id/pay/paychangu
+Content-Type: application/json
+
+{
+  "tx_ref": "YOUR_PAYCHANGU_TX_REF"
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `tx_ref` | string | Yes | Transaction reference from Pay Changu (also accepts `txRef`). Server verifies with Pay Changu and marks the order **paid** + escrow. |
+
+**Success (200):** `data.order` with **`payment_status`: `paid`**.
+
+**Alternatives:** Configure **POST `/api/webhooks/paychangu`** (and/or **GET `/api/webhooks/paychangu/callback`**) so the server marks paid without this call.
+
+### Get Payment Methods (reference / seller flows)
 ```
 GET /api/payment-methods
 ```
 
-Returns available Malipo options with `psp_id` for the pay endpoint.
+Returns **`available_providers`** (Airtel/TNM labels, `psp_id`). Used mainly for **seller subscription** pay endpoints; customer order payment is Pay Changu as above.
 
 **Response:**
 ```json
@@ -331,57 +351,21 @@ Returns available Malipo options with `psp_id` for the pay endpoint.
   "data": {
     "payment_methods": [],
     "available_providers": [
-      { "id": 1, "name": "Airtel Money", "slug": "airtel", "psp_id": 1, "provider": "malipo", "icon": "airtel" },
-      { "id": 2, "name": "TNM Mpamba", "slug": "tnm", "psp_id": 2, "provider": "malipo", "icon": "tnm" }
+      { "id": 1, "name": "Airtel Money", "slug": "airtel", "psp_id": 1, "provider": "paychangu", "icon": "airtel" },
+      { "id": 2, "name": "TNM Mpamba", "slug": "tnm", "psp_id": 2, "provider": "paychangu", "icon": "tnm" }
     ]
   }
 }
 ```
 
----
-
-### Pay with Malipo (Airtel or TNM)
+### List my paid orders
 ```
-POST /api/orders/:order_id/pay/malipo
-Content-Type: application/json
-
-{
-  "msisdn": "0980256737",
-  "psp_id": 1
-}
+GET /api/orders/mine/paid
 ```
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `msisdn` | string | Yes | Customer phone number (e.g. `0980256737`, `+265980256737`) |
-| `psp_id` | number | Yes | `1` = Airtel, `2` = TNM |
-
-**Success (200):**
-```json
-{
-  "success": true,
-  "message": "Payment request sent. Customer will receive a prompt on their phone to confirm.",
-  "data": {
-    "order_id": "ord_1",
-    "order_number": "ORD-20250316-1234",
-    "amount": 300000,
-    "psp_id": 1,
-    "provider": "airtel",
-    "transaction_id": "TXN-MALIPO-123"
-  }
-}
-```
-
-**Flow:**
-1. App calls this endpoint.
-2. Malipo sends a push to the customer's phone.
-3. Customer confirms payment on their phone.
-4. Malipo sends webhook to server → order is marked paid.
-5. App should **poll** `GET /api/orders/:id` every 2–3 seconds until `payment_status` is `"paid"`.
+Same shape as **`GET /orders`**, filtered to **`payment_status: paid`**.
 
 ---
-
-
 
 ## 7. Cancel Order
 ```
@@ -395,9 +379,14 @@ Only allowed when `status` is `pending`. No body required.
 ## 8. Confirm Delivery
 ```
 POST /api/orders/:order_id/delivery/confirm
+Content-Type: application/json
+
+{
+  "file_url": "https://example.com/proof.jpg"
+}
 ```
 
-Customer confirms they received the order. Releases escrow funds to seller. No body required.
+Customer confirms they received the order (order **status** must already be **delivered**). Releases escrow funds to seller. **Body optional:** omit `{}` or omit field; or send **`file_url`** / **`proof_url`** / **`delivery_proof_url`** for a proof image/PDF URL.
 
 ---
 
@@ -405,10 +394,10 @@ Customer confirms they received the order. Releases escrow funds to seller. No b
 
 | Step | API Call |
 |------|----------|
-| Checkout screen load | `GET /cart`, `GET /shipping-addresses`, `GET /payment-methods` |
-| Create order | `POST /orders` with `shipping_address_id`, `items`, `payment_method_id` (`airtel` or `tnm`) |
-| Pay with Malipo | `POST /orders/:id/pay/malipo` with `msisdn`, `psp_id` (1=Airtel, 2=TNM) |
-| Check payment status | `GET /orders/:id` (poll every 2–3 sec until `payment_status === 'paid'`) |
+| Checkout screen load | `GET /cart`, `GET /shipping-addresses`, `GET /payment-methods` (optional) |
+| Create order | `POST /orders` with `shipping_address_id`, `items`, `courier_service_id`, … |
+| Pay Changu | Checkout with Pay Changu → `POST /orders/:id/pay/paychangu` with `tx_ref` (or rely on webhook) |
+| Paid orders | `GET /orders/mine/paid` |
 | Cancel | `POST /orders/:id/cancel` |
 
 ---

@@ -81,7 +81,7 @@ The server will start on `http://localhost:8000` (or the port specified in `.env
 
 ### Subscriptions (admin + seller)
 - **User access (per JWT):** `GET /api/plans`, `POST /api/subscribe`, `GET /api/subscription/transactions`, `GET /api/subscription/status/:userId`, `GET /api/subscription/ping` (gated). Details: `SUBSCRIPTION_API.md`, `docs/SUBSCRIPTION_ACCESS_ARCHITECTURE.md`.
-- **Shop + Malipo:** public `GET /api/subscription-packages`; admin `GET|POST|PATCH|DELETE /api/admin/subscription-packages`, `GET|PATCH /api/admin/shop-subscriptions`; seller `GET …/subscription`, `POST …/subscription/subscribe`, `POST …/subscription/pay/malipo`, cancel, resume.
+- **Shop subscriptions:** public `GET /api/subscription-packages`; admin `GET|POST|PATCH|DELETE /api/admin/subscription-packages`, `GET|PATCH /api/admin/shop-subscriptions`; seller `GET …/subscription`, `POST …/subscription/subscribe`, `POST …/subscription/pay/malipo` or `…/pay/paychangu`, cancel, resume.
 - **Loyalty (MWK per point):** seller `PATCH /api/sellers/:shopId/shop` body `points_mwk_per_point`; admin `GET|PATCH /api/admin/platform-settings` field `default_points_mwk_per_point` (general bucket `shop_id` 0). See `API_DOCUMENTATION.md` (sections 2b, 15b, Admin Platform settings).
 - See `docs/SUBSCRIPTION_PACKAGES.md`
 
