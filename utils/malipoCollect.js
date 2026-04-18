@@ -40,29 +40,8 @@ export async function postMalipoCollect(payload) {
   return { configured: true, response, data };
 }
 
-/**
- * Unique Malipo order / merchant id per collect attempt.
- * Malipo returns "This order id already exists" if you reuse the same `order_id` — retries must use a new ref.
- * Webhook still resolves the shop subscription via the numeric id prefix: SUB-{id} or SUB-{id}-{suffix}.
- */
-export function subscriptionMalipoMerchantRef(subscriptionId) {
-  const sid = parseInt(subscriptionId, 10);
-  if (!sid || Number.isNaN(sid)) {
-    throw new Error('Invalid subscription id for Malipo ref');
-  }
-  const suffix = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
-  return `SUB-${sid}-${suffix}`;
-}
-
-/** Extract shop_subscription id from SUB-42 or SUB-42-{suffix} (case-insensitive SUB prefix). */
-export function parseSubscriptionMerchantRef(merchantTxnId) {
-  let s = String(merchantTxnId ?? '').trim();
-  if (s.charCodeAt(0) === 0xfeff) {
-    s = s.slice(1);
-  }
-  // Relaxed: id first, optional suffix; avoids anchor issues with stray whitespace variants
-  const m = s.match(/^SUB-(\d+)/i);
-  if (!m) return null;
-  const id = parseInt(m[1], 10);
-  return Number.isFinite(id) && id > 0 ? id : null;
-}
+/** @see ../utils/paychanguRefs.js — shared SUB-{id}-{suffix} refs for Malipo collect & Pay Changu */
+export {
+  parseSubscriptionMerchantRef,
+  subscriptionPayChanguChargeId as subscriptionMalipoMerchantRef
+} from './paychanguRefs.js';

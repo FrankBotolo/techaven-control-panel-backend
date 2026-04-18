@@ -3,7 +3,7 @@ import { captureWebhook } from '../utils/webhookCapture.js';
 import { verifyPayChanguTxRef, paychanguVerifyDataIndicatesPaid } from '../utils/paychanguVerify.js';
 import { verifyPayChanguWebhookSignature } from '../utils/paychanguWebhookSignature.js';
 import { completeOrderPaidWithEscrow, findOrderByPaymentRef } from '../utils/orderEscrowFinalize.js';
-import { parseSubscriptionMerchantRef } from '../utils/malipoCollect.js';
+import { parseSubscriptionMerchantRef } from '../utils/paychanguRefs.js';
 import { finalizePendingShopSubscriptionFromMalipo } from '../utils/subscriptionMalipoActivate.js';
 
 const { PayChanguCallback, Order, ShopSubscription, SubscriptionPackage } = db;

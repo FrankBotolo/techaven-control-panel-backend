@@ -6,16 +6,11 @@ import {
   computePeriodEnd,
   whereActiveSubscriptions
 } from '../utils/subscriptionHelpers.js';
-import {
-  getMalipoCredentials,
-  postMalipoCollect,
-  subscriptionMalipoMerchantRef
-} from '../utils/malipoCollect.js';
-import {
-  finalizePendingShopSubscriptionFromMalipo,
-  malipoCollectResponseIndicatesPaid
-} from '../utils/subscriptionMalipoActivate.js';
-import { getMalipoPaymentOptions, resolveMalipoPspId } from '../utils/malipoProviders.js';
+import { verifyPayChanguTxRef, paychanguVerifyDataIndicatesPaid } from '../utils/paychanguVerify.js';
+import { subscriptionPayChanguChargeId, parseSubscriptionMerchantRef } from '../utils/paychanguRefs.js';
+import { getPayChanguBackendCallbackUrl, getPayChanguWebhookUrl } from '../utils/paychanguUrls.js';
+import { getPayChanguPaymentOptions } from '../utils/paychanguProviders.js';
+import { finalizePendingShopSubscriptionFromMalipo } from '../utils/subscriptionMalipoActivate.js';
 
 const { ShopSubscription, SubscriptionPackage, Shop } = db;
 
@@ -53,7 +48,7 @@ export const getCurrent = async (req, res) => {
       offset: 0
     });
 
-    const malipo_payment_options = await getMalipoPaymentOptions();
+    const paychangu_payment_options = await getPayChanguPaymentOptions();
 
     return res.json({
       success: true,
@@ -61,7 +56,7 @@ export const getCurrent = async (req, res) => {
       data: {
         subscription: latest ? toShopSubscriptionDto(latest) : null,
         recent_subscriptions: (history || []).map((s) => toShopSubscriptionDto(s)),
-        malipo_payment_options
+        paychangu_payment_options
       }
     });
   } catch (error) {
@@ -77,7 +72,7 @@ export const getCurrent = async (req, res) => {
 /**
  * Subscribe shop to a package.
  * - Replaces any current active-like subscription (canceled immediately).
- * - Default: pending_payment until Malipo (or admin). Active+paid only if SUBSCRIPTION_AUTO_ACTIVATE=true (dev) or payment_reference is non-empty.
+ * - Default: pending_payment until Pay Changu (or admin). Active+paid only if SUBSCRIPTION_AUTO_ACTIVATE=true (dev) or payment_reference is non-empty.
  */
 export const subscribe = async (req, res) => {
   try {
@@ -155,7 +150,7 @@ export const subscribe = async (req, res) => {
       metadata: { shop_id: check.shop.id, package_id: pkg.id, package_slug: pkg.slug }
     });
 
-    const malipo_payment_options = await getMalipoPaymentOptions();
+    const paychangu_payment_options = await getPayChanguPaymentOptions();
 
     return res.status(201).json({
       success: true,
@@ -164,7 +159,7 @@ export const subscribe = async (req, res) => {
         : 'Subscription created — complete payment to activate',
       data: {
         subscription: toShopSubscriptionDto(full),
-        ...(!autoActivate ? { malipo_payment_options } : {})
+        ...(!autoActivate ? { paychangu_payment_options } : {})
       }
     });
   } catch (error) {
@@ -289,12 +284,75 @@ export const resume = async (req, res) => {
   }
 };
 
+function payChanguVerifyMatchesSubscription(sub, data, clientTxRef) {
+  const m = data?.meta;
+  if (m && typeof m === 'object') {
+    if (m.shop_subscription_id != null && parseInt(String(m.shop_subscription_id), 10) !== sub.id) {
+      return {
+        ok: false,
+        message: 'This Pay Changu payment is linked to a different subscription (meta.shop_subscription_id).'
+      };
+    }
+    if (m.shopSubscriptionId != null && parseInt(String(m.shopSubscriptionId), 10) !== sub.id) {
+      return {
+        ok: false,
+        message: 'This Pay Changu payment is linked to a different subscription (meta.shopSubscriptionId).'
+      };
+    }
+    if (m.package_id != null && parseInt(String(m.package_id), 10) !== sub.package_id) {
+      return {
+        ok: false,
+        message: 'This Pay Changu payment is linked to a different package (meta.package_id).'
+      };
+    }
+  }
+  const apiTxRef = data?.tx_ref != null ? String(data.tx_ref).trim() : '';
+  const fromApi = parseSubscriptionMerchantRef(apiTxRef);
+  if (fromApi != null && fromApi === sub.id) return { ok: true };
+  if (clientTxRef) {
+    const fromClient = parseSubscriptionMerchantRef(clientTxRef);
+    if (fromClient != null && fromClient === sub.id) return { ok: true };
+  }
+  const hasMetaSubId =
+    m &&
+    typeof m === 'object' &&
+    (m.shop_subscription_id != null || m.shopSubscriptionId != null);
+  if (hasMetaSubId) return { ok: true };
+  return {
+    ok: false,
+    message:
+      'Pay Changu payment is not linked to this subscription. Pass meta.shop_subscription_id when starting checkout, or use charge_id SUB-{subscription_id}-… as tx_ref.'
+  };
+}
+
+function payChanguAmountMatchesSubscription(sub, data) {
+  const expected = Math.round(parseFloat(sub.package?.price_mwk) || 0);
+  const raw = data?.amount;
+  const hasAmount =
+    raw != null && raw !== '' && !Number.isNaN(parseFloat(String(raw).replace(/,/g, '')));
+  const paid = hasAmount ? Math.round(parseFloat(String(raw).replace(/,/g, ''))) : null;
+  const currency = String(data?.currency || '').toUpperCase();
+  if (currency && currency !== 'MWK') {
+    return { ok: false, message: `Expected currency MWK, verify returned ${data?.currency}` };
+  }
+  if (expected > 0 && paid != null && Math.abs(paid - expected) > 1) {
+    return {
+      ok: false,
+      message: `Amount mismatch: package price ${expected} MWK, payment ${paid} MWK`
+    };
+  }
+  if (expected > 0 && paid == null) {
+    return { ok: false, message: 'Verify response did not include an amount' };
+  }
+  return { ok: true };
+}
+
 /**
- * POST /api/sellers/:shopId/subscription/pay/malipo
- * Pay for a pending subscription via Malipo (Airtel / TNM). Webhook activates the row.
- * Body: { subscription_id, msisdn, and one of: psp_id | payment_method_id | provider_slug } — same as order pay/malipo.
+ * POST /api/sellers/:shopId/subscription/pay/paychangu
+ * Body: { subscription_id, package_id } — returns Pay Changu checkout params (charge_id, meta, amounts).
+ * Optional: { tx_ref } after client checkout — server verifies with Pay Changu and activates the subscription (same as POST /api/orders/:id/pay/paychangu).
  */
-export const payWithMalipo = async (req, res) => {
+export const payWithPayChangu = async (req, res) => {
   try {
     const { shopId } = req.params;
     const check = await assertShop(shopId, req.user);
@@ -302,40 +360,14 @@ export const payWithMalipo = async (req, res) => {
       return res.status(check.error.status).json({ success: false, message: check.error.message });
     }
 
-    const { subscription_id, msisdn } = req.body;
-    const malipo_payment_options = await getMalipoPaymentOptions();
+    const subscription_id = req.body?.subscription_id;
+    const package_id = req.body?.package_id;
+    const tx_ref = String(req.body?.tx_ref ?? req.body?.txRef ?? '').trim();
 
-    if (!subscription_id) {
+    if (subscription_id == null || subscription_id === '' || package_id == null || package_id === '') {
       return res.status(400).json({
         success: false,
-        message: 'subscription_id is required',
-        data: { malipo_payment_options }
-      });
-    }
-
-    if (!msisdn) {
-      return res.status(400).json({
-        success: false,
-        message:
-          'msisdn is required (mobile number for Airtel Money or TNM Mpamba). Pick a network using psp_id, payment_method_id, or provider_slug.',
-        data: { malipo_payment_options }
-      });
-    }
-
-    const { pspId, error: pspErr } = await resolveMalipoPspId(req.body);
-    if (pspErr) {
-      return res.status(400).json({
-        success: false,
-        message: pspErr,
-        data: { malipo_payment_options }
-      });
-    }
-    if (pspId === null) {
-      return res.status(400).json({
-        success: false,
-        message:
-          'Choose mobile money network: psp_id (1=Airtel, 2=TNM), payment_method_id from GET /api/payment-methods, or provider_slug (e.g. airtel, tnm).',
-        data: { malipo_payment_options }
+        message: 'subscription_id and package_id are required'
       });
     }
 
@@ -354,18 +386,29 @@ export const payWithMalipo = async (req, res) => {
       });
     }
 
-    if (sub.status !== 'pending_payment' || sub.payment_status !== 'pending') {
+    const pkgId = parseInt(package_id, 10);
+    if (Number.isNaN(pkgId) || sub.package_id !== pkgId) {
       return res.status(400).json({
         success: false,
-        message: 'This subscription is not awaiting Malipo payment'
+        message: 'package_id does not match this subscription'
       });
     }
 
-    const { apiKey, appId } = getMalipoCredentials();
-    if (!apiKey || !appId) {
-      return res.status(500).json({
+    if (sub.status === 'active' && sub.payment_status === 'paid') {
+      const full = await ShopSubscription.findByPk(sub.id, {
+        include: [{ model: SubscriptionPackage, as: 'package' }]
+      });
+      return res.json({
+        success: true,
+        message: 'Subscription is already active and paid',
+        data: { subscription: toShopSubscriptionDto(full) }
+      });
+    }
+
+    if (sub.status !== 'pending_payment' || sub.payment_status !== 'pending') {
+      return res.status(400).json({
         success: false,
-        message: 'Malipo payment is not configured. Set MALIPO_API_KEY and MALIPO_APP_ID in .env'
+        message: 'This subscription is not awaiting Pay Changu payment'
       });
     }
 
@@ -373,85 +416,140 @@ export const payWithMalipo = async (req, res) => {
     if (amount <= 0) {
       return res.status(400).json({
         success: false,
-        message: 'Package price must be greater than zero for Malipo payment'
+        message: 'Package price must be greater than zero for payment'
       });
     }
 
-    const merchantRef = subscriptionMalipoMerchantRef(sub.id);
-    const { response, data } = await postMalipoCollect({
-      order_id: merchantRef,
-      merchant_txn_id: merchantRef,
-      msisdn,
-      amount,
-      psp_id: pspId
-    });
+    if (!tx_ref) {
+      const charge_id = subscriptionPayChanguChargeId(sub.id);
+      const meta = {
+        shop_subscription_id: sub.id,
+        package_id: sub.package_id
+      };
+      const full = await ShopSubscription.findByPk(sub.id, {
+        include: [{ model: SubscriptionPackage, as: 'package' }]
+      });
 
-    if (response.ok) {
       await logAudit({
         ...auditContext(req),
-        action: 'seller.subscription.pay_malipo_initiate',
+        action: 'seller.subscription.pay_paychangu_init',
         actor_user_id: req.user.id,
         target_type: 'shop_subscription',
         target_id: sub.id,
-        metadata: { shop_id: check.shop.id, amount, psp_id: pspId, merchant_txn_id: merchantRef },
+        metadata: { shop_id: check.shop.id, amount_mwk: amount, charge_id },
         ip_address: req.ip
       });
+
+      return res.json({
+        success: true,
+        message:
+          'Start Pay Changu checkout with charge_id and meta; after payment send tx_ref here or rely on POST /api/webhooks/paychangu',
+        data: {
+          charge_id,
+          tx_ref: charge_id,
+          amount_mwk: amount,
+          currency: 'MWK',
+          meta,
+          callback_url: getPayChanguBackendCallbackUrl(),
+          webhook_url: getPayChanguWebhookUrl(),
+          subscription: toShopSubscriptionDto(full)
+        }
+      });
     }
 
-    if (!response.ok) {
-      console.error('Malipo subscription collect error:', response.status, data);
-      return res.status(response.status >= 400 && response.status < 500 ? response.status : 500).json({
+    const verify = await verifyPayChanguTxRef(tx_ref);
+    if (!verify.ok || !verify.json) {
+      return res.status(502).json({
         success: false,
-        message: data?.message || data?.error || 'Malipo payment request failed',
-        data: null,
-        error: data?.message || data?.error
+        message: verify.error || 'Could not verify payment with Pay Changu',
+        data: { http_status: verify.httpStatus }
       });
     }
 
-    if (malipoCollectResponseIndicatesPaid(data)) {
-      const payBody = {
-        transaction_id: data?.transaction_id ?? data?.keys?.transaction_id,
-        amount: data?.amount,
-        psp_id: data?.psp_id ?? pspId
-      };
-      await finalizePendingShopSubscriptionFromMalipo(sub, payBody, {
-        orderRef: merchantRef,
-        source: 'malipo_collect_response',
-        ip_address: req.ip,
-        actor_user_id: req.user.id
+    if (!paychanguVerifyDataIndicatesPaid(verify.json)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Pay Changu reports this transaction is not paid',
+        data: null
       });
     }
+
+    const data = verify.json.data;
+    const link = payChanguVerifyMatchesSubscription(sub, data, tx_ref);
+    if (!link.ok) {
+      return res.status(400).json({
+        success: false,
+        message: link.message,
+        data: null
+      });
+    }
+
+    const amt = payChanguAmountMatchesSubscription(sub, data);
+    if (!amt.ok) {
+      return res.status(400).json({
+        success: false,
+        message: amt.message,
+        data: null
+      });
+    }
+
+    const payBody = {
+      amount: data?.amount,
+      transaction_id: data?.reference,
+      status: data?.status,
+      psp_id: undefined
+    };
+
+    const result = await finalizePendingShopSubscriptionFromMalipo(sub, payBody, {
+      orderRef: tx_ref,
+      source: 'paychangu_app_confirm',
+      ip_address: req.ip,
+      actor_user_id: req.user.id
+    });
+
+    if (!result.ok && !result.alreadyActive) {
+      return res.status(400).json({
+        success: false,
+        message: 'Subscription could not be activated',
+        data: { reason: result.reason }
+      });
+    }
+
+    await logAudit({
+      ...auditContext(req),
+      action: 'seller.subscription.pay_paychangu_confirm',
+      actor_user_id: req.user.id,
+      target_type: 'shop_subscription',
+      target_id: sub.id,
+      metadata: {
+        shop_id: check.shop.id,
+        tx_ref,
+        reference: data?.reference
+      },
+      ip_address: req.ip
+    });
 
     const full = await ShopSubscription.findByPk(sub.id, {
       include: [{ model: SubscriptionPackage, as: 'package' }]
     });
-    const activatedNow = full?.status === 'active' && full?.payment_status === 'paid';
 
     return res.json({
       success: true,
-      message: activatedNow
-        ? 'Payment successful. Your subscription is now active.'
-        : 'Payment request sent. Confirm on your phone; your subscription activates when Malipo confirms payment.',
+      message: result.alreadyActive
+        ? 'Subscription was already active and paid'
+        : 'Payment successful. Your subscription is now active.',
       data: {
         subscription_id: sub.id,
-        merchant_txn_id: merchantRef,
-        amount,
-        psp_id: pspId,
-        provider: pspId === 1 ? 'airtel' : 'tnm',
-        ...(data?.transaction_id && { transaction_id: data.transaction_id }),
-        ...data,
+        tx_ref,
         subscription: toShopSubscriptionDto(full)
       }
     });
   } catch (error) {
-    console.error('Subscription pay with Malipo error:', error);
+    console.error('Subscription pay with Pay Changu error:', error);
     return res.status(500).json({
       success: false,
-      message: 'Payment initiation failed',
+      message: 'Payment failed',
       error: error.message
     });
   }
 };
-
-/** Alias for `POST .../subscription/pay/paychangu` — still uses Malipo collect until Pay Changu charge API is wired. */
-export const payWithPayChangu = payWithMalipo;
