@@ -1,10 +1,12 @@
 import db from '../models/index.js';
+import { getSellerCommissionPercent, computeSellerEscrowSplit } from '../utils/sellerCommission.js';
 
 const { Cart, Product, Category, Shop } = db;
 
 export const getCart = async (req, res) => {
   try {
     const userId = req.user.id;
+    const commissionPct = await getSellerCommissionPercent();
 
     const cartItems = await Cart.findAll({
       where: { user_id: userId },
@@ -24,13 +26,16 @@ export const getCart = async (req, res) => {
     // Calculate totals
     let totalItems = 0;
     let totalAmount = 0;
+    let totalPlatformFee = 0;
 
     const items = cartItems.map(item => {
       const product = item.product;
       const unitPrice = parseFloat(product.price) || 0;
       const itemTotal = unitPrice * item.quantity;
+      const { platformFee } = computeSellerEscrowSplit(itemTotal, commissionPct);
       totalItems += item.quantity;
       totalAmount += itemTotal;
+      totalPlatformFee += platformFee;
 
       return {
         id: `item_${item.id}`,
@@ -40,9 +45,13 @@ export const getCart = async (req, res) => {
         unit_price: unitPrice,
         quantity: item.quantity,
         subtotal: itemTotal,
+        platform_fee: platformFee,
         is_available: (product.stock || 0) >= item.quantity
       };
     });
+
+    const grandTotal =
+      Math.round((totalAmount + totalPlatformFee) * 100) / 100;
 
     return res.json({
       success: true,
@@ -52,10 +61,11 @@ export const getCart = async (req, res) => {
         items,
         summary: {
           subtotal: totalAmount,
+          platform_fee: totalPlatformFee,
           discount: 0,
           shipping: 0,
           tax: 0,
-          total: totalAmount,
+          total: grandTotal,
           currency: 'MWK',
           item_count: totalItems
         }
