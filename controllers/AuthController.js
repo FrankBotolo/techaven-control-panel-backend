@@ -1,5 +1,6 @@
 import db from '../models/index.js';
 import jwt from 'jsonwebtoken';
+import { OAuth2Client } from 'google-auth-library';
 import { sendOtpEmail } from '../services/emailService.js';
 import { sendOtpSms, sendPasswordResetOtpSms } from '../services/smsService.js';
 import moment from 'moment';
@@ -1040,6 +1041,118 @@ export const logout = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Logout failed',
+      error: error.message
+    });
+  }
+};
+
+export const googleAuth = async (req, res) => {
+  try {
+    const { id_token } = req.body;
+
+    if (!id_token) {
+      return res.status(400).json({
+        success: false,
+        message: 'Google ID token is required',
+        data: null
+      });
+    }
+
+    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+    let payload;
+    try {
+      const ticket = await client.verifyIdToken({
+        idToken: id_token,
+        audience: process.env.GOOGLE_CLIENT_ID
+      });
+      payload = ticket.getPayload();
+    } catch {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid Google token',
+        data: null
+      });
+    }
+
+    const { sub: google_id, email, name, picture: avatar_url, email_verified } = payload;
+
+    if (!email_verified) {
+      return res.status(400).json({
+        success: false,
+        message: 'Google account email is not verified',
+        data: null
+      });
+    }
+
+    let user = await User.findOne({
+      where: { [Op.or]: [{ google_id }, ...(email ? [{ email }] : [])] }
+    });
+
+    if (user) {
+      if (!assertActiveUser(user, res)) return;
+
+      if (!user.google_id) {
+        await user.update({
+          google_id,
+          avatar_url: user.avatar_url || avatar_url,
+          email_verified_at: user.email_verified_at || new Date()
+        });
+      }
+    } else {
+      user = await User.create({
+        name,
+        email,
+        google_id,
+        avatar_url,
+        role: 'customer',
+        is_verified: true,
+        email_verified_at: new Date(),
+        password: null
+      });
+    }
+
+    const accessToken = generateAccessToken(user);
+
+    await logAudit({
+      ...auditContext(req),
+      action: 'user.google_login',
+      actor_user_id: user.id,
+      target_type: 'user',
+      target_id: user.id,
+      metadata: { role: user.role }
+    });
+
+    const memberSince = user.createdAt
+      ? new Date(user.createdAt).toLocaleString('en-US', { month: 'long', year: 'numeric' })
+      : 'Unknown';
+
+    return res.json({
+      success: true,
+      message: 'Google sign-in successful',
+      data: {
+        access_token: accessToken,
+        token_type: 'Bearer',
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          phone_number: user.phone_number,
+          avatar: user.avatar_url || null,
+          is_verified: user.is_verified,
+          role: user.role,
+          shop_id: user.shop_id ?? null,
+          points: user.points ?? 0,
+          member_since: memberSince,
+          created_at: user.createdAt || user.created_at || new Date()
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Google auth error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Google authentication failed',
+      data: null,
       error: error.message
     });
   }
