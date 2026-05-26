@@ -1,0 +1,256 @@
+import db from '../models/index.js';
+import { Op } from 'sequelize';
+import { captureWebhook } from '../utils/webhookCapture.js';
+import { verifyAirtelWebhookSignature } from '../utils/airtelWebhookSignature.js';
+import { parseSubscriptionMerchantRef } from '../utils/paychanguRefs.js';
+import { finalizePendingShopSubscriptionFromMalipo } from '../utils/subscriptionMalipoActivate.js';
+import { completeOrderPaidWithEscrow } from '../utils/orderEscrowFinalize.js';
+
+const { Order, User, AirtelTransaction, ShopSubscription } = db;
+
+/**
+ * Normalise the many shapes Airtel Money uses for a transaction reference.
+ * Handles both nested `{ transaction: { id, ... }, reference }` and flat payloads.
+ */
+function parseAirtelPayload(body) {
+  const txn = body.transaction && typeof body.transaction === 'object' ? body.transaction : null;
+
+  const transactionId =
+    (txn?.id) ||
+    (txn?.airtel_money_id) ||
+    body.transaction_id ||
+    body.id ||
+    null;
+
+  const airtelMoneyId =
+    (txn?.airtel_money_id) ||
+    body.airtel_money_id ||
+    transactionId ||
+    null;
+
+  const reference =
+    body.reference ||
+    body.merchant_txn_id ||
+    body.order_id ||
+    body.order_number ||
+    null;
+
+  const msisdn =
+    body.msisdn ||
+    body.phone ||
+    body.mobile ||
+    null;
+
+  const amount =
+    body.amount != null ? parseFloat(String(body.amount).replace(/,/g, '')) : null;
+
+  // Airtel uses status_code "TS" for success; also accept plain status strings
+  const statusCode =
+    (txn?.status_code) ||
+    body.status_code ||
+    null;
+
+  const statusRaw =
+    (txn?.message) ||
+    body.status ||
+    body.Status ||
+    null;
+
+  const message =
+    (txn?.message) ||
+    body.message ||
+    null;
+
+  const isSuccess =
+    statusCode === 'TS' ||
+    ['success', 'successful', 'succeeded', 'completed', 'complete', 'paid']
+      .includes(String(statusRaw || '').toLowerCase());
+
+  return { transactionId, airtelMoneyId, reference, msisdn, amount, statusCode, statusRaw, message, isSuccess };
+}
+
+/**
+ * POST /api/webhooks/airtel
+ * Called by Airtel Money after a payment event. Configure the callback URL in the
+ * Airtel Money developer portal. Signature verification uses AIRTEL_WEBHOOK_SECRET.
+ *
+ * Payload shapes handled:
+ *   Nested:  { transaction: { id, status_code, airtel_money_id, message }, reference, msisdn, amount }
+ *   Flat:    { transaction_id, status_code, reference, msisdn, amount, message }
+ *
+ * Capture mode: Set WEBHOOK_CAPTURE_ONLY=true in .env to log payloads without processing.
+ */
+export const webhook = async (req, res) => {
+  captureWebhook('airtel', req);
+
+  // Signature verification — skip with a warning if secret not configured
+  const webhookSecret = (process.env.AIRTEL_WEBHOOK_SECRET || '').trim() || null;
+  const rawBody = req.rawBody;
+  const sig = req.get('x-airtel-signature') || req.get('X-Airtel-Signature');
+
+  if (!webhookSecret) {
+    console.warn('[Airtel webhook] AIRTEL_WEBHOOK_SECRET not set; skipping signature check');
+  } else if (rawBody && Buffer.isBuffer(rawBody)) {
+    if (!verifyAirtelWebhookSignature(rawBody, sig, webhookSecret)) {
+      console.warn('[Airtel webhook] Invalid or missing x-airtel-signature');
+      return res.status(401).json({ success: false, message: 'Invalid webhook signature' });
+    }
+  } else if (process.env.NODE_ENV === 'production') {
+    console.warn('[Airtel webhook] Missing raw body for signature check');
+  }
+
+  const body = req.body && typeof req.body === 'object' ? req.body : {};
+  const parsed = parseAirtelPayload(body);
+  const { transactionId, airtelMoneyId, reference, msisdn, amount, statusCode, statusRaw, message, isSuccess } = parsed;
+
+  // Always persist the raw webhook for the admin transaction log
+  try {
+    const existing = transactionId
+      ? await AirtelTransaction.findOne({ where: { transaction_id: transactionId } })
+      : null;
+
+    if (existing) {
+      existing.status = statusRaw ?? existing.status;
+      existing.status_code = statusCode ?? existing.status_code;
+      existing.message = message ?? existing.message;
+      existing.amount = amount != null ? amount : existing.amount;
+      existing.raw_payload = body;
+      await existing.save();
+    } else {
+      await AirtelTransaction.create({
+        transaction_id: transactionId,
+        airtel_money_id: airtelMoneyId,
+        reference,
+        msisdn,
+        amount: amount != null ? amount : null,
+        currency: 'MWK',
+        status: statusRaw,
+        status_code: statusCode,
+        message,
+        processing_state: 'received',
+        raw_payload: body
+      });
+    }
+  } catch (storeErr) {
+    console.error('[Airtel webhook] Failed to store transaction:', storeErr);
+  }
+
+  if (process.env.WEBHOOK_CAPTURE_ONLY === 'true') {
+    return res.status(200).json({ success: true, message: 'Webhook captured (capture-only mode)' });
+  }
+
+  try {
+    console.log('[Airtel webhook] Received:', { reference, statusCode, statusRaw, body: JSON.stringify(body) });
+
+    if (!isSuccess) {
+      console.log('[Airtel webhook] Ignored: non-success status:', statusRaw, statusCode);
+      return res.status(200).json({ success: true, message: 'Webhook received (non-success)' });
+    }
+
+    if (!reference) {
+      console.log('[Airtel webhook] Rejected: missing reference');
+      return res.status(400).json({ success: false, message: 'Missing reference / merchant reference in payload' });
+    }
+
+    // Check if this is a shop subscription payment
+    const subscriptionId = parseSubscriptionMerchantRef(reference);
+    if (subscriptionId != null) {
+      const sub = await ShopSubscription.findByPk(subscriptionId, {
+        include: [{ model: db.SubscriptionPackage, as: 'package' }]
+      });
+      if (!sub) {
+        console.log('[Airtel webhook] Shop subscription not found for:', reference);
+        return res.status(200).json({ success: true, message: 'Webhook received (subscription not found)' });
+      }
+
+      const malipoStyleBody = {
+        amount,
+        transaction_id: transactionId,
+        status: statusRaw,
+        psp_id: 1
+      };
+
+      const result = await finalizePendingShopSubscriptionFromMalipo(sub, malipoStyleBody, {
+        orderRef: reference,
+        source: 'airtel_webhook',
+        ip_address: req.ip,
+        actor_user_id: null
+      });
+
+      const txRow = await AirtelTransaction.findOne({
+        where: { [Op.or]: [{ transaction_id: transactionId }, { reference }].filter(Boolean) },
+        order: [['createdAt', 'DESC']]
+      });
+
+      if (result.alreadyActive) {
+        if (txRow) { txRow.processing_state = 'already_active'; await txRow.save(); }
+        return res.status(200).json({ success: true, message: 'Webhook received' });
+      }
+      if (!result.ok) {
+        const state = result.reason === 'amount_mismatch' ? 'amount_mismatch' : 'subscription_not_finalized';
+        if (txRow) { txRow.processing_state = state; await txRow.save(); }
+        return res.status(200).json({ success: true, message: 'Webhook received (subscription state)' });
+      }
+
+      if (txRow) {
+        txRow.processing_state = 'subscription_activated';
+        txRow.shop_subscription_id = sub.id;
+        await txRow.save();
+      }
+      console.log('[Airtel webhook] Subscription activated:', reference, 'id:', sub.id);
+      return res.status(200).json({ success: true, message: 'Webhook processed (subscription)' });
+    }
+
+    // Order payment
+    const order = await Order.findOne({
+      where: { [Op.or]: [{ order_number: reference }, { id: parseInt(reference, 10) || 0 }] },
+      include: [
+        { model: User, as: 'seller', attributes: ['id', 'name', 'email'] },
+        { model: db.OrderItem, as: 'items', required: false }
+      ]
+    });
+
+    if (!order) {
+      console.log('[Airtel webhook] Order not found for:', reference);
+      const txRow = await AirtelTransaction.findOne({
+        where: { reference },
+        order: [['createdAt', 'DESC']]
+      });
+      if (txRow) { txRow.processing_state = 'order_not_found'; await txRow.save(); }
+      return res.status(200).json({ success: true, message: 'Webhook received (order not found)' });
+    }
+
+    if (order.payment_status === 'paid') {
+      console.log('[Airtel webhook] Order already paid:', order.order_number);
+      return res.status(200).json({ success: true, message: 'Webhook received' });
+    }
+
+    await completeOrderPaidWithEscrow(order, {
+      paymentMethod: 'airtel',
+      paymentReference: transactionId || airtelMoneyId || null,
+      source: 'airtel_webhook',
+      req
+    });
+
+    const txRow = await AirtelTransaction.findOne({
+      where: {
+        [Op.or]: [
+          transactionId ? { transaction_id: transactionId } : null,
+          { reference }
+        ].filter(Boolean)
+      },
+      order: [['createdAt', 'DESC']]
+    });
+    if (txRow) {
+      txRow.order_id = order.id;
+      txRow.processing_state = 'order_paid';
+      await txRow.save();
+    }
+
+    console.log('[Airtel webhook] Order marked paid:', order.order_number, 'id:', order.id);
+    return res.status(200).json({ success: true, message: 'Webhook processed' });
+  } catch (error) {
+    console.error('[Airtel webhook] Error:', error);
+    return res.status(500).json({ success: false, message: 'Webhook processing failed' });
+  }
+};
