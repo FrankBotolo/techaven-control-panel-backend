@@ -385,6 +385,7 @@ Product reviews (`GET /api/products/:product_id/reviews`): `data` is an array of
 | GET | `/api/orders/mine/paid` | 🔒 | List my orders with **payment_status = paid** (mobile). |
 | GET | `/api/orders/:order_id` | 🔒 | Single order. |
 | POST | `/api/orders/:id/pay/wallet` | 🔒 | Pay with wallet. No body. Returns order + wallet_balance. |
+| POST | `/api/orders/:id/pay/airtel` | 🔒 | Initiate a direct Airtel Money Collection push. Body: **`msisdn`**. Customer confirms on their phone → **`POST /api/webhooks/airtel`** marks the order paid (see `docs/AIRTEL_WEBHOOK.md`). |
 | POST | `/api/orders/:id/pay/paychangu` | 🔒 | Confirm Pay Changu after checkout. Body: **`tx_ref`** (server verifies with Pay Changu, then marks paid + escrow). |
 | POST | `/api/orders/:id/cancel` | 🔒 | Cancel order (only when status is pending). No body. |
 | POST | `/api/orders/:id/payment/complete` | 🔒 | Mark payment complete (escrow). Body: payment_reference, payment_proof. |
@@ -594,11 +595,9 @@ All under `/api/shipping-addresses` (or `/api/addresses`). Data: id, label, name
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| GET | `/api/payment-methods` | 🔒 | Lists mobile-money options in **`data.available_providers`** (`id`, `name`, `slug`, `psp_id`, `provider`, …). **Seller subscriptions:** use with **`POST .../subscription/pay/malipo`** or **`.../pay/paychangu`** (same body) to pick network. **Customer orders** use Pay Changu checkout + **`POST .../orders/:id/pay/paychangu`** with **`tx_ref`**. |
+| GET | `/api/payment-methods` | 🔒 | Lists mobile-money options in **`data.available_providers`** (`id`, `name`, `slug`, `psp_id`, `provider`, …) — Airtel Money only. **Customer orders** use **`POST .../orders/:id/pay/airtel`** (direct Airtel push) or Pay Changu checkout + **`POST .../orders/:id/pay/paychangu`** with **`tx_ref`**. **Seller subscriptions** use **`POST .../subscription/pay/paychangu`**. |
 | POST | `/api/payment-methods` | 🔒 | Add payment method (stub). |
 | DELETE | `/api/payment-methods/:id` | 🔒 | Delete payment method (stub). |
-
-**Seller subscription** pay endpoints accept **`psp_id`** or **`payment_method_id`** or **`provider_slug`**.
 
 **Response format (GET)**
 
@@ -613,8 +612,7 @@ All under `/api/shipping-addresses` (or `/api/addresses`). Data: id, label, name
   "data": {
     "payment_methods": [],
     "available_providers": [
-      { "id": 1, "name": "Airtel Money", "slug": "airtel", "psp_id": 1, "provider": "paychangu", "icon": "airtel" },
-      { "id": 2, "name": "TNM Mpamba", "slug": "tnm", "psp_id": 2, "provider": "paychangu", "icon": "tnm" }
+      { "id": 1, "name": "Airtel Money", "slug": "airtel", "psp_id": 1, "provider": "airtel", "icon": "airtel" }
     ]
   }
 }
@@ -864,17 +862,15 @@ Same response as `GET /api/products` (see section 3).
 |--------|----------|------|-------------|
 | POST | `/api/webhooks/paychangu` | No | Pay Changu **dashboard** webhook (JSON body + **`Signature`** HMAC). Uses **`tx_ref`** / **`charge_id`**, verifies via Pay Changu API, then marks **order** or **subscription** paid when **`meta`** matches. Returns **200**. |
 | GET | `/api/webhooks/paychangu/callback` | No | Pay Changu **browser return** URL (query: **`status`**, **`tx_ref`**, …). Same verify + finalize logic as POST webhook. |
-| POST | `/api/webhooks/malipo` | No | **Seller subscription** mobile-money collect callback (Malipo). **`merchant_txn_id`** = **`SUB-{subscription_id}`** + optional suffix; on success → subscription **`active`** + **`paid`**. Success **`status`** values matched case-insensitively. **`amount`** validated vs package when present (±1 MWK). **`WEBHOOK_CAPTURE_ONLY=true`** skips processing. |
+| POST | `/api/webhooks/airtel` | No | Direct Airtel Money Collection callback (see `docs/AIRTEL_WEBHOOK.md`). Resolves **`reference`** to an **order** or an encoded **`SUB-{subscription_id}`** shop-subscription ref; on success (`status_code: "TS"`) marks the order/subscription **paid**. Verified via **`x-airtel-signature`** HMAC when **`AIRTEL_WEBHOOK_SECRET`** is set. Every call is logged to `airtel_transactions` regardless of outcome. **`WEBHOOK_CAPTURE_ONLY=true`** skips processing. |
 
-**Malipo webhook — seller subscription (example)**  
-After `POST /api/sellers/:shopId/subscription/pay/malipo` (or **`pay/paychangu`** alias with same Malipo collect), Malipo echoes the reference sent as `merchant_txn_id`:
+**Airtel webhook — order payment (example)**  
+After `POST /api/orders/:id/pay/airtel`, Airtel echoes the reference sent as `reference` (the order's `order_number`):
 ```json
 {
-  "merchant_txn_id": "SUB-42-ld0abc123xyz",
-  "status": "success",
-  "transaction_id": "TXN-MALIPO-456",
-  "amount": 150000,
-  "psp_id": 1
+  "transaction": { "id": "CI250722.1344.B0AE1B", "status_code": "TS", "message": "Paid MWK 5000" },
+  "reference": "ORD-000123",
+  "amount": "5000"
 }
 ```
 
@@ -905,10 +901,9 @@ Seller **JWT**, **approved shop**. `:shopId` must equal the authenticated user�
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
 | GET | `/api/subscription-packages` | No | Public catalog of plans (MWK, features). |
-| GET | `/api/sellers/:shopId/subscription` | 🔒 Seller | **`data.subscription`** + **`recent_subscriptions`** + **`malipo_payment_options`**. See **Subscription object** below. |
-| POST | `/api/sellers/:shopId/subscription/subscribe` | 🔒 Seller | Body: `package_id`, optional `replace_existing`, `payment_reference`, `auto_renew`. New row is **pending** until Malipo unless **`SUBSCRIPTION_AUTO_ACTIVATE=true`** (dev only) or non-empty **`payment_reference`**; response includes **`malipo_payment_options`** when awaiting payment. |
-| POST | `/api/sellers/:shopId/subscription/pay/malipo` | 🔒 Seller | Body: **`subscription_id`**, **`msisdn`**, and **one of** **`psp_id`** (1=Airtel, 2=TNM), **`payment_method_id`**, or **`provider_slug`**. On **HTTP 200**, **`data`** includes the latest **`subscription`** object. **`message`** reflects active+paid vs phone confirmation. Errors may return **`data.malipo_payment_options`**. |
-| POST | `/api/sellers/:shopId/subscription/pay/paychangu` | 🔒 Seller | Same body/behaviour as **`pay/malipo`** (alias) until native Pay Changu charge is separate. |
+| GET | `/api/sellers/:shopId/subscription` | 🔒 Seller | **`data.subscription`** + **`recent_subscriptions`** + **`paychangu_payment_options`**. See **Subscription object** below. |
+| POST | `/api/sellers/:shopId/subscription/subscribe` | 🔒 Seller | Body: `package_id`, optional `replace_existing`, `payment_reference`, `auto_renew`. New row is **pending** until Pay Changu confirms unless **`SUBSCRIPTION_AUTO_ACTIVATE=true`** (dev only) or non-empty **`payment_reference`**; response includes **`paychangu_payment_options`** when awaiting payment. |
+| POST | `/api/sellers/:shopId/subscription/pay/paychangu` | 🔒 Seller | Body: **`subscription_id`**, **`package_id`**, **`tx_ref`**. Server re-verifies **`tx_ref`** with Pay Changu, checks it matches this subscription/amount, then activates on success. On **HTTP 200**, **`data`** includes the latest **`subscription`** object. |
 | POST | `/api/sellers/:shopId/subscription/cancel` | 🔒 Seller | Body: optional `immediately`. |
 | POST | `/api/sellers/:shopId/subscription/resume` | 🔒 Seller | Undo cancel-at-period-end. |
 
@@ -922,11 +917,11 @@ Seller **JWT**, **approved shop**. `:shopId` must equal the authenticated user�
 | **`subscribed`** | **`true`** only when **`status`** is **`active`**, **`payment_status`** is **`paid`**, and the period end date has not passed. |
 | `package` | Plan details (`price_mwk`, features, …). |
 
-**Typical Malipo flow**
+**Typical Pay Changu flow (seller subscription)**
 
 1. Do not set **`SUBSCRIPTION_AUTO_ACTIVATE=true`** in production (leave unset so subscribe stays pending until payment).
-2. Subscribe → **`subscription.id`** + **`pending_payment`** + **`malipo_payment_options`**.
-3. **`pay/malipo`** → if Malipo’s JSON response already reports success/paid, the server may set **`active`** + **`paid`** immediately and return **`data.subscription.subscribed: true`**; otherwise the customer confirms on the phone → **`POST /api/webhooks/malipo`** → same activation → poll **`GET .../subscription`** (or use **`data.subscription`** on the pay response) until **`subscribed: true`**.
+2. Subscribe → **`subscription.id`** + **`pending_payment`** + **`paychangu_payment_options`**.
+3. Client completes payment with the Pay Changu SDK, then calls **`pay/paychangu`** with the resulting **`tx_ref`** → server verifies with Pay Changu and, on success, sets **`active`** + **`paid`** and returns **`data.subscription.subscribed: true`**.
 
 ---
 

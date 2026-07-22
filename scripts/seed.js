@@ -589,8 +589,7 @@ const seedDatabase = async () => {
 
     console.log('─── 9. Payment Methods ───\n');
     const paymentMethodsData = [
-      { name: 'Airtel Money', slug: 'airtel', psp_id: 1, provider: 'malipo', icon: 'airtel', is_active: true, sort_order: 1 },
-      { name: 'TNM Mpamba',   slug: 'tnm',    psp_id: 2, provider: 'malipo', icon: 'tnm',    is_active: true, sort_order: 2 }
+      { name: 'Airtel Money', slug: 'airtel', psp_id: 1, provider: 'airtel', icon: 'airtel', is_active: true, sort_order: 1 }
     ];
     for (const pm of paymentMethodsData) {
       await PaymentMethod.findOrCreate({ where: { slug: pm.slug }, defaults: pm });

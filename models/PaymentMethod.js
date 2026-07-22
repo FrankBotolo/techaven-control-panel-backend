@@ -19,12 +19,12 @@ const PaymentMethod = sequelize.define('PaymentMethod', {
   psp_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    comment: 'Malipo PSP: 1=Airtel, 2=TNM'
+    comment: 'PSP id: 1=Airtel'
   },
   provider: {
     type: DataTypes.STRING(50),
     allowNull: false,
-    defaultValue: 'malipo'
+    defaultValue: 'airtel'
   },
   icon: {
     type: DataTypes.STRING(50),

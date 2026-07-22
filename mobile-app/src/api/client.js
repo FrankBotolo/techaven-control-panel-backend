@@ -96,7 +96,7 @@ export const orders = {
   getAll: (params) => client.get('/orders', { params }),
   getById: (id) => client.get(`/orders/${id}`),
   create: (body) => client.post('/orders', body),
-  payWithMalipo: (id, body) => client.post(`/orders/${id}/pay/malipo`, body),
+  payWithAirtel: (id, body) => client.post(`/orders/${id}/pay/airtel`, body),
   cancel: (id, body) => client.post(`/orders/${id}/cancel`, body),
 };
 export const paymentMethods = {

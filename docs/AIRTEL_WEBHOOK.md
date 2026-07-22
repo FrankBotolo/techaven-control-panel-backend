@@ -1,0 +1,109 @@
+# Airtel Money integration (direct)
+
+## Overview
+
+Airtel Money is the only mobile-money payment method in this app — payments go **directly** to Airtel's Collection API (Airtel Africa Open API), with no aggregator in between. Two halves:
+
+- **Outbound push** — `POST /api/orders/:id/pay/airtel` initiates a payment prompt on the customer's phone. Handler: [`controllers/OrderController.js`](../controllers/OrderController.js) (`payWithAirtel`), using [`utils/airtelCollect.js`](../utils/airtelCollect.js) for the OAuth2 + Collection API call.
+- **Inbound webhook** — Airtel calls back once the customer confirms (or the payment fails/times out). Handler: [`controllers/AirtelWebhookController.js`](../controllers/AirtelWebhookController.js). Every inbound call is persisted to the `airtel_transactions` table regardless of outcome, for the admin transaction log.
+
+Register the callback URL in the **Airtel Money developer portal (Malawi)** merchant account under your Collection API app.
+
+## Initiating a payment (outbound)
+
+```
+POST /api/orders/:id/pay/airtel
+Body: { "msisdn": "0991234567" }
+```
+
+- Looks up the order, requires it to belong to the requesting user and not already be paid.
+- Fetches an OAuth2 token (`POST {base}/auth/oauth2/token`, cached in memory until near expiry) and pushes a Collection request (`POST {base}/merchant/v1/payments/`) with `reference: order.order_number` and a freshly generated `transaction.id`.
+- Base URL is staging (`openapiuat.airtel.africa`) unless `AIRTEL_ENV=production` (`openapi.airtel.africa`).
+- Returns 500 with a clear message if `AIRTEL_CLIENT_ID`/`AIRTEL_CLIENT_SECRET` aren't set.
+
+## Callback URL (inbound)
+
+```
+{APP_URL}/api/webhooks/airtel
+```
+
+`APP_URL` comes from `.env`. Currently set to:
+
+```
+http://localhost:8000/api/webhooks/airtel
+```
+
+**Local/dev only** — Airtel's servers cannot reach `localhost` directly. To actually receive callbacks before going live, expose your local server with a tunnel (e.g. `ngrok http 8000`) and register the resulting `https://xxxx.ngrok.app/api/webhooks/airtel` URL in the portal instead.
+
+**Before going live:** set `APP_URL` to your real public HTTPS domain and register `https://<your-domain>/api/webhooks/airtel` in the portal — Airtel requires a public HTTPS endpoint, it will not deliver to `http://` or unreachable hosts.
+
+## Required environment variables
+
+| Variable | Purpose |
+|---|---|
+| `AIRTEL_CLIENT_ID` / `AIRTEL_CLIENT_SECRET` | OAuth2 client credentials for the outbound Collection API (token + push). Required for `pay/airtel` to work. |
+| `AIRTEL_ENV` | `production` to use Airtel's live API; anything else (or unset) uses the staging/UAT environment. |
+| `AIRTEL_WEBHOOK_SECRET` | HMAC-SHA256 secret used to verify the `x-airtel-signature` header on inbound callbacks (get this from the Airtel developer portal when you register the callback). If unset, the endpoint accepts unsigned requests and logs a warning — set this before going live. |
+
+## What Airtel sends after a transaction
+
+Airtel Money's Collection API posts a JSON body to the callback URL once a transaction reaches a final (or intermediate) state. The handler accepts both shapes below.
+
+**Nested shape (standard Airtel Africa Collection callback):**
+
+```json
+{
+  "transaction": {
+    "id": "CI250722.1344.B0AE1B",
+    "message": "Paid MWK 5000 to Chiwaya Merchant",
+    "status_code": "TS",
+    "airtel_money_id": "MP250722.1345.A01234"
+  },
+  "reference": "ORD-000123",
+  "msisdn": "265991234567",
+  "amount": "5000"
+}
+```
+
+**Flat shape (also accepted, some integrations use this form):**
+
+```json
+{
+  "transaction_id": "CI250722.1344.B0AE1B",
+  "status_code": "TS",
+  "status": "SUCCESS",
+  "reference": "ORD-000123",
+  "msisdn": "265991234567",
+  "amount": "5000",
+  "message": "Paid MWK 5000 to Chiwaya Merchant"
+}
+```
+
+### Field reference
+
+| Field | Meaning |
+|---|---|
+| `transaction.id` / `transaction_id` | Airtel's transaction reference for this attempt — matches the `transaction.id` sent in the outbound push. |
+| `transaction.airtel_money_id` / `airtel_money_id` | Airtel Money's internal reference (may differ from `transaction.id`). |
+| `transaction.status_code` / `status_code` | `TS` = success, `TF` = failed, `TIP` = in progress, `TA` = ambiguous/abandoned. Only `TS` (or a `status`/`Status` string of `success`/`successful`/`succeeded`/`completed`/`complete`/`paid`) is treated as a successful payment. |
+| `transaction.message` / `message` | Human-readable status message from Airtel. |
+| `reference` / `merchant_txn_id` / `order_id` / `order_number` | **Your** merchant reference — the same `order.order_number` sent in the outbound push, or an encoded shop-subscription reference (see `parseSubscriptionMerchantRef`). This is how the webhook finds what to mark as paid. |
+| `msisdn` / `phone` / `mobile` | Payer's phone number. |
+| `amount` | Transaction amount (commas are stripped before parsing). |
+
+### Signature header
+
+`x-airtel-signature`: HMAC-SHA256 hex digest of the **raw request body**, signed with `AIRTEL_WEBHOOK_SECRET`. Verified in [`utils/airtelWebhookSignature.js`](../utils/airtelWebhookSignature.js) using a timing-safe comparison.
+
+## What happens on receipt
+
+1. Payload is captured for debugging (`captureWebhook`) and upserted into `airtel_transactions` (keyed by `transaction_id`), regardless of outcome.
+2. If `WEBHOOK_CAPTURE_ONLY=true`, processing stops here (log-only mode).
+3. Non-success `status_code`/`status` → **200 OK**, no state change, `processing_state: 'received'`.
+4. `reference` resolves to a **shop subscription** merchant ref → activates the subscription via `finalizePendingShopSubscriptionPayment` (amount-checked); `processing_state` becomes `subscription_activated`, `amount_mismatch`, or `subscription_not_finalized`.
+5. Otherwise `reference` is looked up as an **order** (`order_number` or numeric `id`) → marks it paid via `completeOrderPaidWithEscrow`; `processing_state` becomes `order_paid` or `order_not_found`.
+6. Always responds **200 OK** on recognized-but-unprocessable cases (missing order, already paid, etc.) so Airtel doesn't retry indefinitely — except a genuinely missing `reference`, which returns **400**, and unexpected errors, which return **500**.
+
+## Note on source of truth
+
+The exact payload Airtel Money Malawi sends is defined in your merchant account's **Collection API** section of the developer portal (developers.airtel.africa) — that page requires an authenticated merchant login, so it couldn't be fetched directly here. The shapes documented above are the standard Airtel Africa Collection callback format used consistently across markets (Kenya, Uganda, Rwanda, Zambia, Malawi) in public SDKs and integration guides, and match what this handler already parses. **Confirm against your actual portal page**, and update `parseAirtelPayload` in `AirtelWebhookController.js` / the request shape in `utils/airtelCollect.js` if Malawi's payload differs in practice.

@@ -11,7 +11,7 @@ const CAPTURE_DIR = path.join(__dirname, '..', 'logs', 'webhook-captures');
  * Captures everything a webhook sends for inspection.
  * Writes to logs/webhook-captures/{webhookName}-{timestamp}.json
  *
- * @param {string} webhookName - e.g. 'malipo'
+ * @param {string} webhookName - e.g. 'airtel'
  * @param {object} req - Express request
  */
 export function captureWebhook(webhookName, req) {

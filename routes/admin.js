@@ -7,7 +7,6 @@ import * as DashboardController from '../controllers/DashboardController.js';
 import * as OrderController from '../controllers/OrderController.js';
 import * as AdminWithdrawalController from '../controllers/AdminWithdrawalController.js';
 import * as AdminCourierController from '../controllers/AdminCourierController.js';
-import * as AdminMalipoController from '../controllers/AdminMalipoController.js';
 import * as AdminOnboardingSlideController from '../controllers/AdminOnboardingSlideController.js';
 import * as AdminBannerController from '../controllers/AdminBannerController.js';
 import * as AdminAuditLogController from '../controllers/AdminAuditLogController.js';
@@ -72,8 +71,6 @@ router.post('/courier-services', AdminCourierController.createCourierService);
 router.patch('/courier-services/:id', AdminCourierController.updateCourierService);
 router.delete('/courier-services/:id', AdminCourierController.deleteCourierService);
 
-// Malipo transactions - View all Malipo payment webhooks and status
-router.get('/malipo-transactions', AdminMalipoController.listMalipoTransactions);
 
 // Onboarding slides - CRUD for app onboarding carousel
 router.get('/onboarding-slides', AdminOnboardingSlideController.list);

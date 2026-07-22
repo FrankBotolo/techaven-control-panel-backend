@@ -2,7 +2,7 @@ import db from '../models/index.js';
 import { Op } from 'sequelize';
 import { logAudit, auditContext } from '../utils/audit.js';
 import { sendNotificationEmail } from '../utils/notificationHelper.js';
-import { getMalipoCredentials, postMalipoCollect } from '../utils/malipoCollect.js';
+import { getAirtelCredentials, postAirtelCollect } from '../utils/airtelCollect.js';
 import { getSellerCommissionPercent, computeSellerEscrowSplit } from '../utils/sellerCommission.js';
 import { verifyPayChanguTxRef, paychanguVerifyDataIndicatesPaid } from '../utils/paychanguVerify.js';
 import { completeOrderPaidWithEscrow } from '../utils/orderEscrowFinalize.js';
@@ -253,14 +253,12 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    const validPaymentMethods = ['airtel', 'tnm'];
+    const validPaymentMethods = ['airtel'];
     let paymentMethodValue = payment_method || payment_method_id || 'airtel';
-    if (payment_method_id && validPaymentMethods.includes(payment_method_id)) {
-      paymentMethodValue = payment_method_id;
-    } else if (payment_method_id === 'airtel_money') {
+    if (payment_method_id === 'airtel_money') {
       paymentMethodValue = 'airtel';
-    } else if (payment_method_id === 'tnm' || payment_method_id === 'tnm_mpamba' || payment_method_id === 'mpamba') {
-      paymentMethodValue = 'tnm';
+    } else if (payment_method_id && validPaymentMethods.includes(payment_method_id)) {
+      paymentMethodValue = payment_method_id;
     } else {
       paymentMethodValue = 'airtel';
     }
@@ -1617,15 +1615,14 @@ export const payWithWallet = async (req, res) => {
   }
 };
 
-/** POST /api/orders/:id/pay/malipo — initiate Malipo mobile money payment (Airtel or TNM)
- * Body: { msisdn: "0980256737", psp_id: 1 | 2 }
- * psp_id: 1 = Airtel, 2 = TNM
+/** POST /api/orders/:id/pay/airtel — initiate a direct Airtel Money Collection push
+ * Body: { msisdn: "0991234567" }
  */
-export const payWithMalipo = async (req, res) => {
+export const payWithAirtel = async (req, res) => {
   try {
     const userId = req.user.id;
     const id = resolveOrderId(req);
-    const { msisdn, psp_id } = req.body;
+    const { msisdn } = req.body;
 
     const order = await Order.findByPk(id);
     if (!order || order.user_id !== userId) {
@@ -1643,58 +1640,47 @@ export const payWithMalipo = async (req, res) => {
       });
     }
 
-    if (!msisdn || !psp_id) {
+    if (!msisdn) {
       return res.status(400).json({
         success: false,
-        message: 'msisdn and psp_id are required. psp_id: 1 = Airtel, 2 = TNM',
+        message: 'msisdn is required',
         data: null
       });
     }
 
-    const pspId = parseInt(psp_id, 10);
-    if (pspId !== 1 && pspId !== 2) {
-      return res.status(400).json({
-        success: false,
-        message: 'psp_id must be 1 (Airtel) or 2 (TNM)',
-        data: null
-      });
-    }
-
-    const { apiKey, appId } = getMalipoCredentials();
-    if (!apiKey || !appId) {
+    const { clientId, clientSecret } = getAirtelCredentials();
+    if (!clientId || !clientSecret) {
       return res.status(500).json({
         success: false,
-        message: 'Malipo payment is not configured. Set MALIPO_API_KEY and MALIPO_APP_ID in .env',
+        message: 'Airtel payment is not configured. Set AIRTEL_CLIENT_ID and AIRTEL_CLIENT_SECRET in .env',
         data: null
       });
     }
 
     const amount = Math.round(parseFloat(order.total_amount) || 0);
-    const { response, data } = await postMalipoCollect({
-      order_id: order.order_number,
-      merchant_txn_id: order.order_number,
+    const { response, data, transactionId } = await postAirtelCollect({
+      reference: order.order_number,
       msisdn,
-      amount,
-      psp_id: pspId
+      amount
     });
 
     if (response.ok) {
       await logAudit({
         ...auditContext(req),
-        action: 'customer.order.pay_malipo_initiate',
+        action: 'customer.order.pay_airtel_initiate',
         actor_user_id: userId,
         target_type: 'order',
         target_id: order.id,
-        metadata: { order_number: order.order_number, amount, psp_id: pspId },
+        metadata: { order_number: order.order_number, amount, transaction_id: transactionId },
         ip_address: req.ip
       });
     }
 
     if (!response.ok) {
-      console.error('Malipo collect error:', response.status, data);
+      console.error('Airtel collect error:', response.status, data);
       return res.status(response.status >= 400 && response.status < 500 ? response.status : 500).json({
         success: false,
-        message: data?.message || data?.error || 'Malipo payment request failed',
+        message: data?.message || data?.error || 'Airtel payment request failed',
         data: null,
         error: data?.message || data?.error
       });
@@ -1707,14 +1693,13 @@ export const payWithMalipo = async (req, res) => {
         order_id: `ord_${order.id}`,
         order_number: order.order_number,
         amount,
-        psp_id: pspId,
-        provider: pspId === 1 ? 'airtel' : 'tnm',
-        ...(data?.transaction_id && { transaction_id: data.transaction_id }),
+        provider: 'airtel',
+        transaction_id: transactionId,
         ...data
       }
     });
   } catch (error) {
-    console.error('Pay with Malipo error:', error);
+    console.error('Pay with Airtel error:', error);
     return res.status(500).json({
       success: false,
       message: 'Payment initiation failed',

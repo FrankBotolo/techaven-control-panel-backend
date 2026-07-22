@@ -4,7 +4,7 @@ import { verifyPayChanguTxRef, paychanguVerifyDataIndicatesPaid } from '../utils
 import { verifyPayChanguWebhookSignature } from '../utils/paychanguWebhookSignature.js';
 import { completeOrderPaidWithEscrow, findOrderByPaymentRef } from '../utils/orderEscrowFinalize.js';
 import { parseSubscriptionMerchantRef } from '../utils/paychanguRefs.js';
-import { finalizePendingShopSubscriptionFromMalipo } from '../utils/subscriptionMalipoActivate.js';
+import { finalizePendingShopSubscriptionPayment } from '../utils/subscriptionPaymentActivate.js';
 
 const { PayChanguCallback, Order, ShopSubscription, SubscriptionPackage } = db;
 
@@ -225,8 +225,7 @@ async function applyPayChanguVerifyResult(req, res, row, tx_ref, verify, channel
     if (resolved.kind === 'subscription' && resolved.subscription) {
       const sub = resolved.subscription;
       const body = verifyBodyForSubscription(data);
-      const result = await finalizePendingShopSubscriptionFromMalipo(sub, body, {
-        orderRef: tx_ref,
+      const result = await finalizePendingShopSubscriptionPayment(sub, body, {
         source: auditTag,
         ip_address: req.ip,
         actor_user_id: null

@@ -6,7 +6,7 @@ import { logAudit } from './audit.js';
 const { Order, Wallet, WalletTransaction, Escrow, User, Notification } = db;
 
 /**
- * Mark order paid, create escrow, credit admin wallet, notify — same as Malipo webhook success path.
+ * Mark order paid, create escrow, credit admin wallet, notify — shared by all payment webhooks' success path.
  * @param {import('sequelize').Model} order - Sequelize Order with seller + items if needed for email
  * @param {{ paymentMethod: string, paymentReference: string | null, source: string, req: import('express').Request }} opts
  */
@@ -115,7 +115,7 @@ export async function completeOrderPaidWithEscrow(order, opts) {
 }
 
 /**
- * Load order for Pay Changu / Malipo-style reference (order_number or numeric id).
+ * Load order for Pay Changu / Airtel-style reference (order_number or numeric id).
  * @param {string} ref
  */
 export async function findOrderByPaymentRef(ref) {

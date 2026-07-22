@@ -3,7 +3,7 @@ import { Op } from 'sequelize';
 import { captureWebhook } from '../utils/webhookCapture.js';
 import { verifyAirtelWebhookSignature } from '../utils/airtelWebhookSignature.js';
 import { parseSubscriptionMerchantRef } from '../utils/paychanguRefs.js';
-import { finalizePendingShopSubscriptionFromMalipo } from '../utils/subscriptionMalipoActivate.js';
+import { finalizePendingShopSubscriptionPayment } from '../utils/subscriptionPaymentActivate.js';
 import { completeOrderPaidWithEscrow } from '../utils/orderEscrowFinalize.js';
 
 const { Order, User, AirtelTransaction, ShopSubscription } = db;
@@ -163,15 +163,13 @@ export const webhook = async (req, res) => {
         return res.status(200).json({ success: true, message: 'Webhook received (subscription not found)' });
       }
 
-      const malipoStyleBody = {
+      const paymentBody = {
         amount,
         transaction_id: transactionId,
-        status: statusRaw,
-        psp_id: 1
+        status: statusRaw
       };
 
-      const result = await finalizePendingShopSubscriptionFromMalipo(sub, malipoStyleBody, {
-        orderRef: reference,
+      const result = await finalizePendingShopSubscriptionPayment(sub, paymentBody, {
         source: 'airtel_webhook',
         ip_address: req.ip,
         actor_user_id: null

@@ -60,7 +60,7 @@ Customers do **not** have a wallet; they pay directly at checkout. Sellers get a
 
 - The customer pays the **order total** using their chosen method:
   - **Card** – payment gateway / POS.
-  - **Mobile money** – e.g. Airtel Money, TNM.
+  - **Mobile money** – Airtel Money.
   - **Bank transfer** – bank app or branch.
   - **Cash on delivery** – pay when the parcel arrives.
 

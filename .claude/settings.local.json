@@ -2,7 +2,15 @@
   "permissions": {
     "allow": [
       "Bash(npm install *)",
-      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\HomePC\\\\Desktop\\\\Techaven\\\\chiwaya-main\\\\server\" -Force)"
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\HomePC\\\\Desktop\\\\Techaven\\\\chiwaya-main\\\\server\" -Force)",
+      "PowerShell(Get-Content .env | Where-Object { $_ -match '^AIRTEL_' } | ForEach-Object { $parts = $_ -split '=',2; $name = $parts[0]; $val = $parts[1]; if \\([string]::IsNullOrWhiteSpace\\($val\\)\\) { \"$name = \\(empty\\)\" } else { \"$name = \\(set, length $\\($val.Length\\)\\)\" } })",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:medium.com)",
+      "WebFetch(domain:developers.airtel.africa)",
+      "WebFetch(domain:gbox.rw)",
+      "Bash(xargs grep -H \"CREATE TABLE\")",
+      "Bash(xargs grep -lin \"malipo\")"
     ]
   }
 }

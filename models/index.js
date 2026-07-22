@@ -23,7 +23,6 @@ import CourierService from './CourierService.js';
 import DeliveryAgent from './DeliveryAgent.js';
 import DeliveryJob from './DeliveryJob.js';
 import PaymentMethod from './PaymentMethod.js';
-import MalipoTransaction from './MalipoTransaction.js';
 import PayChanguCallback from './PayChanguCallback.js';
 import AirtelTransaction from './AirtelTransaction.js';
 import OnboardingSlide from './OnboardingSlide.js';
@@ -165,8 +164,8 @@ User.hasMany(Dispute, { foreignKey: 'seller_id', as: 'seller_disputes' });
 Order.belongsTo(CourierService, { foreignKey: 'courier_service_id', as: 'courierService' });
 CourierService.hasMany(Order, { foreignKey: 'courier_service_id', as: 'orders' });
 
-// Payment methods (Malipo: Airtel psp_id=1, TNM psp_id=2)
-// No FK - payment_method on Order stores slug (airtel, tnm)
+// Payment methods (Airtel psp_id=1)
+// No FK - payment_method on Order stores slug (airtel)
 
 DeliveryAgent.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 User.hasOne(DeliveryAgent, { foreignKey: 'user_id', as: 'delivery_agent' });
@@ -175,8 +174,6 @@ DeliveryJob.belongsTo(DeliveryAgent, { foreignKey: 'agent_id', as: 'agent' });
 Order.hasOne(DeliveryJob, { foreignKey: 'order_id', as: 'delivery_job' });
 DeliveryAgent.hasMany(DeliveryJob, { foreignKey: 'agent_id', as: 'jobs' });
 
-MalipoTransaction.belongsTo(Order, { foreignKey: 'order_id', as: 'order' });
-Order.hasMany(MalipoTransaction, { foreignKey: 'order_id', as: 'malipo_transactions' });
 AirtelTransaction.belongsTo(Order, { foreignKey: 'order_id', as: 'order' });
 Order.hasMany(AirtelTransaction, { foreignKey: 'order_id', as: 'airtel_transactions' });
 AirtelTransaction.belongsTo(ShopSubscription, { foreignKey: 'shop_subscription_id', as: 'shop_subscription' });
@@ -186,11 +183,6 @@ Order.hasMany(PayChanguCallback, { foreignKey: 'order_id', as: 'paychangu_callba
 PayChanguCallback.belongsTo(ShopSubscription, {
   foreignKey: 'shop_subscription_id',
   as: 'shop_subscription'
-});
-MalipoTransaction.belongsTo(ShopSubscription, { foreignKey: 'shop_subscription_id', as: 'shop_subscription' });
-ShopSubscription.hasMany(MalipoTransaction, {
-  foreignKey: 'shop_subscription_id',
-  as: 'malipo_transactions'
 });
 
 const db = {
@@ -220,7 +212,6 @@ const db = {
   DeliveryAgent,
   DeliveryJob,
   PaymentMethod,
-  MalipoTransaction,
   PayChanguCallback,
   AirtelTransaction,
   OnboardingSlide,

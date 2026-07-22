@@ -12,7 +12,7 @@ API documentation for the checkout and order flow in the mobile app (Flutter).
 ```
 1. Get Cart                    → GET /cart
 2. Get Shipping Addresses      → GET /shipping-addresses
-3. Get Payment Methods         → GET /payment-methods (network labels; seller subs use psp_id — customer orders use Pay Changu)
+3. Get Payment Methods         → GET /payment-methods (Airtel Money only; customer orders can pay directly via Airtel or Pay Changu)
 4. (Optional) Get Couriers     → GET /courier-services
 5. Create Order                → POST /orders
 6. Pay with Pay Changu         → Hosted checkout / SDK, then POST /orders/:id/pay/paychangu { "tx_ref": "..." } (and/or rely on POST /webhooks/paychangu)
@@ -247,7 +247,7 @@ Content-Type: application/json
 ```
 
 **Legacy `payment_method_id` on create (if used):**  
-`airtel`, `tnm` — prefer **`courier_service_id`** + Pay Changu for payment.
+`airtel` — prefer **`courier_service_id`** + **`POST /orders/:id/pay/airtel`** or Pay Changu for payment.
 
 ---
 
@@ -341,7 +341,7 @@ Content-Type: application/json
 GET /api/payment-methods
 ```
 
-Returns **`available_providers`** (Airtel/TNM labels, `psp_id`). Used mainly for **seller subscription** pay endpoints; customer order payment is Pay Changu as above.
+Returns **`available_providers`** (Airtel Money only, `psp_id`). Customer orders can pay directly via **`POST /orders/:id/pay/airtel`** or Pay Changu as above; seller subscriptions use Pay Changu.
 
 **Response:**
 ```json
@@ -351,8 +351,7 @@ Returns **`available_providers`** (Airtel/TNM labels, `psp_id`). Used mainly for
   "data": {
     "payment_methods": [],
     "available_providers": [
-      { "id": 1, "name": "Airtel Money", "slug": "airtel", "psp_id": 1, "provider": "paychangu", "icon": "airtel" },
-      { "id": 2, "name": "TNM Mpamba", "slug": "tnm", "psp_id": 2, "provider": "paychangu", "icon": "tnm" }
+      { "id": 1, "name": "Airtel Money", "slug": "airtel", "psp_id": 1, "provider": "airtel", "icon": "airtel" }
     ]
   }
 }

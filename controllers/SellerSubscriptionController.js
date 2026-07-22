@@ -10,7 +10,7 @@ import { verifyPayChanguTxRef, paychanguVerifyDataIndicatesPaid } from '../utils
 import { subscriptionPayChanguChargeId, parseSubscriptionMerchantRef } from '../utils/paychanguRefs.js';
 import { getPayChanguBackendCallbackUrl, getPayChanguWebhookUrl } from '../utils/paychanguUrls.js';
 import { getPayChanguPaymentOptions } from '../utils/paychanguProviders.js';
-import { finalizePendingShopSubscriptionFromMalipo } from '../utils/subscriptionMalipoActivate.js';
+import { finalizePendingShopSubscriptionPayment } from '../utils/subscriptionPaymentActivate.js';
 
 const { ShopSubscription, SubscriptionPackage, Shop } = db;
 
@@ -496,12 +496,10 @@ export const payWithPayChangu = async (req, res) => {
     const payBody = {
       amount: data?.amount,
       transaction_id: data?.reference,
-      status: data?.status,
-      psp_id: undefined
+      status: data?.status
     };
 
-    const result = await finalizePendingShopSubscriptionFromMalipo(sub, payBody, {
-      orderRef: tx_ref,
+    const result = await finalizePendingShopSubscriptionPayment(sub, payBody, {
       source: 'paychangu_app_confirm',
       ip_address: req.ip,
       actor_user_id: req.user.id

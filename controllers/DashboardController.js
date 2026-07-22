@@ -13,22 +13,13 @@ const {
   Notification,
   Order,
   OrderItem,
-  MalipoTransaction
+  AirtelTransaction
 } = db;
 
 const PAID_ORDER_BASE = {
   payment_status: 'paid',
   status: { [Op.ne]: 'cancelled' }
 };
-
-function malipoSubscriptionPaidWhere() {
-  const states = ['success', 'successful', 'succeeded', 'completed', 'complete', 'paid'];
-  return {
-    [Op.or]: states.map((s) =>
-      db.sequelize.where(db.sequelize.fn('LOWER', db.sequelize.col('status')), s)
-    )
-  };
-}
 
 async function aggregatePaidLineRevenue(fromDate, toDate) {
   const orderWhere = { ...PAID_ORDER_BASE };
@@ -226,7 +217,7 @@ export const getDashboard = async (req, res) => {
     const subscriptionMonthWhere = {
       shop_subscription_id: { [Op.ne]: null },
       createdAt: { [Op.between]: [monthStart, now] },
-      ...malipoSubscriptionPaidWhere()
+      processing_state: 'subscription_activated'
     };
 
     const [
@@ -247,8 +238,8 @@ export const getDashboard = async (req, res) => {
       aggregatePaidLineRevenueByShop(),
       aggregatePaidLineRevenueByShop(monthStart, now),
       Shop.findAll({ attributes: ['id', 'name', 'logo'], order: [['name', 'ASC']] }),
-      MalipoTransaction.sum('amount', { where: subscriptionMonthWhere }),
-      MalipoTransaction.count({ where: subscriptionMonthWhere })
+      AirtelTransaction.sum('amount', { where: subscriptionMonthWhere }),
+      AirtelTransaction.count({ where: subscriptionMonthWhere })
     ]);
 
     const byShopAllTime = mergeShopSalesRows(allShopsList, shopMapAllTime).sort(
@@ -341,7 +332,7 @@ export const getDashboard = async (req, res) => {
         month: nowUtc.format('YYYY-MM'),
         timezone: 'UTC',
         basis:
-          'Malipo payments linked to shop subscriptions (successful webhook statuses only), month to date.',
+          'Airtel Money payments linked to shop subscriptions (activated subscriptions only), month to date.',
         subscription_payments_mwk: parseFloat(subscriptionIncomeMonth) || 0,
         subscription_transaction_count: subscriptionTxCountMonth
       },

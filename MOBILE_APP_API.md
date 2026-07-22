@@ -525,22 +525,14 @@ All require authentication.
         "name": "Airtel Money",
         "slug": "airtel",
         "psp_id": 1,
-        "provider": "paychangu",
+        "provider": "airtel",
         "icon": "airtel"
-      },
-      {
-        "id": 2,
-        "name": "TNM Mpamba",
-        "slug": "tnm",
-        "psp_id": 2,
-        "provider": "paychangu",
-        "icon": "tnm"
       }
     ]
   }
 }
 ```
-- Use `psp_id` when calling the pay endpoint.
+- Customer orders can pay directly via `POST /orders/:id/pay/airtel` (body: `msisdn`) or Pay Changu.
 
 ---
 
@@ -565,7 +557,7 @@ All require authentication.
 }
 ```
 - **Required:** `shipping_address_id`, `items`
-- **payment_method_id:** `"airtel"` or `"tnm"`
+- **payment_method_id:** `"airtel"`
 
 **Response (201):**
 ```json
@@ -826,5 +818,5 @@ All require authentication.
 - [ ] Add `Authorization: Bearer <token>` to all protected requests
 - [ ] Handle 401 by redirecting to login or refreshing token
 - [ ] After Pay Changu: call `POST /orders/:id/pay/paychangu` with `tx_ref` (or rely on `POST /webhooks/paychangu`)
-- [ ] Use `GET /orders/mine/paid` for paid-order list; `psp_id` from `GET /payment-methods` is for **seller subscription** pay flows
+- [ ] Use `GET /orders/mine/paid` for paid-order list; `psp_id` from `GET /payment-methods` is for `POST /orders/:id/pay/airtel`
 - [ ] Use `items[].id` from cart for update/delete (e.g. `item_1` or `1`)
