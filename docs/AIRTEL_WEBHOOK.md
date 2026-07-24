@@ -102,7 +102,7 @@ Airtel Money's Collection API posts a JSON body to the callback URL once a trans
 3. Non-success `status_code`/`status` → **200 OK**, no state change, `processing_state: 'received'`.
 4. `reference` resolves to a **shop subscription** merchant ref → activates the subscription via `finalizePendingShopSubscriptionPayment` (amount-checked); `processing_state` becomes `subscription_activated`, `amount_mismatch`, or `subscription_not_finalized`.
 5. Otherwise `reference` is looked up as an **order** (`order_number` or numeric `id`) → marks it paid via `completeOrderPaidWithEscrow`; `processing_state` becomes `order_paid` or `order_not_found`.
-6. Always responds **200 OK** on recognized-but-unprocessable cases (missing order, already paid, etc.) so Airtel doesn't retry indefinitely — except a genuinely missing `reference`, which returns **400**, and unexpected errors, which return **500**.
+6. Always responds **200 OK** on recognized-but-unprocessable cases (missing order, already paid, missing `reference` — e.g. Airtel's connectivity-test payload `{ transaction: { id, status_code: "TS", ... } }` with no reference — etc.) so Airtel doesn't retry indefinitely or disable the callback URL. Only unexpected errors return **500**.
 
 ## Note on source of truth
 

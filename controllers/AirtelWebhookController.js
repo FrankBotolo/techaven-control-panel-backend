@@ -148,8 +148,18 @@ export const webhook = async (req, res) => {
     }
 
     if (!reference) {
-      console.log('[Airtel webhook] Rejected: missing reference');
-      return res.status(400).json({ success: false, message: 'Missing reference / merchant reference in payload' });
+      // Airtel sends this shape for connectivity/test callbacks too — e.g. { transaction: { id, status_code: "TS", ... } }
+      // with no merchant reference. There's nothing to reconcile, but it's not malformed — always ack with 200
+      // so Airtel doesn't treat the callback URL as broken.
+      console.log('[Airtel webhook] No reference in payload (test ping or unreconcilable callback):', transactionId);
+      if (transactionId) {
+        const txRow = await AirtelTransaction.findOne({ where: { transaction_id: transactionId } });
+        if (txRow) {
+          txRow.processing_state = 'no_reference';
+          await txRow.save();
+        }
+      }
+      return res.status(200).json({ success: true, message: 'Webhook received (no reference)' });
     }
 
     // Check if this is a shop subscription payment
