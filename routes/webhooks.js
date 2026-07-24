@@ -42,5 +42,8 @@ router.post('/paychangu', PayChanguCallbackController.webhook);
 router.get('/paychangu/callback', PayChanguCallbackController.callback);
 /** POST — Airtel Money direct API webhook. Configure callback URL in Airtel Money developer portal. */
 router.post('/airtel', captureRawBodyIfUnparsed, AirtelWebhookController.webhook);
+/** GET/HEAD — reachability check for the callback URL (Airtel/uptime monitors probe before delivering). */
+router.get('/airtel', (req, res) => res.status(200).json({ success: true, message: 'Airtel webhook endpoint is up' }));
+router.head('/airtel', (req, res) => res.sendStatus(200));
 
 export default router;
