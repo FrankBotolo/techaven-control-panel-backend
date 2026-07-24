@@ -50,8 +50,11 @@ function parseAirtelPayload(body) {
     body.status_code ||
     null;
 
+  // Short status keyword only (flat-shape integrations send e.g. "SUCCESS"/"FAILED" here).
+  // The nested/Malawi shape has no separate short status string, only `status_code` (TS/TF/...)
+  // and a long human-readable `message` — don't fall back to that here, it overflows the
+  // `status` column and belongs in `message` instead.
   const statusRaw =
-    (txn?.message) ||
     body.status ||
     body.Status ||
     null;
@@ -113,23 +116,29 @@ export const webhook = async (req, res) => {
     }
   }
   const parsed = parseAirtelPayload(body);
-  const { transactionId, airtelMoneyId, reference, msisdn, amount, statusCode, statusRaw, message, isSuccess } = parsed;
+  const { transactionId, airtelMoneyId, msisdn, amount, statusCode, statusRaw, message, isSuccess } = parsed;
+  let reference = parsed.reference;
 
-  // Always persist the raw webhook for the admin transaction log
+  // Always persist the raw webhook for the admin transaction log. Airtel's callback only ever
+  // echoes back `transaction.id` — never `reference` — so if a row already exists for this
+  // transaction_id (created when the push was initiated, see payWithAirtel), fall back to its
+  // stored `reference` to know which order/subscription this callback belongs to.
+  let txRow = null;
   try {
-    const existing = transactionId
+    txRow = transactionId
       ? await AirtelTransaction.findOne({ where: { transaction_id: transactionId } })
       : null;
 
-    if (existing) {
-      existing.status = statusRaw ?? existing.status;
-      existing.status_code = statusCode ?? existing.status_code;
-      existing.message = message ?? existing.message;
-      existing.amount = amount != null ? amount : existing.amount;
-      existing.raw_payload = body;
-      await existing.save();
+    if (txRow) {
+      if (!reference) reference = txRow.reference;
+      txRow.status = statusRaw ?? txRow.status;
+      txRow.status_code = statusCode ?? txRow.status_code;
+      txRow.message = message ?? txRow.message;
+      txRow.amount = amount != null ? amount : txRow.amount;
+      txRow.raw_payload = body;
+      await txRow.save();
     } else {
-      await AirtelTransaction.create({
+      txRow = await AirtelTransaction.create({
         transaction_id: transactionId,
         airtel_money_id: airtelMoneyId,
         reference,
@@ -160,16 +169,15 @@ export const webhook = async (req, res) => {
     }
 
     if (!reference) {
-      // Airtel sends this shape for connectivity/test callbacks too — e.g. { transaction: { id, status_code: "TS", ... } }
-      // with no merchant reference. There's nothing to reconcile, but it's not malformed — always ack with 200
-      // so Airtel doesn't treat the callback URL as broken.
-      console.log('[Airtel webhook] No reference in payload (test ping or unreconcilable callback):', transactionId);
-      if (transactionId) {
-        const txRow = await AirtelTransaction.findOne({ where: { transaction_id: transactionId } });
-        if (txRow) {
-          txRow.processing_state = 'no_reference';
-          await txRow.save();
-        }
+      // Airtel's callback never includes `reference` (confirmed by their own sample payload —
+      // only `transaction.{id, message, status_code, airtel_money_id}`), and no push-time row
+      // was found for this transaction.id to resolve one from either. Nothing to reconcile —
+      // could be a connectivity/test callback with a synthetic id, or a transaction we never
+      // initiated push-side.
+      console.log('[Airtel webhook] No reference resolvable (test ping or unknown transaction):', transactionId);
+      if (txRow) {
+        txRow.processing_state = 'no_reference';
+        await txRow.save();
       }
       return res.status(200).json({ success: true, message: 'Webhook received (no reference)' });
     }

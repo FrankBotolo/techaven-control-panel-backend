@@ -1665,6 +1665,18 @@ export const payWithAirtel = async (req, res) => {
     });
 
     if (response.ok) {
+      // Airtel's callback only echoes back `transaction.id` — not `reference` — so this row is
+      // the only way the webhook can later map that ID back to this order.
+      await db.AirtelTransaction.create({
+        transaction_id: transactionId,
+        reference: order.order_number,
+        order_id: order.id,
+        msisdn,
+        amount,
+        currency: 'MWK',
+        processing_state: 'push_initiated'
+      });
+
       await logAudit({
         ...auditContext(req),
         action: 'customer.order.pay_airtel_initiate',
