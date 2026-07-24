@@ -210,25 +210,25 @@ export const webhook = async (req, res) => {
         actor_user_id: null
       });
 
-      const txRow = await AirtelTransaction.findOne({
+      const subTxRow = await AirtelTransaction.findOne({
         where: { [Op.or]: [{ transaction_id: transactionId }, { reference }].filter(Boolean) },
         order: [['createdAt', 'DESC']]
       });
 
       if (result.alreadyActive) {
-        if (txRow) { txRow.processing_state = 'already_active'; await txRow.save(); }
+        if (subTxRow) { subTxRow.processing_state = 'already_active'; await subTxRow.save(); }
         return res.status(200).json({ success: true, message: 'Webhook received' });
       }
       if (!result.ok) {
         const state = result.reason === 'amount_mismatch' ? 'amount_mismatch' : 'subscription_not_finalized';
-        if (txRow) { txRow.processing_state = state; await txRow.save(); }
+        if (subTxRow) { subTxRow.processing_state = state; await subTxRow.save(); }
         return res.status(200).json({ success: true, message: 'Webhook received (subscription state)' });
       }
 
-      if (txRow) {
-        txRow.processing_state = 'subscription_activated';
-        txRow.shop_subscription_id = sub.id;
-        await txRow.save();
+      if (subTxRow) {
+        subTxRow.processing_state = 'subscription_activated';
+        subTxRow.shop_subscription_id = sub.id;
+        await subTxRow.save();
       }
       console.log('[Airtel webhook] Subscription activated:', reference, 'id:', sub.id);
       return res.status(200).json({ success: true, message: 'Webhook processed (subscription)' });
@@ -245,11 +245,11 @@ export const webhook = async (req, res) => {
 
     if (!order) {
       console.log('[Airtel webhook] Order not found for:', reference);
-      const txRow = await AirtelTransaction.findOne({
+      const notFoundTxRow = await AirtelTransaction.findOne({
         where: { reference },
         order: [['createdAt', 'DESC']]
       });
-      if (txRow) { txRow.processing_state = 'order_not_found'; await txRow.save(); }
+      if (notFoundTxRow) { notFoundTxRow.processing_state = 'order_not_found'; await notFoundTxRow.save(); }
       return res.status(200).json({ success: true, message: 'Webhook received (order not found)' });
     }
 
@@ -265,7 +265,7 @@ export const webhook = async (req, res) => {
       req
     });
 
-    const txRow = await AirtelTransaction.findOne({
+    const paidTxRow = await AirtelTransaction.findOne({
       where: {
         [Op.or]: [
           transactionId ? { transaction_id: transactionId } : null,
@@ -274,10 +274,10 @@ export const webhook = async (req, res) => {
       },
       order: [['createdAt', 'DESC']]
     });
-    if (txRow) {
-      txRow.order_id = order.id;
-      txRow.processing_state = 'order_paid';
-      await txRow.save();
+    if (paidTxRow) {
+      paidTxRow.order_id = order.id;
+      paidTxRow.processing_state = 'order_paid';
+      await paidTxRow.save();
     }
 
     console.log('[Airtel webhook] Order marked paid:', order.order_number, 'id:', order.id);
