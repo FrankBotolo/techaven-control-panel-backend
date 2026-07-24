@@ -41,8 +41,26 @@ app.get('/health', (req, res) => {
 });
 
 // Error handling middleware
-app.use((err, req, res, next) => {
+app.use(async (err, req, res, next) => {
   console.error('Error:', err);
+
+  // A malformed/non-JSON body never reaches AirtelWebhookController — express.json() throws
+  // here instead. Still capture it and ack 200 so Airtel's callback URL isn't flagged as broken.
+  if (err.type === 'entity.parse.failed' && req.originalUrl && req.originalUrl.includes('/webhooks/airtel')) {
+    try {
+      await db.AirtelWebhookLog.create({
+        method: req.method,
+        headers: req.headers,
+        raw_body: req.rawBody ? req.rawBody.toString('utf8') : null,
+        ip: req.ip,
+        note: `JSON parse failed: ${err.message}`
+      });
+    } catch (logErr) {
+      console.error('[Airtel webhook] Failed to log unparsable payload:', logErr);
+    }
+    return res.status(200).json({ success: true, message: 'Webhook received (unparsable body logged)' });
+  }
+
   res.status(err.status || 500).json({
     success: false,
     message: err.message || 'Internal server error',

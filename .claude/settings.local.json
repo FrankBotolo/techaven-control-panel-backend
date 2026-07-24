@@ -10,7 +10,17 @@
       "WebFetch(domain:developers.airtel.africa)",
       "WebFetch(domain:gbox.rw)",
       "Bash(xargs grep -H \"CREATE TABLE\")",
-      "Bash(xargs grep -lin \"malipo\")"
+      "Bash(xargs grep -lin \"malipo\")",
+      "Bash(git -C \"c:\\\\Users\\\\HomePC\\\\Desktop\\\\Techaven\\\\chiwaya-main\\\\server\" log --oneline -5)",
+      "Bash(git -C \"c:\\\\Users\\\\HomePC\\\\Desktop\\\\Techaven\\\\chiwaya-main\\\\server\" status)",
+      "Bash(git -C \"c:\\\\Users\\\\HomePC\\\\Desktop\\\\Techaven\\\\chiwaya-main\\\\server\" remote -v)",
+      "Bash(git -C \"c:\\\\Users\\\\HomePC\\\\Desktop\\\\Techaven\\\\chiwaya-main\\\\server\" show 36c898a --stat)",
+      "Bash(git -C \"c:\\\\Users\\\\HomePC\\\\Desktop\\\\Techaven\\\\chiwaya-main\\\\server\" fetch origin --quiet)",
+      "Bash(git -C \"c:\\\\Users\\\\HomePC\\\\Desktop\\\\Techaven\\\\chiwaya-main\\\\server\" log origin/main --oneline -3)",
+      "Bash(git -C \"c:\\\\Users\\\\HomePC\\\\Desktop\\\\Techaven\\\\chiwaya-main\\\\server\" rev-parse HEAD origin/main)",
+      "Bash(curl -s -o /dev/null -w 'HTTP_STATUS:%{http_code}\\\\n' -X POST https://www.techaven.mw/api/webhooks/airtel -H 'Content-Type: application/json' -d '{\"transaction\":{\"id\":\"BBZMiscxy\",\"message\":\"Paid MWK 5,000 to TECHNOLOGIES LIMITED Charge MWK 140, Trans ID MP210603.1234.L06941.\",\"status_code\":\"TS\",\"airtel_money_id\":\"MP210603.1234.L06941\"}}')",
+      "Bash(curl -s -X POST https://www.techaven.mw/api/webhooks/airtel -H 'Content-Type: application/json' -d '{\"transaction\":{\"id\":\"BBZMiscxy\",\"message\":\"Paid MWK 5,000 to TECHNOLOGIES LIMITED Charge MWK 140, Trans ID MP210603.1234.L06941.\",\"status_code\":\"TS\",\"airtel_money_id\":\"MP210603.1234.L06941\"}}')",
+      "Bash(curl -s -D - -o /dev/null -X POST https://www.techaven.mw/api/webhooks/airtel -H 'Content-Type: application/json' -d '{\"transaction\":{\"id\":\"BBZMiscxy\",\"message\":\"Paid MWK 5,000 to TECHNOLOGIES LIMITED Charge MWK 140, Trans ID MP210603.1234.L06941.\",\"status_code\":\"TS\",\"airtel_money_id\":\"MP210603.1234.L06941\"}}')"
     ]
   }
 }

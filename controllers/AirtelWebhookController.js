@@ -6,7 +6,7 @@ import { parseSubscriptionMerchantRef } from '../utils/paychanguRefs.js';
 import { finalizePendingShopSubscriptionPayment } from '../utils/subscriptionPaymentActivate.js';
 import { completeOrderPaidWithEscrow } from '../utils/orderEscrowFinalize.js';
 
-const { Order, User, AirtelTransaction, ShopSubscription } = db;
+const { Order, User, AirtelTransaction, AirtelWebhookLog, ShopSubscription } = db;
 
 /**
  * Normalise the many shapes Airtel Money uses for a transaction reference.
@@ -83,23 +83,35 @@ function parseAirtelPayload(body) {
 export const webhook = async (req, res) => {
   captureWebhook('airtel', req);
 
-  // Signature verification — skip with a warning if secret not configured
-  const webhookSecret = (process.env.AIRTEL_WEBHOOK_SECRET || '').trim() || null;
   const rawBody = req.rawBody;
-  const sig = req.get('x-airtel-signature') || req.get('X-Airtel-Signature');
+  const body = req.body && typeof req.body === 'object' ? req.body : {};
 
-  if (!webhookSecret) {
-    console.warn('[Airtel webhook] AIRTEL_WEBHOOK_SECRET not set; skipping signature check');
-  } else if (rawBody && Buffer.isBuffer(rawBody)) {
-    if (!verifyAirtelWebhookSignature(rawBody, sig, webhookSecret)) {
-      console.warn('[Airtel webhook] Invalid or missing x-airtel-signature');
-      return res.status(401).json({ success: false, message: 'Invalid webhook signature' });
-    }
-  } else if (process.env.NODE_ENV === 'production') {
-    console.warn('[Airtel webhook] Missing raw body for signature check');
+  // Unconditional capture — must never fail to record exactly what Airtel sent,
+  // independent of whether the payload matches any expected shape.
+  try {
+    await AirtelWebhookLog.create({
+      method: req.method,
+      headers: req.headers,
+      body,
+      raw_body: rawBody ? rawBody.toString('utf8') : null,
+      ip: req.ip
+    });
+  } catch (logErr) {
+    console.error('[Airtel webhook] Failed to write airtel_webhook_logs row:', logErr);
   }
 
-  const body = req.body && typeof req.body === 'object' ? req.body : {};
+  // Signature verification — logged only. Airtel's callback contract expects a 200 ack
+  // regardless; an unsigned/invalid payload just means we won't trust it for order/subscription
+  // state changes below (isSignatureValid gates that), but we still record and ack it.
+  const webhookSecret = (process.env.AIRTEL_WEBHOOK_SECRET || '').trim() || null;
+  const sig = req.get('x-airtel-signature') || req.get('X-Airtel-Signature');
+  let isSignatureValid = true;
+  if (webhookSecret) {
+    isSignatureValid = Boolean(rawBody) && Buffer.isBuffer(rawBody) && verifyAirtelWebhookSignature(rawBody, sig, webhookSecret);
+    if (!isSignatureValid) {
+      console.warn('[Airtel webhook] Invalid or missing x-airtel-signature — payload logged, not applied to order/subscription state');
+    }
+  }
   const parsed = parseAirtelPayload(body);
   const { transactionId, airtelMoneyId, reference, msisdn, amount, statusCode, statusRaw, message, isSuccess } = parsed;
 
@@ -160,6 +172,11 @@ export const webhook = async (req, res) => {
         }
       }
       return res.status(200).json({ success: true, message: 'Webhook received (no reference)' });
+    }
+
+    if (!isSignatureValid) {
+      console.log('[Airtel webhook] Skipping order/subscription update — unverified signature:', reference);
+      return res.status(200).json({ success: true, message: 'Webhook received (unverified signature)' });
     }
 
     // Check if this is a shop subscription payment
@@ -258,7 +275,10 @@ export const webhook = async (req, res) => {
     console.log('[Airtel webhook] Order marked paid:', order.order_number, 'id:', order.id);
     return res.status(200).json({ success: true, message: 'Webhook processed' });
   } catch (error) {
-    console.error('[Airtel webhook] Error:', error);
-    return res.status(500).json({ success: false, message: 'Webhook processing failed' });
+    // Payload is already captured in airtel_webhook_logs (and, if parseable, airtel_transactions)
+    // above — a processing error here is our problem to fix, not Airtel's. Still ack 200 so the
+    // callback URL isn't flagged as broken and retried/disabled.
+    console.error('[Airtel webhook] Processing error (payload already logged):', error);
+    return res.status(200).json({ success: true, message: 'Webhook received' });
   }
 };

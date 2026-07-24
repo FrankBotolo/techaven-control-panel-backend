@@ -97,12 +97,44 @@ Airtel Money's Collection API posts a JSON body to the callback URL once a trans
 
 ## What happens on receipt
 
-1. Payload is captured for debugging (`captureWebhook`) and upserted into `airtel_transactions` (keyed by `transaction_id`), regardless of outcome.
-2. If `WEBHOOK_CAPTURE_ONLY=true`, processing stops here (log-only mode).
-3. Non-success `status_code`/`status` → **200 OK**, no state change, `processing_state: 'received'`.
-4. `reference` resolves to a **shop subscription** merchant ref → activates the subscription via `finalizePendingShopSubscriptionPayment` (amount-checked); `processing_state` becomes `subscription_activated`, `amount_mismatch`, or `subscription_not_finalized`.
-5. Otherwise `reference` is looked up as an **order** (`order_number` or numeric `id`) → marks it paid via `completeOrderPaidWithEscrow`; `processing_state` becomes `order_paid` or `order_not_found`.
-6. Always responds **200 OK** on recognized-but-unprocessable cases (missing order, already paid, missing `reference` — e.g. Airtel's connectivity-test payload `{ transaction: { id, status_code: "TS", ... } }` with no reference — etc.) so Airtel doesn't retry indefinitely or disable the callback URL. Only unexpected errors return **500**.
+The endpoint **always responds 200 OK** — no exceptions. Airtel's callback contract only needs an
+ack; every real decision (parsed or not, signed or not, matched to an order or not) happens after
+that's guaranteed, never as a reason to fail the HTTP response.
+
+1. Every call is unconditionally written to `airtel_webhook_logs` (raw headers + body + raw request
+   bytes) — this insert doesn't depend on the payload having any particular shape, being valid JSON,
+   or matching a known transaction. Even a request Express itself can't parse as JSON (wrong
+   `Content-Type`, malformed body) is still logged here and acked 200, via the `entity.parse.failed`
+   branch in `server.js`'s error middleware.
+2. Payload is also captured for local debugging (`captureWebhook`, writes to `logs/webhook-captures/`)
+   and, if it parses into a recognizable Airtel shape, upserted into `airtel_transactions` (keyed by
+   `transaction_id`) — best effort, failures here are logged and swallowed, never surfaced as an error
+   response.
+3. If `WEBHOOK_CAPTURE_ONLY=true`, processing stops here (log-only mode).
+4. Non-success `status_code`/`status` → no state change, `processing_state: 'received'`.
+5. Missing `reference` (e.g. Airtel's connectivity-test payload `{ transaction: { id, status_code: "TS", ... } }`
+   with no reference) → nothing to reconcile, `processing_state: 'no_reference'`.
+6. Invalid/missing `x-airtel-signature` (when `AIRTEL_WEBHOOK_SECRET` is set) → logged, but the
+   order/subscription update below is skipped so an unverified payload can't move money state.
+7. `reference` resolves to a **shop subscription** merchant ref → activates the subscription via
+   `finalizePendingShopSubscriptionPayment` (amount-checked); `processing_state` becomes
+   `subscription_activated`, `amount_mismatch`, or `subscription_not_finalized`.
+8. Otherwise `reference` is looked up as an **order** (`order_number` or numeric `id`) → marks it paid
+   via `completeOrderPaidWithEscrow`; `processing_state` becomes `order_paid` or `order_not_found`.
+9. Any unexpected error during steps 4–8 is caught, logged, and still acked 200 — the payload is
+   already durable in `airtel_webhook_logs` regardless, so a bug in our matching logic is our problem
+   to fix from the log, not something that should make Airtel retry-storm or disable the callback URL.
+
+### `airtel_webhook_logs` table
+
+Created by [`database/migrations/add_airtel_webhook_logs.sql`](../database/migrations/add_airtel_webhook_logs.sql)
+(model: [`models/AirtelWebhookLog.js`](../models/AirtelWebhookLog.js)). Run the migration against the
+target database once after pulling this change — production doesn't auto-sync on boot (see
+`server.js`, `sequelize.sync` only runs when `NODE_ENV !== 'production'`):
+
+```
+mysql -u <user> -p <db_name> < database/migrations/add_airtel_webhook_logs.sql
+```
 
 ## Note on source of truth
 

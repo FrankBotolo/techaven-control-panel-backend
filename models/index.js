@@ -25,6 +25,7 @@ import DeliveryJob from './DeliveryJob.js';
 import PaymentMethod from './PaymentMethod.js';
 import PayChanguCallback from './PayChanguCallback.js';
 import AirtelTransaction from './AirtelTransaction.js';
+import AirtelWebhookLog from './AirtelWebhookLog.js';
 import OnboardingSlide from './OnboardingSlide.js';
 import SubscriptionPackage from './SubscriptionPackage.js';
 import ShopSubscription from './ShopSubscription.js';
@@ -214,6 +215,7 @@ const db = {
   PaymentMethod,
   PayChanguCallback,
   AirtelTransaction,
+  AirtelWebhookLog,
   OnboardingSlide,
   SubscriptionPackage,
   ShopSubscription,
