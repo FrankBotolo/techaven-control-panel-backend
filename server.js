@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import db from './models/index.js';
 import routes from './routes/index.js';
 import { startSubscriptionExpiryJob } from './utils/subscriptionExpiryScheduler.js';
+import { startAirtelTokenWarmup } from './utils/airtelToken.js';
 import { corsMiddleware } from './middleware/cors.js';
 import { requestLogger } from './middleware/requestLogger.js';
 
@@ -91,6 +92,7 @@ const startServer = async () => {
     }
 
     startSubscriptionExpiryJob();
+    startAirtelTokenWarmup();
 
     // Start server
     app.listen(PORT, () => {

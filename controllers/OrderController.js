@@ -1658,15 +1658,13 @@ export const payWithAirtel = async (req, res) => {
     }
 
     const amount = Math.round(parseFloat(order.total_amount) || 0);
-    const { response, data, transactionId } = await postAirtelCollect({
+    const { response, data, transactionId, success: apiSuccess, message: apiMessage } = await postAirtelCollect({
       reference: order.order_number,
       msisdn,
       amount
     });
 
-    if (response.ok) {
-      // Airtel's callback only echoes back `transaction.id` — not `reference` — so this row is
-      // the only way the webhook can later map that ID back to this order.
+    if (apiSuccess) {
       await db.AirtelTransaction.create({
         transaction_id: transactionId,
         reference: order.order_number,
@@ -1674,7 +1672,11 @@ export const payWithAirtel = async (req, res) => {
         msisdn,
         amount,
         currency: 'MWK',
-        processing_state: 'push_initiated'
+        status: data?.data?.transaction?.status || null,
+        status_code: data?.status?.response_code || data?.status?.result_code || null,
+        message: apiMessage,
+        processing_state: 'push_initiated',
+        raw_payload: data
       });
 
       await logAudit({
@@ -1688,13 +1690,13 @@ export const payWithAirtel = async (req, res) => {
       });
     }
 
-    if (!response.ok) {
-      console.error('Airtel collect error:', response.status, data);
-      return res.status(response.status >= 400 && response.status < 500 ? response.status : 500).json({
+    if (!apiSuccess) {
+      console.error('Airtel collect error:', response?.status, data);
+      return res.status(response?.status >= 400 && response?.status < 500 ? response.status : 500).json({
         success: false,
-        message: data?.message || data?.error || 'Airtel payment request failed',
-        data: null,
-        error: data?.message || data?.error
+        message: apiMessage || data?.message || data?.error || 'Airtel payment request failed',
+        data: data?.data || null,
+        error: apiMessage || data?.message || data?.error
       });
     }
 
@@ -1707,7 +1709,7 @@ export const payWithAirtel = async (req, res) => {
         amount,
         provider: 'airtel',
         transaction_id: transactionId,
-        ...data
+        airtel: data
       }
     });
   } catch (error) {

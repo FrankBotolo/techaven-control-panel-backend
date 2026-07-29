@@ -3,17 +3,28 @@ export {
   subscriptionPayChanguChargeId as subscriptionAirtelMerchantRef
 } from './paychanguRefs.js';
 
-function getAirtelBaseUrl() {
-  return process.env.AIRTEL_ENV === 'production'
-    ? 'https://openapi.airtel.africa'
-    : 'https://openapiuat.airtel.africa';
-}
+export {
+  getAirtelBaseUrl,
+  getAirtelCredentials,
+  getAirtelAccessToken,
+  refreshAirtelAccessToken,
+  getAirtelTokenCacheStatus,
+  startAirtelTokenWarmup
+} from './airtelToken.js';
 
-export function getAirtelCredentials() {
-  return {
-    clientId: process.env.AIRTEL_CLIENT_ID,
-    clientSecret: process.env.AIRTEL_CLIENT_SECRET
-  };
+import { getAirtelAccessToken, getAirtelBaseUrl, getAirtelCredentials } from './airtelToken.js';
+import crypto from 'crypto';
+
+const TXN_ID_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+
+/** Unique id for Airtel `transaction.id` (e.g. RFYYGhuhSerrIhUY) — not the order id. */
+export function generateAirtelTransactionId() {
+  const bytes = crypto.randomBytes(16);
+  let id = '';
+  for (let i = 0; i < 16; i++) {
+    id += TXN_ID_ALPHABET[bytes[i] % TXN_ID_ALPHABET.length];
+  }
+  return id;
 }
 
 export function normalizeAirtelMsisdn(msisdn) {
@@ -21,51 +32,40 @@ export function normalizeAirtelMsisdn(msisdn) {
   return local.replace(/^0/, '');
 }
 
-export function generateAirtelTransactionRef() {
-  return `AT${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`.toUpperCase();
+/** @param {unknown} data */
+export function isAirtelCollectSuccess(data) {
+  if (!data || typeof data !== 'object') {
+    return false;
+  }
+  const status = /** @type {{ status?: { success?: boolean, code?: string|number } }} */ (data).status;
+  if (status?.success === true) {
+    return true;
+  }
+  return String(status?.code) === '200';
 }
 
-let cachedToken = null;
-let cachedTokenExpiresAt = 0;
-
-async function getAirtelAccessToken() {
-  if (cachedToken && Date.now() < cachedTokenExpiresAt) {
-    return cachedToken;
+/** @param {unknown} data */
+export function getAirtelCollectErrorMessage(data) {
+  if (!data || typeof data !== 'object') {
+    return 'Airtel payment request failed';
   }
-
-  const { clientId, clientSecret } = getAirtelCredentials();
-  const response = await fetch(`${getAirtelBaseUrl()}/auth/oauth2/token`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: '*/*' },
-    body: JSON.stringify({
-      client_id: clientId,
-      client_secret: clientSecret,
-      grant_type: 'client_credentials'
-    })
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok || !data.access_token) {
-    throw new Error(`Airtel token request failed: ${response.status} ${JSON.stringify(data)}`);
-  }
-
-  cachedToken = data.access_token;
-  cachedTokenExpiresAt = Date.now() + (Number(data.expires_in || 3600) - 60) * 1000;
-  return cachedToken;
+  const body = /** @type {{ status?: { message?: string }, message?: string, error?: string }} */ (data);
+  return body.status?.message || body.message || body.error || 'Airtel payment request failed';
 }
 
 /**
  * Initiate an Airtel Money Collection push (USSD prompt on the customer's phone).
- * Airtel echoes `reference` and `transaction.id` back in the /api/webhooks/airtel callback.
- * @param {{ reference: string, msisdn: string, amount: number }} payload
+ * Malawi API: POST {base}/merchant/v1/payments/
+ * @param {{ reference: string, msisdn: string, amount: number, transactionId?: string }} payload
  */
 export async function postAirtelCollect(payload) {
   const { clientId, clientSecret } = getAirtelCredentials();
   if (!clientId || !clientSecret) {
-    return { configured: false, response: null, data: {} };
+    return { configured: false, response: null, data: {}, transactionId: null, success: false };
   }
 
   const token = await getAirtelAccessToken();
-  const transactionId = generateAirtelTransactionRef();
+  const transactionId = payload.transactionId || generateAirtelTransactionId();
   const body = {
     reference: payload.reference,
     subscriber: {
@@ -74,7 +74,7 @@ export async function postAirtelCollect(payload) {
       msisdn: normalizeAirtelMsisdn(payload.msisdn)
     },
     transaction: {
-      amount: Math.round(Number(payload.amount) || 0),
+      amount: String(Math.round(Number(payload.amount) || 0)),
       country: 'MW',
       currency: 'MWK',
       id: transactionId
@@ -84,8 +84,8 @@ export async function postAirtelCollect(payload) {
   const response = await fetch(`${getAirtelBaseUrl()}/merchant/v1/payments/`, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
       Accept: '*/*',
+      'Content-Type': 'application/json',
       'X-Country': 'MW',
       'X-Currency': 'MWK',
       Authorization: `Bearer ${token}`
@@ -93,5 +93,13 @@ export async function postAirtelCollect(payload) {
     body: JSON.stringify(body)
   });
   const data = await response.json().catch(() => ({}));
-  return { configured: true, response, data, transactionId };
+  const success = response.ok && isAirtelCollectSuccess(data);
+  return {
+    configured: true,
+    response,
+    data,
+    transactionId,
+    success,
+    message: success ? (data?.status?.message || 'SUCCESS') : getAirtelCollectErrorMessage(data)
+  };
 }

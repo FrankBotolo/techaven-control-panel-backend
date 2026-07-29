@@ -17,8 +17,9 @@ Body: { "msisdn": "0991234567" }
 ```
 
 - Looks up the order, requires it to belong to the requesting user and not already be paid.
-- Fetches an OAuth2 token (`POST {base}/auth/oauth2/token`, cached in memory until near expiry) and pushes a Collection request (`POST {base}/merchant/v1/payments/`) with `reference: order.order_number` and a freshly generated `transaction.id`.
-- Base URL is staging (`openapiuat.airtel.africa`) unless `AIRTEL_ENV=production` (`openapi.airtel.africa`).
+- Fetches an OAuth2 token (warmed up on server start when credentials are set, auto-refreshed before expiry) and pushes a Collection request to `POST {base}/merchant/v1/payments/` with `reference: order.order_number`, a unique random `transaction.id` (e.g. `RFYYGhuhSerrIhUY`), and `transaction.amount` as a string in MWK.
+- Base URL is staging (`openapiuat.airtel.mw`) unless `AIRTEL_ENV=production` (`openapi.airtel.mw`). Override with `AIRTEL_API_BASE_URL` if needed.
+- Airtel success response shape: `{ data: { transaction: { id, status } }, status: { success, code, message, ... } }`.
 - Returns 500 with a clear message if `AIRTEL_CLIENT_ID`/`AIRTEL_CLIENT_SECRET` aren't set.
 
 ## Callback URL (inbound)
@@ -42,7 +43,9 @@ http://localhost:8000/api/webhooks/airtel
 | Variable | Purpose |
 |---|---|
 | `AIRTEL_CLIENT_ID` / `AIRTEL_CLIENT_SECRET` | OAuth2 client credentials for the outbound Collection API (token + push). Required for `pay/airtel` to work. |
-| `AIRTEL_ENV` | `production` to use Airtel's live API; anything else (or unset) uses the staging/UAT environment. |
+| `AIRTEL_ENV` | `production` to use `https://openapi.airtel.mw`; anything else (or unset) uses staging `https://openapiuat.airtel.mw`. |
+| `AIRTEL_API_BASE_URL` | Optional override for the Airtel Open API host (no trailing slash). |
+| `AIRTEL_TOKEN_REFRESH_BUFFER_SEC` | Seconds before the 180s token expiry to refresh proactively (default `30`). |
 | `AIRTEL_WEBHOOK_SECRET` | HMAC-SHA256 secret used to verify the `x-airtel-signature` header on inbound callbacks (get this from the Airtel developer portal when you register the callback). If unset, the endpoint accepts unsigned requests and logs a warning — set this before going live. |
 
 ## What Airtel sends after a transaction

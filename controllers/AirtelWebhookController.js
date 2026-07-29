@@ -13,7 +13,9 @@ const { Order, User, AirtelTransaction, AirtelWebhookLog, ShopSubscription } = d
  * Handles both nested `{ transaction: { id, ... }, reference }` and flat payloads.
  */
 function parseAirtelPayload(body) {
-  const txn = body.transaction && typeof body.transaction === 'object' ? body.transaction : null;
+  const nestedDataTxn =
+    body.data?.transaction && typeof body.data.transaction === 'object' ? body.data.transaction : null;
+  const txn = body.transaction && typeof body.transaction === 'object' ? body.transaction : nestedDataTxn;
 
   const transactionId =
     (txn?.id) ||
@@ -61,13 +63,21 @@ function parseAirtelPayload(body) {
 
   const message =
     (txn?.message) ||
+    (txn?.status && typeof txn.status === 'string' ? txn.status : null) ||
     body.message ||
+    body.status?.message ||
     null;
 
+  const apiStatus = body.status && typeof body.status === 'object' ? body.status : null;
+
   const isSuccess =
+    apiStatus?.success === true ||
     statusCode === 'TS' ||
     ['success', 'successful', 'succeeded', 'completed', 'complete', 'paid']
-      .includes(String(statusRaw || '').toLowerCase());
+      .includes(String(statusRaw || '').toLowerCase()) ||
+    (typeof txn?.status === 'string' &&
+      ['success', 'successful', 'succeeded', 'completed', 'complete', 'paid']
+        .includes(txn.status.replace(/\.$/, '').toLowerCase()));
 
   return { transactionId, airtelMoneyId, reference, msisdn, amount, statusCode, statusRaw, message, isSuccess };
 }
@@ -137,7 +147,17 @@ export const webhook = async (req, res) => {
       txRow.amount = amount != null ? amount : txRow.amount;
       txRow.raw_payload = body;
       await txRow.save();
-    } else {
+    } else if (transactionId) {
+      const orderIdFromTxn = parseInt(String(transactionId), 10);
+      if (Number.isFinite(orderIdFromTxn) && orderIdFromTxn > 0) {
+        const orderByTxnId = await Order.findByPk(orderIdFromTxn, { attributes: ['id', 'order_number'] });
+        if (orderByTxnId) {
+          reference = orderByTxnId.order_number;
+        }
+      }
+    }
+
+    if (!txRow) {
       txRow = await AirtelTransaction.create({
         transaction_id: transactionId,
         airtel_money_id: airtelMoneyId,
