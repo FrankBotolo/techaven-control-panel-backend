@@ -1,19 +1,41 @@
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
 /** Seconds before expiry to refresh (Airtel MW tokens last 180s). */
 const TOKEN_REFRESH_BUFFER_SEC = Number(process.env.AIRTEL_TOKEN_REFRESH_BUFFER_SEC || 30);
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ENV_PATH = path.join(__dirname, '..', '.env');
+let envLoaded = false;
+
+/** Load server/.env on demand (safe if PM2 cwd differs from app folder). */
+function ensureEnvLoaded() {
+  if (envLoaded) return;
+  dotenv.config({ path: ENV_PATH });
+  envLoaded = true;
+}
+
+function trimEnv(value) {
+  const v = value == null ? '' : String(value).trim();
+  return v || null;
+}
+
+export function getAirtelCredentials() {
+  ensureEnvLoaded();
+  return {
+    clientId: trimEnv(process.env.AIRTEL_CLIENT_ID),
+    clientSecret: trimEnv(process.env.AIRTEL_CLIENT_SECRET)
+  };
+}
 
 let cachedToken = null;
 let cachedTokenExpiresAt = 0;
 let refreshTimer = null;
 let refreshPromise = null;
 
-export function getAirtelCredentials() {
-  return {
-    clientId: process.env.AIRTEL_CLIENT_ID,
-    clientSecret: process.env.AIRTEL_CLIENT_SECRET
-  };
-}
-
 export function getAirtelBaseUrl() {
+  ensureEnvLoaded();
   const override = (process.env.AIRTEL_API_BASE_URL || '').trim();
   if (override) {
     return override.replace(/\/$/, '');
@@ -119,6 +141,12 @@ export function getAirtelTokenCacheStatus() {
 export function startAirtelTokenWarmup() {
   const { clientId, clientSecret } = getAirtelCredentials();
   if (!clientId || !clientSecret) {
+    console.warn(
+      '[Airtel] Credentials missing — set AIRTEL_CLIENT_ID and AIRTEL_CLIENT_SECRET in',
+      ENV_PATH,
+      '(cwd:',
+      process.cwd() + ')'
+    );
     return;
   }
 
