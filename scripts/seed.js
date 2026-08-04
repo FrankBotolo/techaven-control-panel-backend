@@ -573,10 +573,8 @@ const seedDatabase = async () => {
 
     console.log('─── 8. Courier Services ───\n');
     const courierData = [
-      { name: 'Airtel Money Express', description: 'Fast delivery via Airtel network', is_active: true, sort_order: 1 },
-      { name: 'TNM Mpamba Delivery',  description: 'Reliable delivery via TNM',        is_active: true, sort_order: 2 },
-      { name: 'DHL Malawi',           description: 'International and local courier',   is_active: true, sort_order: 3 },
-      { name: 'FedEx',                description: 'Express shipping',                  is_active: true, sort_order: 4 }
+      { name: 'Smart Delivery', description: 'Fast delivery ', is_active: true, sort_order: 1 },
+      { name: 'CTS Courier ',  description: 'Reliable delivery ',        is_active: true, sort_order: 2 }
     ];
     for (const c of courierData) {
       await CourierService.findOrCreate({ where: { name: c.name }, defaults: c });
