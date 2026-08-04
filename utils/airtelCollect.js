@@ -32,6 +32,21 @@ export function normalizeAirtelMsisdn(msisdn) {
   return local.replace(/^0/, '');
 }
 
+/** Airtel `reference` must be alphanumeric, max 64 chars (hyphens in order_number are stripped). */
+export function normalizeAirtelReference(ref) {
+  const s = String(ref ?? '')
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .slice(0, 64);
+  return s || null;
+}
+
+/** Reverse ORD202608041234 → ORD-20260804-1234 for DB lookup when webhook echoes normalized ref. */
+export function denormalizeOrdOrderNumber(normalizedRef) {
+  const m = String(normalizedRef ?? '').match(/^ORD(\d{8})(\d{4})$/i);
+  if (!m) return null;
+  return `ORD-${m[1]}-${m[2]}`;
+}
+
 /** @param {unknown} data */
 export function isAirtelCollectSuccess(data) {
   if (!data || typeof data !== 'object') {
@@ -66,8 +81,20 @@ export async function postAirtelCollect(payload) {
 
   const token = await getAirtelAccessToken();
   const transactionId = payload.transactionId || generateAirtelTransactionId();
+  const reference = normalizeAirtelReference(payload.reference);
+  if (!reference) {
+    return {
+      configured: true,
+      response: null,
+      data: {},
+      transactionId: null,
+      airtelReference: null,
+      success: false,
+      message: 'Invalid payment reference (must be alphanumeric after normalization, max 64 chars)'
+    };
+  }
   const body = {
-    reference: payload.reference,
+    reference,
     subscriber: {
       country: 'MW',
       currency: 'MWK',
@@ -99,6 +126,7 @@ export async function postAirtelCollect(payload) {
     response,
     data,
     transactionId,
+    airtelReference: reference,
     success,
     message: success ? (data?.status?.message || 'SUCCESS') : getAirtelCollectErrorMessage(data)
   };

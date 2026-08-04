@@ -6,7 +6,8 @@ import {
   getAirtelCredentials,
   getAirtelBaseUrl,
   postAirtelCollect,
-  normalizeAirtelMsisdn
+  normalizeAirtelMsisdn,
+  normalizeAirtelReference
 } from '../utils/airtelCollect.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -107,6 +108,7 @@ async function main() {
 
   console.log('MSISDN (normalized):', normalizeAirtelMsisdn(msisdn));
   console.log('Reference:', reference);
+  console.log('Airtel reference (normalized):', normalizeAirtelReference(reference));
   console.log('Amount (MWK):', amount);
   console.log('\nSending payment push…\n');
 
@@ -127,7 +129,7 @@ async function main() {
   if (args.mode === 'db' && result.success && dbOrderId != null) {
     await db.AirtelTransaction.create({
       transaction_id: result.transactionId,
-      reference,
+      reference: result.airtelReference || reference,
       order_id: dbOrderId,
       msisdn,
       amount,

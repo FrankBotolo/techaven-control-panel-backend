@@ -5,6 +5,7 @@ import { verifyAirtelWebhookSignature } from '../utils/airtelWebhookSignature.js
 import { parseSubscriptionMerchantRef } from '../utils/paychanguRefs.js';
 import { finalizePendingShopSubscriptionPayment } from '../utils/subscriptionPaymentActivate.js';
 import { completeOrderPaidWithEscrow } from '../utils/orderEscrowFinalize.js';
+import { denormalizeOrdOrderNumber, normalizeAirtelReference } from '../utils/airtelCollect.js';
 
 const { Order, User, AirtelTransaction, AirtelWebhookLog, ShopSubscription } = db;
 
@@ -254,14 +255,36 @@ export const webhook = async (req, res) => {
       return res.status(200).json({ success: true, message: 'Webhook processed (subscription)' });
     }
 
-    // Order payment
-    const order = await Order.findOne({
-      where: { [Op.or]: [{ order_number: reference }, { id: parseInt(reference, 10) || 0 }] },
-      include: [
-        { model: User, as: 'seller', attributes: ['id', 'name', 'email'] },
-        { model: db.OrderItem, as: 'items', required: false }
-      ]
-    });
+    // Order payment — prefer order_id from push-time row; else match by reference (normalized or ORD-… format)
+    let order = null;
+    if (txRow?.order_id) {
+      order = await Order.findByPk(txRow.order_id, {
+        include: [
+          { model: User, as: 'seller', attributes: ['id', 'name', 'email'] },
+          { model: db.OrderItem, as: 'items', required: false }
+        ]
+      });
+    }
+    if (!order && reference) {
+      const refs = [reference];
+      const denorm = denormalizeOrdOrderNumber(reference);
+      if (denorm) refs.push(denorm);
+      const normalized = normalizeAirtelReference(reference);
+      if (normalized && normalized !== reference) refs.push(normalized);
+
+      order = await Order.findOne({
+        where: {
+          [Op.or]: [
+            ...refs.map((r) => ({ order_number: r })),
+            { id: parseInt(reference, 10) || 0 }
+          ]
+        },
+        include: [
+          { model: User, as: 'seller', attributes: ['id', 'name', 'email'] },
+          { model: db.OrderItem, as: 'items', required: false }
+        ]
+      });
+    }
 
     if (!order) {
       console.log('[Airtel webhook] Order not found for:', reference);

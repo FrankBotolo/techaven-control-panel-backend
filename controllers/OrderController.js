@@ -1658,7 +1658,7 @@ export const payWithAirtel = async (req, res) => {
     }
 
     const amount = Math.round(parseFloat(order.total_amount) || 0);
-    const { response, data, transactionId, success: apiSuccess, message: apiMessage } = await postAirtelCollect({
+    const { response, data, transactionId, airtelReference, success: apiSuccess, message: apiMessage } = await postAirtelCollect({
       reference: order.order_number,
       msisdn,
       amount
@@ -1667,7 +1667,7 @@ export const payWithAirtel = async (req, res) => {
     if (apiSuccess) {
       await db.AirtelTransaction.create({
         transaction_id: transactionId,
-        reference: order.order_number,
+        reference: airtelReference || order.order_number,
         order_id: order.id,
         msisdn,
         amount,
