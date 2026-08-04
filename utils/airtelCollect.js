@@ -21,7 +21,7 @@ const TXN_ID_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 export const AIRTEL_COLLECT_REFERENCE = 'Testing transaction';
 
 export function getAirtelCollectReference() {
-  return normalizeAirtelReference( 'Techaven App transaction');
+  return normalizeAirtelReference( 'Techaven transaction');
 }
 
 /** Unique random id (legacy / manual test flows). Order pay uses order_number as transaction.id. */
