@@ -7,7 +7,8 @@ import {
   getAirtelBaseUrl,
   postAirtelCollect,
   normalizeAirtelMsisdn,
-  normalizeAirtelReference
+  normalizeAirtelReference,
+  getAirtelCollectReference
 } from '../utils/airtelCollect.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -17,13 +18,16 @@ function usage() {
   console.log(`Airtel Money payment push test
 
 Usage:
-  npm run test-airtel-payment -- <msisdn> [amount] [reference]
+  npm run test-airtel-payment -- <msisdn> [amount] [transactionId]
   npm run test-airtel-payment -- --order <orderId> [--msisdn <phone>]
 
 Examples:
   npm run test-airtel-payment -- 0998256737
-  npm run test-airtel-payment -- 0998256737 100 "Testing transaction"
+  npm run test-airtel-payment -- 0998256737 100 ORD202608041234
   npm run test-airtel-payment -- --order 42 --msisdn 0998256737
+
+Reference sent to Airtel is always: "${getAirtelCollectReference()}" (from "Testing transaction")
+transaction.id = order_number (or manual transactionId arg)
 
 Env (optional): AIRTEL_TEST_MSISDN, AIRTEL_TEST_AMOUNT
 
@@ -44,12 +48,12 @@ function parseArgs(argv) {
     return { mode: 'db', orderId, msisdn };
   }
 
-  const [msisdn, amount, reference] = argv;
+  const [msisdn, amount, transactionId] = argv;
   return {
     mode: 'manual',
     msisdn: msisdn || process.env.AIRTEL_TEST_MSISDN || null,
     amount: amount || process.env.AIRTEL_TEST_AMOUNT || '100',
-    reference: reference || 'Testing transaction'
+    transactionId: transactionId || 'ORD202608049999'
   };
 }
 
@@ -67,7 +71,7 @@ async function main() {
 
   let msisdn;
   let amount;
-  let reference;
+  let transactionId;
   let dbOrderId = null;
 
   if (args.mode === 'db') {
@@ -92,8 +96,8 @@ async function main() {
 
     dbOrderId = order.id;
     amount = Math.round(parseFloat(order.total_amount) || 0);
-    reference = order.order_number;
-    console.log('Loaded order:', reference, `(id ${order.id}), amount MWK ${amount}`);
+    transactionId = normalizeAirtelReference(order.order_number);
+    console.log('Loaded order:', order.order_number, `(id ${order.id}), amount MWK ${amount}`);
   } else {
     if (!args.msisdn) {
       console.error('\nPhone number required.');
@@ -103,22 +107,22 @@ async function main() {
 
     msisdn = args.msisdn;
     amount = Math.round(Number(args.amount) || 0);
-    reference = args.reference;
+    transactionId = normalizeAirtelReference(args.transactionId);
   }
 
   console.log('MSISDN (normalized):', normalizeAirtelMsisdn(msisdn));
-  console.log('Reference:', reference);
-  console.log('Airtel reference (normalized):', normalizeAirtelReference(reference));
+  console.log('Airtel reference (fixed):', getAirtelCollectReference());
+  console.log('transaction.id (order number):', transactionId);
   console.log('Amount (MWK):', amount);
   console.log('\nSending payment push…\n');
 
   const result = await postAirtelCollect({
-    reference,
+    transactionId,
     msisdn,
     amount
   });
 
-  console.log('Transaction id:', result.transactionId);
+  console.log('Transaction id sent:', result.transactionId);
 
   console.log('HTTP status:', result.response?.status ?? '(no response)');
   console.log('Success:', result.success ? 'yes' : 'no');
@@ -129,7 +133,7 @@ async function main() {
   if (args.mode === 'db' && result.success && dbOrderId != null) {
     await db.AirtelTransaction.create({
       transaction_id: result.transactionId,
-      reference: result.airtelReference || reference,
+      reference: getAirtelCollectReference(),
       order_id: dbOrderId,
       msisdn,
       amount,

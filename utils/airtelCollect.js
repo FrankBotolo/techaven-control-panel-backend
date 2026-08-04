@@ -17,7 +17,14 @@ import crypto from 'crypto';
 
 const TXN_ID_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 
-/** Unique id for Airtel `transaction.id` (e.g. RFYYGhuhSerrIhUY) — not the order id. */
+/** Fixed merchant reference on every Airtel Collection push (spaces stripped → alphanumeric). */
+export const AIRTEL_COLLECT_REFERENCE = 'Testing transaction';
+
+export function getAirtelCollectReference() {
+  return normalizeAirtelReference( 'Techaven App transaction');
+}
+
+/** Unique random id (legacy / manual test flows). Order pay uses order_number as transaction.id. */
 export function generateAirtelTransactionId() {
   const bytes = crypto.randomBytes(16);
   let id = '';
@@ -32,7 +39,7 @@ export function normalizeAirtelMsisdn(msisdn) {
   return local.replace(/^0/, '');
 }
 
-/** Ensure reference is alphanumeric, max 64 (legacy order numbers may contain hyphens). */
+/** Ensure value is alphanumeric, max 64 (legacy order numbers may contain hyphens). */
 export function normalizeAirtelReference(ref) {
   const s = String(ref ?? '')
     .replace(/[^a-zA-Z0-9]/g, '')
@@ -40,11 +47,27 @@ export function normalizeAirtelReference(ref) {
   return s || null;
 }
 
-/** Reverse ORD202608041234 → ORD-20260804-1234 for DB lookup when webhook echoes normalized ref. */
+/** Reverse ORD202608041234 → ORD-20260804-1234 for DB lookup when webhook echoes normalized id. */
 export function denormalizeOrdOrderNumber(normalizedRef) {
   const m = String(normalizedRef ?? '').match(/^ORD(\d{8})(\d{4})$/i);
   if (!m) return null;
   return `ORD-${m[1]}-${m[2]}`;
+}
+
+/** Build order_number lookup candidates from Airtel callback transaction.id (order number). */
+export function orderNumberLookupCandidates(transactionId) {
+  const s = String(transactionId ?? '').trim();
+  if (!s) return [];
+  const out = new Set([s]);
+  const normalized = normalizeAirtelReference(s);
+  if (normalized) out.add(normalized);
+  const denorm = denormalizeOrdOrderNumber(s);
+  if (denorm) out.add(denorm);
+  if (normalized) {
+    const denormFromNorm = denormalizeOrdOrderNumber(normalized);
+    if (denormFromNorm) out.add(denormFromNorm);
+  }
+  return [...out];
 }
 
 /** @param {unknown} data */
@@ -71,7 +94,7 @@ export function getAirtelCollectErrorMessage(data) {
 /**
  * Initiate an Airtel Money Collection push (USSD prompt on the customer's phone).
  * Malawi API: POST {base}/merchant/v1/payments/
- * @param {{ reference: string, msisdn: string, amount: number, transactionId?: string }} payload
+ * @param {{ msisdn: string, amount: number, transactionId: string }} payload — transactionId = order_number (alphanumeric)
  */
 export async function postAirtelCollect(payload) {
   const { clientId, clientSecret } = getAirtelCredentials();
@@ -79,20 +102,21 @@ export async function postAirtelCollect(payload) {
     return { configured: false, response: null, data: {}, transactionId: null, success: false };
   }
 
-  const token = await getAirtelAccessToken();
-  const transactionId = payload.transactionId || generateAirtelTransactionId();
-  const reference = normalizeAirtelReference(payload.reference);
-  if (!reference) {
+  const reference = getAirtelCollectReference();
+  const transactionId = normalizeAirtelReference(payload.transactionId);
+  if (!transactionId) {
     return {
       configured: true,
       response: null,
       data: {},
       transactionId: null,
-      airtelReference: null,
+      airtelReference: reference,
       success: false,
-      message: 'Invalid payment reference (must be alphanumeric after normalization, max 64 chars)'
+      message: 'transactionId (order number) is required and must be alphanumeric, max 64 chars'
     };
   }
+
+  const token = await getAirtelAccessToken();
   const body = {
     reference,
     subscriber: {

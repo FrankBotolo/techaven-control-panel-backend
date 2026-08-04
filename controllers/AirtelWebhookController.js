@@ -5,7 +5,8 @@ import { verifyAirtelWebhookSignature } from '../utils/airtelWebhookSignature.js
 import { parseSubscriptionMerchantRef } from '../utils/paychanguRefs.js';
 import { finalizePendingShopSubscriptionPayment } from '../utils/subscriptionPaymentActivate.js';
 import { completeOrderPaidWithEscrow } from '../utils/orderEscrowFinalize.js';
-import { denormalizeOrdOrderNumber, normalizeAirtelReference } from '../utils/airtelCollect.js';
+import { orderNumberLookupCandidates, getAirtelCollectReference } from '../utils/airtelCollect.js';
+import { findOrderByPaymentRef } from '../utils/orderEscrowFinalize.js';
 
 const { Order, User, AirtelTransaction, AirtelWebhookLog, ShopSubscription } = db;
 
@@ -83,6 +84,28 @@ function parseAirtelPayload(body) {
   return { transactionId, airtelMoneyId, reference, msisdn, amount, statusCode, statusRaw, message, isSuccess };
 }
 
+/** Resolve order from Airtel callback transaction.id (we send order_number as transaction.id). */
+async function findOrderByAirtelTransactionId(transactionId, txRow) {
+  if (txRow?.order_id) {
+    const order = await Order.findByPk(txRow.order_id, {
+      include: [
+        { model: User, as: 'seller', attributes: ['id', 'name', 'email'] },
+        { model: db.OrderItem, as: 'items', required: false }
+      ]
+    });
+    if (order) return order;
+  }
+
+  if (!transactionId) return null;
+
+  for (const candidate of orderNumberLookupCandidates(transactionId)) {
+    const order = await findOrderByPaymentRef(candidate);
+    if (order) return order;
+  }
+
+  return null;
+}
+
 /**
  * POST /api/webhooks/airtel
  * Called by Airtel Money after a payment event. Configure the callback URL in the
@@ -141,7 +164,7 @@ export const webhook = async (req, res) => {
       : null;
 
     if (txRow) {
-      if (!reference) reference = txRow.reference;
+      if (!reference) reference = txRow.reference || getAirtelCollectReference();
       txRow.status = statusRaw ?? txRow.status;
       txRow.status_code = statusCode ?? txRow.status_code;
       txRow.message = message ?? txRow.message;
@@ -149,12 +172,9 @@ export const webhook = async (req, res) => {
       txRow.raw_payload = body;
       await txRow.save();
     } else if (transactionId) {
-      const orderIdFromTxn = parseInt(String(transactionId), 10);
-      if (Number.isFinite(orderIdFromTxn) && orderIdFromTxn > 0) {
-        const orderByTxnId = await Order.findByPk(orderIdFromTxn, { attributes: ['id', 'order_number'] });
-        if (orderByTxnId) {
-          reference = orderByTxnId.order_number;
-        }
+      const orderFromTxnId = await findOrderByAirtelTransactionId(transactionId, null);
+      if (orderFromTxnId) {
+        reference = orderFromTxnId.order_number;
       }
     }
 
@@ -189,7 +209,46 @@ export const webhook = async (req, res) => {
       return res.status(200).json({ success: true, message: 'Webhook received (non-success)' });
     }
 
+    // Order pay: transaction.id = order_number; reference is fixed "Testing transaction"
+    const orderFromCallback = await findOrderByAirtelTransactionId(transactionId, txRow);
+    if (orderFromCallback) {
+      if (!isSignatureValid) {
+        console.log('[Airtel webhook] Skipping order update — unverified signature, txn id:', transactionId);
+        return res.status(200).json({ success: true, message: 'Webhook received (unverified signature)' });
+      }
+
+      const order = orderFromCallback;
+      reference = order.order_number;
+
+      if (order.payment_status === 'paid') {
+        console.log('[Airtel webhook] Order already paid:', order.order_number);
+        if (txRow) {
+          txRow.processing_state = 'order_already_paid';
+          txRow.order_id = order.id;
+          await txRow.save();
+        }
+        return res.status(200).json({ success: true, message: 'Webhook received' });
+      }
+
+      await completeOrderPaidWithEscrow(order, {
+        paymentMethod: 'airtel',
+        paymentReference: transactionId || airtelMoneyId || null,
+        source: 'airtel_webhook',
+        req
+      });
+
+      if (txRow) {
+        txRow.order_id = order.id;
+        txRow.processing_state = 'order_paid';
+        await txRow.save();
+      }
+
+      console.log('[Airtel webhook] Order marked paid via transaction.id:', transactionId, 'order:', order.order_number);
+      return res.status(200).json({ success: true, message: 'Webhook processed' });
+    }
+
     if (!reference) {
+      console.log('[Airtel webhook] No order for transaction.id and no reference:', transactionId);
       // Airtel's callback never includes `reference` (confirmed by their own sample payload —
       // only `transaction.{id, message, status_code, airtel_money_id}`), and no push-time row
       // was found for this transaction.id to resolve one from either. Nothing to reconcile —
@@ -255,39 +314,12 @@ export const webhook = async (req, res) => {
       return res.status(200).json({ success: true, message: 'Webhook processed (subscription)' });
     }
 
-    // Order payment — prefer order_id from push-time row; else match by reference (normalized or ORD-… format)
-    let order = null;
-    if (txRow?.order_id) {
-      order = await Order.findByPk(txRow.order_id, {
-        include: [
-          { model: User, as: 'seller', attributes: ['id', 'name', 'email'] },
-          { model: db.OrderItem, as: 'items', required: false }
-        ]
-      });
-    }
-    if (!order && reference) {
-      const refs = [reference];
-      const denorm = denormalizeOrdOrderNumber(reference);
-      if (denorm) refs.push(denorm);
-      const normalized = normalizeAirtelReference(reference);
-      if (normalized && normalized !== reference) refs.push(normalized);
-
-      order = await Order.findOne({
-        where: {
-          [Op.or]: [
-            ...refs.map((r) => ({ order_number: r })),
-            { id: parseInt(reference, 10) || 0 }
-          ]
-        },
-        include: [
-          { model: User, as: 'seller', attributes: ['id', 'name', 'email'] },
-          { model: db.OrderItem, as: 'items', required: false }
-        ]
-      });
-    }
+    // Order payment fallback (subscription / legacy reference-based flows)
+    const order = await findOrderByAirtelTransactionId(reference, txRow)
+      ?? await findOrderByAirtelTransactionId(transactionId, txRow);
 
     if (!order) {
-      console.log('[Airtel webhook] Order not found for:', reference);
+      console.log('[Airtel webhook] Order not found for transaction.id:', transactionId, 'reference:', reference);
       const notFoundTxRow = await AirtelTransaction.findOne({
         where: { reference },
         order: [['createdAt', 'DESC']]

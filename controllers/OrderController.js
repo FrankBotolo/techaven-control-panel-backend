@@ -2,7 +2,7 @@ import db from '../models/index.js';
 import { Op } from 'sequelize';
 import { logAudit, auditContext } from '../utils/audit.js';
 import { sendNotificationEmail } from '../utils/notificationHelper.js';
-import { getAirtelCredentials, postAirtelCollect } from '../utils/airtelCollect.js';
+import { getAirtelCredentials, postAirtelCollect, normalizeAirtelReference, getAirtelCollectReference } from '../utils/airtelCollect.js';
 import { getSellerCommissionPercent, computeSellerEscrowSplit } from '../utils/sellerCommission.js';
 import { verifyPayChanguTxRef, paychanguVerifyDataIndicatesPaid } from '../utils/paychanguVerify.js';
 import { completeOrderPaidWithEscrow } from '../utils/orderEscrowFinalize.js';
@@ -1659,8 +1659,17 @@ export const payWithAirtel = async (req, res) => {
     }
 
     const amount = Math.round(parseFloat(order.total_amount) || 0);
+    const airtelTransactionId = normalizeAirtelReference(order.order_number);
+    if (!airtelTransactionId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Order number is not a valid Airtel transaction id (must be alphanumeric, max 64 chars)',
+        data: null
+      });
+    }
+
     const { response, data, transactionId, success: apiSuccess, message: apiMessage } = await postAirtelCollect({
-      reference: order.order_number,
+      transactionId: airtelTransactionId,
       msisdn,
       amount
     });
@@ -1668,7 +1677,7 @@ export const payWithAirtel = async (req, res) => {
     if (apiSuccess) {
       await db.AirtelTransaction.create({
         transaction_id: transactionId,
-        reference: order.order_number,
+        reference: getAirtelCollectReference(),
         order_id: order.id,
         msisdn,
         amount,
