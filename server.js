@@ -1,6 +1,6 @@
+import './utils/loadEnv.js';
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import db from './models/index.js';
@@ -9,8 +9,6 @@ import { startSubscriptionExpiryJob } from './utils/subscriptionExpiryScheduler.
 import { startAirtelTokenWarmup } from './utils/airtelToken.js';
 import { corsMiddleware } from './middleware/cors.js';
 import { requestLogger } from './middleware/requestLogger.js';
-
-dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
