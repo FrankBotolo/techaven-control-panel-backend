@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -9,10 +10,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ENV_PATH = path.join(__dirname, '..', '.env');
 let envLoaded = false;
 
-/** Load server/.env on demand (safe if PM2 cwd differs from app folder). */
+/** Load server/.env on demand. override:true fixes PM2/systemd empty env vars blocking .env values. */
 function ensureEnvLoaded() {
   if (envLoaded) return;
-  dotenv.config({ path: ENV_PATH });
+  dotenv.config({ path: ENV_PATH, override: true });
   envLoaded = true;
 }
 
@@ -21,12 +22,43 @@ function trimEnv(value) {
   return v || null;
 }
 
+/** Last-resort: read a key straight from the .env file (when process.env is blank/stale). */
+function readEnvFileKey(key) {
+  try {
+    if (!fs.existsSync(ENV_PATH)) return null;
+    const content = fs.readFileSync(ENV_PATH, 'utf8');
+    for (const line of content.split(/\r?\n/)) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) continue;
+      const eq = trimmed.indexOf('=');
+      if (eq === -1) continue;
+      const k = trimmed.slice(0, eq).trim();
+      if (k !== key) continue;
+      let v = trimmed.slice(eq + 1).trim();
+      if (
+        (v.startsWith('"') && v.endsWith('"')) ||
+        (v.startsWith("'") && v.endsWith("'"))
+      ) {
+        v = v.slice(1, -1);
+      }
+      return v || null;
+    }
+  } catch {
+    // ignore read/parse errors
+  }
+  return null;
+}
+
 export function getAirtelCredentials() {
   ensureEnvLoaded();
-  return {
-    clientId: trimEnv(process.env.AIRTEL_CLIENT_ID),
-    clientSecret: trimEnv(process.env.AIRTEL_CLIENT_SECRET)
-  };
+
+  let clientId = trimEnv(process.env.AIRTEL_CLIENT_ID);
+  let clientSecret = trimEnv(process.env.AIRTEL_CLIENT_SECRET);
+
+  if (!clientId) clientId = trimEnv(readEnvFileKey('AIRTEL_CLIENT_ID'));
+  if (!clientSecret) clientSecret = trimEnv(readEnvFileKey('AIRTEL_CLIENT_SECRET'));
+
+  return { clientId, clientSecret };
 }
 
 let cachedToken = null;
@@ -36,11 +68,12 @@ let refreshPromise = null;
 
 export function getAirtelBaseUrl() {
   ensureEnvLoaded();
-  const override = (process.env.AIRTEL_API_BASE_URL || '').trim();
+  let airtelEnv = trimEnv(process.env.AIRTEL_ENV) || trimEnv(readEnvFileKey('AIRTEL_ENV'));
+  const override = (process.env.AIRTEL_API_BASE_URL || readEnvFileKey('AIRTEL_API_BASE_URL') || '').trim();
   if (override) {
     return override.replace(/\/$/, '');
   }
-  return process.env.AIRTEL_ENV === 'production'
+  return airtelEnv === 'production'
     ? 'https://openapi.airtel.mw'
     : 'https://openapiuat.airtel.mw';
 }
@@ -141,11 +174,13 @@ export function getAirtelTokenCacheStatus() {
 export function startAirtelTokenWarmup() {
   const { clientId, clientSecret } = getAirtelCredentials();
   if (!clientId || !clientSecret) {
+    const envExists = fs.existsSync(ENV_PATH);
     console.warn(
       '[Airtel] Credentials missing — set AIRTEL_CLIENT_ID and AIRTEL_CLIENT_SECRET in',
       ENV_PATH,
-      '(cwd:',
-      process.cwd() + ')'
+      envExists ? '(file exists)' : '(file NOT found)',
+      'cwd:',
+      process.cwd()
     );
     return;
   }
