@@ -32,7 +32,7 @@ export function normalizeAirtelMsisdn(msisdn) {
   return local.replace(/^0/, '');
 }
 
-/** Airtel `reference` must be alphanumeric, max 64 chars (hyphens in order_number are stripped). */
+/** Ensure reference is alphanumeric, max 64 (legacy order numbers may contain hyphens). */
 export function normalizeAirtelReference(ref) {
   const s = String(ref ?? '')
     .replace(/[^a-zA-Z0-9]/g, '')

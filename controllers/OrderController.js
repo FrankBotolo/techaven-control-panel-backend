@@ -40,11 +40,12 @@ const awardPointsForOrder = async (orderId, userId) => {
   await buyer.save();
 };
 
+/** Alphanumeric order number (Airtel reference-safe): ORD + YYYYMMDD + 4-digit seq, max 64 chars. */
 const generateOrderNumber = () => {
   const now = new Date();
   const ymd = now.toISOString().slice(0, 10).replace(/-/g, '');
   const seq = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-  return `ORD-${ymd}-${seq}`;
+  return `ORD${ymd}${seq}`;
 };
 
 /** Format order for API doc response */
@@ -1658,7 +1659,7 @@ export const payWithAirtel = async (req, res) => {
     }
 
     const amount = Math.round(parseFloat(order.total_amount) || 0);
-    const { response, data, transactionId, airtelReference, success: apiSuccess, message: apiMessage } = await postAirtelCollect({
+    const { response, data, transactionId, success: apiSuccess, message: apiMessage } = await postAirtelCollect({
       reference: order.order_number,
       msisdn,
       amount
@@ -1667,7 +1668,7 @@ export const payWithAirtel = async (req, res) => {
     if (apiSuccess) {
       await db.AirtelTransaction.create({
         transaction_id: transactionId,
-        reference: airtelReference || order.order_number,
+        reference: order.order_number,
         order_id: order.id,
         msisdn,
         amount,
