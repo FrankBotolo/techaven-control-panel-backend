@@ -159,9 +159,6 @@ const Order = sequelize.define('Order', {
   timestamps: true,
   indexes: [
     {
-      fields: ['order_number']
-    },
-    {
       fields: ['status']
     }
   ]

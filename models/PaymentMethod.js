@@ -41,7 +41,7 @@ const PaymentMethod = sequelize.define('PaymentMethod', {
 }, {
   tableName: 'payment_methods',
   timestamps: true,
-  indexes: [{ fields: ['slug'] }, { fields: ['psp_id'] }]
+  indexes: [{ fields: ['psp_id'] }]
 });
 
 export default PaymentMethod;
