@@ -22,6 +22,7 @@
     "test-sms": "node scripts/test-sms.js",
     "test-airtel": "node scripts/test-airtel-token.js",
     "test-airtel-payment": "node scripts/test-airtel-payment.js",
+    "test-airtel-transaction": "node scripts/test-airtel-transaction.js",
     "fix-invitations": "node scripts/fix-invitations-timestamps.js",
     "seed": "node scripts/seed.js",
     "setup": "npm run create-db && npm run migrate && npm run seed"

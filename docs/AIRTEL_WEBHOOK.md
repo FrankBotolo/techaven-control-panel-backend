@@ -22,6 +22,16 @@ Body: { "msisdn": "0991234567" }
 - Airtel success response shape: `{ data: { transaction: { id, status } }, status: { success, code, message, ... } }`.
 - Returns 500 with a clear message if `AIRTEL_CLIENT_ID`/`AIRTEL_CLIENT_SECRET` aren't set.
 
+## Transaction summary (enquiry)
+
+```
+GET /api/orders/:id/pay/airtel/status
+```
+
+- Authenticated customer who owns the order. Calls Airtel `GET {base}/merchant/v1/transactions/{transactionId}` where `transactionId` is the normalized `order_number`.
+- Implementation: [`utils/airtelTransactions.js`](../utils/airtelTransactions.js) (`getAirtelTransactionSummary`).
+- CLI test: `npm run test-airtel-transaction -- ORD202608041234` (omit id to hit list endpoint `GET .../transactions`).
+
 ## Callback URL (inbound)
 
 ```

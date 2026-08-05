@@ -3,6 +3,7 @@ import { Op } from 'sequelize';
 import { logAudit, auditContext } from '../utils/audit.js';
 import { sendNotificationEmail } from '../utils/notificationHelper.js';
 import { getAirtelCredentials, postAirtelCollect, normalizeAirtelReference, getAirtelCollectReference } from '../utils/airtelCollect.js';
+import { getAirtelTransactionSummary } from '../utils/airtelTransactions.js';
 import { getSellerCommissionPercent, computeSellerEscrowSplit } from '../utils/sellerCommission.js';
 import { verifyPayChanguTxRef, paychanguVerifyDataIndicatesPaid } from '../utils/paychanguVerify.js';
 import { completeOrderPaidWithEscrow } from '../utils/orderEscrowFinalize.js';
@@ -1727,6 +1728,71 @@ export const payWithAirtel = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Payment initiation failed',
+      data: null,
+      error: error.message
+    });
+  }
+};
+
+/** GET /api/orders/:id/pay/airtel/status — query Airtel for transaction summary (uses order_number as transaction id). */
+export const getAirtelPaymentStatus = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const id = resolveOrderId(req);
+
+    const order = await Order.findByPk(id);
+    if (!order || order.user_id !== userId) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found',
+        data: null
+      });
+    }
+
+    const { clientId, clientSecret } = getAirtelCredentials();
+    if (!clientId || !clientSecret) {
+      return res.status(500).json({
+        success: false,
+        message: 'Airtel payment is not configured. Set AIRTEL_CLIENT_ID and AIRTEL_CLIENT_SECRET in .env',
+        data: null
+      });
+    }
+
+    const airtelTransactionId = normalizeAirtelReference(order.order_number);
+    if (!airtelTransactionId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Order number is not a valid Airtel transaction id (must be alphanumeric, max 64 chars)',
+        data: null
+      });
+    }
+
+    const result = await getAirtelTransactionSummary({ transactionId: airtelTransactionId });
+
+    if (!result.configured) {
+      return res.status(500).json({
+        success: false,
+        message: result.message,
+        data: null
+      });
+    }
+
+    return res.status(result.response?.ok ? 200 : result.response?.status || 502).json({
+      success: result.success,
+      message: result.message,
+      data: {
+        order_id: `ord_${order.id}`,
+        order_number: order.order_number,
+        payment_status: order.payment_status,
+        transaction_id: airtelTransactionId,
+        airtel: result.data
+      }
+    });
+  } catch (error) {
+    console.error('Airtel payment status error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch Airtel transaction summary',
       data: null,
       error: error.message
     });
