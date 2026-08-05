@@ -268,6 +268,19 @@ const seedDatabase = async () => {
       return categoryIds.smartphones;
     }
 
+    /** Seed catalog items are cheap and labelled for payment/checkout testing. */
+    const SEED_TEST_PRODUCT_PRICE = 50;
+
+    function toTestingSeedProduct(product) {
+      const stripped = String(product.name).replace(/^\[Testing\]\s*/i, '').trim();
+      return {
+        ...product,
+        name: `[Testing] ${stripped}`,
+        price: SEED_TEST_PRODUCT_PRICE,
+        original_price: product.original_price != null ? SEED_TEST_PRODUCT_PRICE * 2 : null
+      };
+    }
+
     // ═══════════════════════════════════════════════════════════════════
     // 5. TECH HAVEN ELECTRONICS — Product Listings
     // ═══════════════════════════════════════════════════════════════════
@@ -391,7 +404,7 @@ const seedDatabase = async () => {
         vendor: 'Tech Haven Electronics',
         specifications: { display: '6.5" Super AMOLED, 120 Hz', chipset: 'Exynos 1280 (5G)', ram_storage: '6GB / 128GB', main_camera: '50 MP OIS + 8 MP ultra-wide + 2 MP macro', battery: '5000 mAh', os: 'Android 14' }
       },
-      { name: 'Tecno Camon 40 Pro', description: 'Premium 4G experience featuring a brilliant AMOLED display and a high-resolution 50MP selfie camera.', price: 645000, original_price: 690000, discount: 7, image: 'https://fdn2.gsmarena.com/vv/bigpic/tecno-camon-40-pro.jpg', stock: 15, is_featured: false, is_hot: true, is_special: false, is_new_arrival: true, vendor: 'Tech Haven Electronics', specifications: { display: '6.78" AMOLED, 1080 x 2436 px', chipset: 'Mediatek Helio G100 Ultimate (6 nm)', ram_storage: '8GB / 256GB', main_camera: '50 MP f/1.9 + 50 MP Front', battery: '5200 mAh', os: 'Android 15' } },
+      { name: 'Tecno Camon 40 Pro test ', description: 'Premium 4G experience featuring a brilliant AMOLED display and a high-resolution 50MP selfie camera.', price: 50, original_price: 690000, discount: 7, image: 'https://fdn2.gsmarena.com/vv/bigpic/tecno-camon-40-pro.jpg', stock: 15, is_featured: false, is_hot: true, is_special: false, is_new_arrival: true, vendor: 'Tech Haven Electronics', specifications: { display: '6.78" AMOLED, 1080 x 2436 px', chipset: 'Mediatek Helio G100 Ultimate (6 nm)', ram_storage: '8GB / 256GB', main_camera: '50 MP f/1.9 + 50 MP Front', battery: '5200 mAh', os: 'Android 15' } },
       { name: 'Tecno Camon 40', description: 'The perfect balance of style and performance with a vivid 6.78-inch AMOLED and rapid 45W charging.', price: 580000, original_price: null, discount: null, image: 'https://fdn2.gsmarena.com/vv/bigpic/tecno-camon-40.jpg', stock: 20, is_featured: false, is_hot: false, is_special: false, is_new_arrival: true, vendor: 'Tech Haven Electronics', specifications: { display: '6.78" AMOLED, 1080 x 2436 px', chipset: 'Mediatek Helio G100 Ultimate (6 nm)', ram_storage: '8GB / 128GB/256GB', main_camera: '50 MP f/1.9', battery: '5200 mAh', os: 'Android 15' } },
       { name: 'Tecno Spark Go 1S', description: 'Essential performance meets modern design with a large 6.67-inch display and IP54 durability.', price: 145000, original_price: null, discount: null, image: 'https://fdn2.gsmarena.com/vv/bigpic/tecno-spark-go-1s.jpg', stock: 45, is_featured: false, is_hot: false, is_special: false, is_new_arrival: true, vendor: 'General Mobile', specifications: { display: '6.67" IPS LCD, 720 x 1600 px', chipset: 'Mediatek Helio G50', ram_storage: '3GB / 64GB', main_camera: '13 MP f/1.8', battery: '5000 mAh', os: 'Android 14 (Go edition)' } },
       { name: 'Tecno Camon 30S', description: 'Sleek and splash-resistant with an immersive AMOLED display and up to 2 major Android upgrades.', price: 415000, original_price: 440000, discount: 6, image: 'https://fdn2.gsmarena.com/vv/bigpic/tecno-camon-30s.jpg', stock: 18, is_featured: false, is_hot: false, is_special: false, is_new_arrival: false, vendor: 'Tech Haven Electronics', specifications: { display: '6.78" AMOLED, 1080 x 2436 px', chipset: 'Mediatek Helio G100 (6 nm)', ram_storage: '6GB/8GB / 128GB/256GB', main_camera: '50 MP f/1.9 OIS', battery: '5000 mAh', os: 'Android 14' } },
@@ -465,15 +478,32 @@ const seedDatabase = async () => {
       { name: 'Oppo Reno 10 5G', description: 'Portrait-focused mid-range with telephoto lens.', price: 789000, original_price: null, discount: null, image: 'https://phonesdata.com/files/models/Oppo-Reno10-265.jpg', stock: 6, is_featured: false, is_hot: true, is_special: true, is_new_arrival: false, vendor: 'Tech Haven Electronics', specifications: { display: '6.7" AMOLED, 120 Hz', chipset: 'MediaTek Dimensity 7050', ram_storage: '8GB / 256GB', main_camera: '64 MP + 32 MP tele portrait + 8 MP ultra-wide', battery: '5000 mAh, 67W', os: 'Android 13' } },
       { name: 'Oppo Reno 11 5G', description: 'Refined Reno design with improved low-light portraits.', price: 935000, original_price: 999000, discount: 6, image: 'https://phonesdata.com/files/models/Oppo-Reno11-1.jpg', stock: 5, is_featured: true, is_hot: false, is_special: true, is_new_arrival: true, vendor: 'Tech Haven Electronics', specifications: { display: '6.7" AMOLED, 120 Hz', chipset: 'MediaTek Dimensity 7050 / 8200 (region)', ram_storage: '8GB / 256GB', main_camera: '50 MP LYT main + 32 MP tele + 8 MP ultra-wide', battery: '4800–5000 mAh', os: 'Android 14' } },
       { name: 'Oppo Find X7', description: 'Ultra-premium camera flagship — Hasselblad color science (series).', price: 2989000, original_price: 3250000, discount: 8, image: 'https://phonesdata.com/files/models/Oppo-Find-X7-1.jpg', stock: 3, is_featured: true, is_hot: true, is_special: true, is_new_arrival: true, vendor: 'Tech Haven Electronics', specifications: { display: '6.78" LTPO AMOLED, ProXDR', chipset: 'MediaTek Dimensity 9300', ram_storage: '16GB / 512GB', main_camera: 'Triple 50 MP flagship array (periscope on variant)', battery: '5000 mAh, 100W', os: 'Android 14' } },
-    ].map((p) => ({ ...p, category_id: resolveProductCategoryId(p), shop_id: techHavenShop.id }));
+    ].map((p) => ({ ...p, category_id: resolveProductCategoryId(p), shop_id: techHavenShop.id }))
+      .map(toTestingSeedProduct);
 
     for (const p of techHavenProducts) {
-      await Product.findOrCreate({
+      const [product, created] = await Product.findOrCreate({
         where: { name: p.name, shop_id: techHavenShop.id },
         defaults: p
       });
+      if (!created) {
+        await product.update({
+          price: p.price,
+          original_price: p.original_price,
+          description: p.description,
+          image: p.image,
+          stock: p.stock,
+          is_featured: p.is_featured,
+          is_hot: p.is_hot,
+          is_special: p.is_special,
+          is_new_arrival: p.is_new_arrival,
+          vendor: p.vendor,
+          specifications: p.specifications,
+          category_id: p.category_id
+        });
+      }
     }
-    console.log(`       ✅ ${techHavenProducts.length} products created for Tech Haven Electronics.\n`);
+    console.log(`       ✅ ${techHavenProducts.length} test products (MWK ${SEED_TEST_PRODUCT_PRICE}) for Tech Haven Electronics.\n`);
 
     // ═══════════════════════════════════════════════════════════════════
     // 6. PIXIE ELECTRONICS — Product Listings
@@ -537,15 +567,33 @@ const seedDatabase = async () => {
       { name: 'iPhone 13 128GB — Pre-owned 100%', description: 'Pre-owned iPhone 13 128GB. Battery health 100%. A15 Bionic, dual-camera with sensor-shift OIS, Cinematic mode. 2-month Pixie warranty.', price: 1450000, original_price: null, discount: null, image: IMG.iphone_13, stock: 3, is_featured: false, is_hot: true, is_special: false, is_new_arrival: false, condition: 'used', vendor: 'Pixie Electronics', category_id: categoryIds.smartphones, specifications: { display: '6.1" Super Retina XDR OLED, 2532×1170 (460 ppi)', chipset: 'Apple A15 Bionic', ram_storage: '4GB / 128GB', main_camera: '12 MP Dual (Wide + Ultra-wide)', battery: '3227 mAh — 100% health', os: 'iOS 15 (upgradable to 17)' } },
       { name: 'iPhone 13 Pro Max 128GB — Pre-owned 84%', description: 'Pre-owned iPhone 13 Pro Max 128GB. Battery health 84%. ProMotion 120Hz, triple-camera with macro, 6.7" OLED. 2-month Pixie warranty.', price: 2000000, original_price: null, discount: null, image: IMG.iphone_13_pro_max, stock: 1, is_featured: true, is_hot: true, is_special: false, is_new_arrival: false, condition: 'used', vendor: 'Pixie Electronics', category_id: categoryIds.smartphones, specifications: { display: '6.7" ProMotion Super Retina XDR OLED, 2778×1284 (458 ppi), 120 Hz', chipset: 'Apple A15 Bionic', ram_storage: '6GB / 128GB', main_camera: '12 MP Triple + LiDAR (Wide + Ultra-wide + Telephoto 3x + Macro)', battery: '4352 mAh — 84% health', os: 'iOS 15 (upgradable to 17)' } },
       { name: 'iPhone 15 Pro Max 256GB — Pre-owned 83%', description: 'Pre-owned iPhone 15 Pro Max 256GB. Battery health 83%. Titanium design, 5x optical zoom, A17 Pro chip, USB-C. 2-month Pixie warranty.', price: 2950000, original_price: null, discount: null, image: IMG.iphone_15_pro_max, stock: 1, is_featured: true, is_hot: true, is_special: true, is_new_arrival: false, condition: 'used', vendor: 'Pixie Electronics', category_id: categoryIds.smartphones, specifications: { display: '6.7" ProMotion Super Retina XDR OLED, 2796×1290 (460 ppi), 120 Hz', chipset: 'Apple A17 Pro', ram_storage: '8GB / 256GB', main_camera: '48 MP Triple + LiDAR (Fusion + Ultra-wide + Telephoto 5x)', battery: '4422 mAh — 83% health', os: 'iOS 17' } },
-    ].map((p) => ({ ...p, shop_id: pixieShop.id }));
+    ].map((p) => ({ ...p, shop_id: pixieShop.id }))
+      .map(toTestingSeedProduct);
 
     for (const p of pixieProducts) {
-      await Product.findOrCreate({
+      const [product, created] = await Product.findOrCreate({
         where: { name: p.name, shop_id: pixieShop.id },
         defaults: p
       });
+      if (!created) {
+        await product.update({
+          price: p.price,
+          original_price: p.original_price,
+          description: p.description,
+          image: p.image,
+          stock: p.stock,
+          is_featured: p.is_featured,
+          is_hot: p.is_hot,
+          is_special: p.is_special,
+          is_new_arrival: p.is_new_arrival,
+          condition: p.condition,
+          vendor: p.vendor,
+          specifications: p.specifications,
+          category_id: p.category_id
+        });
+      }
     }
-    console.log(`       ✅ ${pixieProducts.length} products created for Pixie Electronics.\n`);
+    console.log(`       ✅ ${pixieProducts.length} test products (MWK ${SEED_TEST_PRODUCT_PRICE}) for Pixie Electronics.\n`);
 
     // ═══════════════════════════════════════════════════════════════════
     // 7. BUYER — Shipping Address
@@ -620,9 +668,9 @@ const seedDatabase = async () => {
     console.log('═══════════════════════════════════════════════════════════════');
     console.log('\nShops seeded:');
     console.log('  1. Tech Haven Electronics — 123 Commerce Street, Area 47');
-    console.log(`     ${techHavenProducts.length} products (Samsung, Tecno, Infinix, Apple, Xiaomi, Oppo...)`);
+    console.log(`     ${techHavenProducts.length} test products @ MWK ${SEED_TEST_PRODUCT_PRICE} (Samsung, Tecno, Infinix, Apple, Xiaomi, Oppo...)`);
     console.log('  2. Pixie Electronics — Behind Game by Olympic Mall');
-    console.log(`     ${pixieProducts.length} products (Sealed + Pre-owned iPhones, Pixel, Samsung)`);
+    console.log(`     ${pixieProducts.length} test products @ MWK ${SEED_TEST_PRODUCT_PRICE} (Sealed + Pre-owned iPhones, Pixel, Samsung)`);
     console.log('\nFlow: Buyer browses → Checkout → Payment → Escrow holds');
     console.log('      → Seller accepts → Delivery → Buyer confirms → Released');
     console.log('═══════════════════════════════════════════════════════════════\n');
