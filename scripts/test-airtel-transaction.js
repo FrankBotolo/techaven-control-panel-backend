@@ -6,7 +6,7 @@ import {
   getAirtelBaseUrl,
   normalizeAirtelReference
 } from '../utils/airtelCollect.js';
-import { getAirtelTransactionSummary } from '../utils/airtelTransactions.js';
+import { getAirtelTransactionSummary, getAirtelAllTransactions } from '../utils/airtelTransactions.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
@@ -26,12 +26,12 @@ async function main() {
   if (transactionId) {
     console.log('Transaction id:', normalizeAirtelReference(transactionId));
   } else {
-    console.log('No transaction id — fetching merchant transaction list/summary');
+    console.log('Fetching ALL transactions from Airtel (GET /merchant/v1/transactions)');
   }
 
-  const result = await getAirtelTransactionSummary(
-    transactionId ? { transactionId } : {}
-  );
+  const result = transactionId
+    ? await getAirtelTransactionSummary({ transactionId })
+    : await getAirtelAllTransactions();
 
   console.log('\nSuccess:', result.success ? 'yes' : 'no');
   console.log('Message:', result.message);

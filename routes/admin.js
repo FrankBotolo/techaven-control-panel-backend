@@ -15,6 +15,7 @@ import * as AdminShopSubscriptionController from '../controllers/AdminShopSubscr
 import * as AdminPlatformSettingController from '../controllers/AdminPlatformSettingController.js';
 import * as AdminPlatformDeductionController from '../controllers/AdminPlatformDeductionController.js';
 import * as AdminUserController from '../controllers/AdminUserController.js';
+import * as AdminAirtelController from '../controllers/AdminAirtelController.js';
 
 const router = express.Router();
 
@@ -108,6 +109,13 @@ router.delete('/audit-logs/:id', AdminAuditLogController.remove);
 router.get('/withdrawals', AdminWithdrawalController.listWithdrawals);
 router.get('/withdrawals/:id', AdminWithdrawalController.getWithdrawal);
 router.patch('/withdrawals/:id', AdminWithdrawalController.processWithdrawal);
+
+// Airtel Money — local transaction log + live enquiry via Airtel API
+router.get('/airtel/transactions/live/summary', AdminAirtelController.getLiveTransactionSummary);
+router.get('/airtel/transactions/live', AdminAirtelController.getLiveAllTransactions);
+router.get('/airtel/transactions', AdminAirtelController.listTransactions);
+router.get('/airtel/transactions/:id', AdminAirtelController.getTransaction);
+router.get('/airtel/orders/:orderId/status', AdminAirtelController.getOrderPaymentStatus);
 
 export default router;
 

@@ -32,6 +32,21 @@ GET /api/orders/:id/pay/airtel/status
 - Implementation: [`utils/airtelTransactions.js`](../utils/airtelTransactions.js) (`getAirtelTransactionSummary`).
 - CLI test: `npm run test-airtel-transaction -- ORD202608041234` (omit id to hit list endpoint `GET .../transactions`).
 
+## Admin endpoints
+
+All require **admin** Bearer token (`/api/admin/...`).
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/admin/airtel/transactions` | Paginated local log (`airtel_transactions` table). Query: `page`, `limit`, `processing_state`, `order_id` |
+| GET | `/api/admin/airtel/transactions/:id` | Single local log row by DB id |
+| GET | `/api/admin/airtel/transactions?all=true` | **All** local log rows (no pagination) |
+| GET | `/api/admin/airtel/transactions/live` | **All** transactions from Airtel live API (`GET .../merchant/v1/transactions`) |
+| GET | `/api/admin/airtel/transactions/live/summary` | Live Airtel API — optional `?transaction_id=` for one txn |
+| GET | `/api/admin/airtel/orders/:orderId/status` | Live Airtel status for an order (+ local log row if any) |
+
+Handler: [`controllers/AdminAirtelController.js`](../controllers/AdminAirtelController.js).
+
 ## Callback URL (inbound)
 
 ```

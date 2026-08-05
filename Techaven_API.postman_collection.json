@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "techaven-api-collection",
 		"name": "Techaven API",
-		"description": "Complete API documentation for Techaven e-commerce platform (Flow Diagram v1.0).\n\n**Seed credentials** (run `npm run seed` first):\n- Admin: admin@techaven.mw / admin12345\n- Buyer: buyer@techaven.mw / password123\n- Seller: seller@techaven.mw / seller12345\n- Delivery Agent: agent@techaven.mw / agent12345\n\n**Response envelope:** All endpoints return JSON with `success`, `message`, `data`. Use `Authorization: Bearer {{access_token}}` for protected routes.\n\n**Organization:**\n- **Mobile App:** Onboarding, Auth, User (**`GET /api/user/points/balances`**, **`POST /api/user/points/redeem`** → wallet MWK), Products (paginated `data.products`), public **subscription packages**, Categories, Cart, Orders (**`GET /api/orders/mine/paid`**, **`POST /api/orders/:id/pay/airtel`** Airtel MW direct push (`msisdn`), **`POST /api/orders/:id/pay/paychangu`**, confirm delivery optional **`file_url`**), **Wishlist** (`GET/POST /api/wishlist`, `GET/DELETE /api/wishlist/:productId`), Addresses, Wallet, Payment Methods, Notifications, **Shops** (**`GET /api/shops`** all shops; detail `followers_count`, **`points_mwk_per_point`**; optional `is_following`; **POST/DELETE** `/api/shops/:id/follow`; **`GET /api/shops/:id/products`**), Search, Help, App Info, public **platform settings** (seller commission %, **`default_points_mwk_per_point`** for general loyalty redemptions), SMS, Webhooks (**Airtel Money Malawi** direct Collection: **`POST /api/webhooks/airtel`** (callback), **`GET /api/webhooks/airtel`** (health); OAuth + payments via `openapi.airtel.mw`; **Pay Changu** = **`POST /api/webhooks/paychangu`**, **GET .../paychangu/callback**)\n- **Admin:** Dashboard, **Platform settings** (seller commission %, **`default_points_mwk_per_point`**, deduction summary & by-seller), **Subscription packages** & **Shop subscriptions**, Shops, Orders, Courier Services, Onboarding Slides, Banners, Audit Logs, Withdrawals, Notifications, Categories\n- **Seller:** Products (paginated + variants), Orders, Dashboard, **Subscription** (subscribe, **pay/paychangu** for mobile-money collect, cancel, resume), Earnings, **Shop profile** (`PATCH /api/sellers/:shopId/shop` incl. **`points_mwk_per_point`** MWK per loyalty point for buyer redemptions, **POST** `.../shop/logo` multipart `logo`, web UI `/seller-shop.html`), **Shop followers** (`GET /api/sellers/:shopId/followers`), Notifications\n- **Delivery Agent:** Jobs, Profile\n\n**Notes:** Featured/hot/new product segment endpoints were removed — filter client-side from `GET /api/products`. See `docs/SUBSCRIPTION_PACKAGES.md` for seller plans.\n\n**Airtel Money (Malawi):** Direct Collection API (`openapi.airtel.mw`). Server env: `AIRTEL_CLIENT_ID`, `AIRTEL_CLIENT_SECRET`, optional `AIRTEL_ENV=production`, `AIRTEL_WEBHOOK_SECRET`. Local CLI tests: `npm run test-airtel` (OAuth token), `npm run test-airtel-payment -- <msisdn>`. Full guide: `docs/AIRTEL_WEBHOOK.md`.",
+		"description": "Complete API documentation for Techaven e-commerce platform (Flow Diagram v1.0).\n\n**Seed credentials** (run `npm run seed` first):\n- Admin: admin@techaven.mw / admin12345\n- Buyer: buyer@techaven.mw / password123\n- Seller: seller@techaven.mw / seller12345\n- Delivery Agent: agent@techaven.mw / agent12345\n\n**Response envelope:** All endpoints return JSON with `success`, `message`, `data`. Use `Authorization: Bearer {{access_token}}` for protected routes.\n\n**Organization:**\n- **Mobile App:** Onboarding, Auth, User (**`GET /api/user/points/balances`**, **`POST /api/user/points/redeem`** → wallet MWK), Products (paginated `data.products`), public **subscription packages**, Categories, Cart, Orders (**`GET /api/orders/mine/paid`**, **`POST /api/orders/:id/pay/airtel`** + **`GET .../pay/airtel/status`**, **`POST /api/orders/:id/pay/paychangu`**, confirm delivery optional **`file_url`**), **Wishlist** (`GET/POST /api/wishlist`, `GET/DELETE /api/wishlist/:productId`), Addresses, Wallet, Payment Methods, Notifications, **Shops** (**`GET /api/shops`** all shops; detail `followers_count`, **`points_mwk_per_point`**; optional `is_following`; **POST/DELETE** `/api/shops/:id/follow`; **`GET /api/shops/:id/products`**), Search, Help, App Info, public **platform settings** (seller commission %, **`default_points_mwk_per_point`** for general loyalty redemptions), SMS, Webhooks (**Airtel Money Malawi** direct Collection: **`POST /api/webhooks/airtel`** (callback), **`GET /api/webhooks/airtel`** (health); OAuth + payments via `openapi.airtel.mw`; **Pay Changu** = **`POST /api/webhooks/paychangu`**, **GET .../paychangu/callback**)\n- **Admin:** Dashboard, **Platform settings** (seller commission %, **`default_points_mwk_per_point`**, deduction summary & by-seller), **Subscription packages** & **Shop subscriptions**, Shops, Orders, **Airtel Money** (`GET /api/admin/airtel/transactions`, **`/live`**, order status), Courier Services, Onboarding Slides, Banners, Audit Logs, Withdrawals, Notifications, Categories\n- **Seller:** Products (paginated + variants), Orders, Dashboard, **Subscription** (subscribe, **pay/paychangu** for mobile-money collect, cancel, resume), Earnings, **Shop profile** (`PATCH /api/sellers/:shopId/shop` incl. **`points_mwk_per_point`** MWK per loyalty point for buyer redemptions, **POST** `.../shop/logo` multipart `logo`, web UI `/seller-shop.html`), **Shop followers** (`GET /api/sellers/:shopId/followers`), Notifications\n- **Delivery Agent:** Jobs, Profile\n\n**Notes:** Featured/hot/new product segment endpoints were removed — filter client-side from `GET /api/products`. See `docs/SUBSCRIPTION_PACKAGES.md` for seller plans.\n\n**Airtel Money (Malawi):** Direct Collection API (`openapi.airtel.mw`). Server env: `AIRTEL_CLIENT_ID`, `AIRTEL_CLIENT_SECRET`, optional `AIRTEL_ENV=production`, `AIRTEL_WEBHOOK_SECRET`. CLI: `npm run test-airtel`, `npm run test-airtel-payment -- <msisdn>`, `npm run test-airtel-transaction [-- transactionId]`. Guide: `docs/AIRTEL_WEBHOOK.md`.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"auth": {
@@ -858,7 +858,7 @@
 				},
 				{
 					"name": "6. Orders",
-					"description": "Customer orders. Pay with **Airtel Money** (`POST /api/orders/:id/pay/airtel`, body `msisdn`) or **Pay Changu** (`POST /api/orders/:id/pay/paychangu`, body `tx_ref`). Paid orders: `GET /api/orders/mine/paid`.",
+					"description": "Customer orders. Pay with **Airtel Money** (`POST /api/orders/:id/pay/airtel`, body `msisdn`; poll **`GET .../pay/airtel/status`**) or **Pay Changu** (`POST /api/orders/:id/pay/paychangu`, body `tx_ref`). Paid orders: `GET /api/orders/mine/paid`.",
 					"item": [
 						{
 							"name": "Create Order",
@@ -958,7 +958,7 @@
 									"host": ["{{base_url}}"],
 									"path": ["api", "orders", "1", "pay", "airtel"]
 								},
-								"description": "Initiates a direct **Airtel Money Malawi** Collection push (USSD prompt on the customer's phone).\n\n**Auth:** Bearer — customer who owns the order.\n\n**Body:**\n- `msisdn` (required) — e.g. `0998256737` or `+265998256737` (sent to Airtel as `998256737`)\n\n**Server flow:**\n1. Validates order belongs to user and is not already paid.\n2. Obtains OAuth2 token from `POST https://openapi.airtel.mw/auth/oauth2/token` (auto-refreshed every ~150s; warmed on server start).\n3. Calls Airtel `POST https://openapi.airtel.mw/merchant/v1/payments/` with:\n   - `reference` = order `order_number`\n   - `transaction.id` = unique random id (e.g. `RFYYGhuhSerrIhUY`) — **not** the order id\n   - `transaction.amount` = string MWK amount\n4. Saves `airtel_transactions` row linking `transaction_id` → order.\n5. Customer confirms on phone → **`POST /api/webhooks/airtel`** marks order paid.\n\n**Env:** `AIRTEL_CLIENT_ID`, `AIRTEL_CLIENT_SECRET`, optional `AIRTEL_ENV=production`, `AIRTEL_WEBHOOK_SECRET`.\n\n**Local test:** `npm run test-airtel-payment -- 0998256737`\n\nSee `docs/AIRTEL_WEBHOOK.md`."
+								"description": "Initiates a direct **Airtel Money Malawi** Collection push (USSD prompt on the customer's phone).\n\n**Auth:** Bearer — customer who owns the order.\n\n**Body:**\n- `msisdn` (required) — e.g. `0998256737` (sent to Airtel as `998256737`)\n\n**Airtel outbound payload:**\n```json\n{\n  \"reference\": \"Techaventransaction\",\n  \"subscriber\": { \"country\": \"MW\", \"currency\": \"MWK\", \"msisdn\": \"998256737\" },\n  \"transaction\": { \"amount\": \"50\", \"country\": \"MW\", \"currency\": \"MWK\", \"id\": \"ORD202608041234\" }\n}\n```\n- `reference` — fixed merchant ref (`Techaven transaction` → alphanumeric)\n- `transaction.id` — normalized `order_number` (hyphens stripped)\n- `transaction.amount` — string MWK\n\n**Server flow:** OAuth token → `POST https://openapi.airtel.mw/merchant/v1/payments/` → saves `airtel_transactions` → webhook marks paid.\n\n**Env:** `AIRTEL_CLIENT_ID`, `AIRTEL_CLIENT_SECRET`, optional `AIRTEL_ENV=production`.\n\n**CLI:** `npm run test-airtel-payment -- 0998256737`\n\nSee `docs/AIRTEL_WEBHOOK.md`."
 							},
 							"response": [
 								{
@@ -990,7 +990,7 @@
 											"value": "application/json"
 										}
 									],
-									"body": "{\n  \"success\": true,\n  \"message\": \"Payment request sent. Customer will receive a prompt on their phone to confirm.\",\n  \"data\": {\n    \"order_id\": \"ord_1\",\n    \"order_number\": \"ORD-000001\",\n    \"amount\": 100,\n    \"provider\": \"airtel\",\n    \"transaction_id\": \"yHQzUnEzMKGitOke\",\n    \"airtel\": {\n      \"data\": {\n        \"transaction\": {\n          \"id\": \"yHQzUnEzMKGitOke\",\n          \"status\": \"Success.\"\n        }\n      },\n      \"status\": {\n        \"response_code\": \"DP00800001006\",\n        \"code\": \"200\",\n        \"success\": true,\n        \"result_code\": \"ESB000010\",\n        \"message\": \"SUCCESS\"\n      }\n    }\n  }\n}"
+									"body": "{\n  \"success\": true,\n  \"message\": \"Payment request sent. Customer will receive a prompt on their phone to confirm.\",\n  \"data\": {\n    \"order_id\": \"ord_1\",\n    \"order_number\": \"ORD-20260804-1234\",\n    \"amount\": 50,\n    \"provider\": \"airtel\",\n    \"transaction_id\": \"ORD202608041234\",\n    \"airtel\": {\n      \"data\": {\n        \"transaction\": {\n          \"id\": \"ORD202608041234\",\n          \"status\": \"Success.\"\n        }\n      },\n      \"status\": {\n        \"response_code\": \"DP00800001006\",\n        \"code\": \"200\",\n        \"success\": true,\n        \"result_code\": \"ESB000010\",\n        \"message\": \"SUCCESS\"\n      }\n    }\n  }\n}"
 								},
 								{
 									"name": "Airtel API error (400)",
@@ -1010,6 +1010,20 @@
 									"body": "{\n  \"success\": false,\n  \"message\": \"Invalid transaction id in body\",\n  \"data\": null,\n  \"error\": \"Invalid transaction id in body\"\n}"
 								}
 							]
+						},
+						{
+							"name": "Get Airtel Payment Status",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/orders/1/pay/airtel/status",
+									"host": ["{{base_url}}"],
+									"path": ["api", "orders", "1", "pay", "airtel", "status"]
+								},
+								"description": "Poll **Airtel live transaction summary** for this order after initiating payment.\n\n**Auth:** Bearer — customer who owns the order.\n\nCalls Airtel `GET https://openapi.airtel.mw/merchant/v1/transactions/{transactionId}` where `transactionId` = normalized `order_number` (e.g. `ORD-20260804-1234` → `ORD202608041234`).\n\n**CLI equivalent:** `npm run test-airtel-transaction -- ORD202608041234`"
+							},
+							"response": []
 						},
 						{
 							"name": "Confirm Pay Changu payment",
@@ -1956,14 +1970,14 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"transaction\": {\n    \"id\": \"yHQzUnEzMKGitOke\",\n    \"message\": \"Paid MWK 100 to Chiwaya Merchant\",\n    \"status_code\": \"TS\",\n    \"airtel_money_id\": \"MP260317.1345.A01234\"\n  },\n  \"reference\": \"ORD-000001\",\n  \"msisdn\": \"265998256737\",\n  \"amount\": \"100\"\n}"
+									"raw": "{\n  \"transaction\": {\n    \"id\": \"ORD202608041234\",\n    \"message\": \"Paid MWK 50 to Chiwaya Merchant\",\n    \"status_code\": \"TS\",\n    \"airtel_money_id\": \"MP260317.1345.A01234\"\n  },\n  \"reference\": \"Techaventransaction\",\n  \"msisdn\": \"265998256737\",\n  \"amount\": \"50\"\n}"
 								},
 								"url": {
 									"raw": "{{base_url}}/api/webhooks/airtel",
 									"host": ["{{base_url}}"],
 									"path": ["api", "webhooks", "airtel"]
 								},
-								"description": "Called by Airtel Money Malawi after a Collection payment event.\n\n**Auth:** None by default. When `AIRTEL_WEBHOOK_SECRET` is set, include header **`x-airtel-signature`** = HMAC-SHA256 hex of the **raw** JSON body.\n\n**Payload notes:**\n- `transaction.id` matches the unique id sent in the outbound push (e.g. `yHQzUnEzMKGitOke`) — server looks up `airtel_transactions` to resolve the order.\n- `reference` is often omitted in callbacks; server falls back to the stored `reference` (`order_number`) from the push row.\n- `status_code: \"TS\"` or nested `status.success: true` = payment success → order marked **paid** + escrow.\n- Shop subscriptions: `reference` may be `SUB-{id}-…`.\n\n**Always returns HTTP 200** (Airtel callback contract). Set `WEBHOOK_CAPTURE_ONLY=true` to log only.\n\nSee `docs/AIRTEL_WEBHOOK.md`."
+								"description": "Called by Airtel Money Malawi after a Collection payment event.\n\n**Auth:** None by default. When `AIRTEL_WEBHOOK_SECRET` is set, include header **`x-airtel-signature`** = HMAC-SHA256 hex of the **raw** JSON body.\n\n**Payload notes:**\n- `transaction.id` matches normalized `order_number` sent in the outbound push (e.g. `ORD202608041234`). Server also resolves via `airtel_transactions` row and reference fallbacks.\n- `reference` may be omitted in callbacks; server falls back to stored merchant reference.\n- `status_code: \"TS\"` or nested `status.success: true` = payment success → order marked **paid** + escrow.\n- Shop subscriptions: `reference` may be `SUB-{id}-…`.\n\n**Always returns HTTP 200** (Airtel callback contract). Set `WEBHOOK_CAPTURE_ONLY=true` to log only.\n\nSee `docs/AIRTEL_WEBHOOK.md`."
 							},
 							"response": []
 						},
@@ -2976,6 +2990,114 @@
 											"path": ["api", "admin", "withdrawals", "1"]
 										},
 										"description": "Approve or reject a withdrawal. status: completed (debits seller wallet and marks paid) or rejected. Optionally set admin_notes. Requires admin role."
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Airtel Money",
+							"description": "Admin tools for Airtel Money Malawi: local `airtel_transactions` log and live enquiry via `GET https://openapi.airtel.mw/merchant/v1/transactions`. Requires admin JWT. See `docs/AIRTEL_WEBHOOK.md`.",
+							"item": [
+								{
+									"name": "List Local Airtel Transactions (paginated)",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/airtel/transactions?page=1&limit=20",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "airtel", "transactions"],
+											"query": [
+												{ "key": "page", "value": "1" },
+												{ "key": "limit", "value": "20" },
+												{ "key": "processing_state", "value": "pending", "disabled": true, "description": "pending | success | failed" },
+												{ "key": "order_id", "value": "1", "disabled": true }
+											]
+										},
+										"description": "Paginated rows from local `airtel_transactions` table (includes linked order summary)."
+									},
+									"response": []
+								},
+								{
+									"name": "List All Local Airtel Transactions",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/airtel/transactions?all=true",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "airtel", "transactions"],
+											"query": [
+												{ "key": "all", "value": "true" },
+												{ "key": "processing_state", "value": "pending", "disabled": true },
+												{ "key": "order_id", "value": "1", "disabled": true }
+											]
+										},
+										"description": "Every local Airtel transaction row (no pagination). Optional filters: `processing_state`, `order_id`."
+									},
+									"response": []
+								},
+								{
+									"name": "Get Local Airtel Transaction by ID",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/airtel/transactions/1",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "airtel", "transactions", "1"]
+										},
+										"description": "Single row from `airtel_transactions` by primary key (not Airtel transaction id)."
+									},
+									"response": []
+								},
+								{
+									"name": "Get All Live Transactions (Airtel API)",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/airtel/transactions/live",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "airtel", "transactions", "live"]
+										},
+										"description": "Proxies Airtel `GET /merchant/v1/transactions` — full transaction list from Airtel's servers."
+									},
+									"response": []
+								},
+								{
+									"name": "Get Live Transaction Summary",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/airtel/transactions/live/summary?transaction_id=ORD202608041234",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "airtel", "transactions", "live", "summary"],
+											"query": [
+												{
+													"key": "transaction_id",
+													"value": "ORD202608041234",
+													"description": "Normalized order_number. Omit to return full list summary."
+												}
+											]
+										},
+										"description": "Live Airtel enquiry. With `transaction_id` → `GET /merchant/v1/transactions/{id}`. Without → same as list all."
+									},
+									"response": []
+								},
+								{
+									"name": "Get Order Airtel Payment Status",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/admin/airtel/orders/1/status",
+											"host": ["{{base_url}}"],
+											"path": ["api", "admin", "airtel", "orders", "1", "status"]
+										},
+										"description": "Combines local `airtel_transactions` row for the order with live Airtel status (uses normalized `order_number` as transaction id)."
 									},
 									"response": []
 								}
