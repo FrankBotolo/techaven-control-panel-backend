@@ -58,12 +58,6 @@ const WalletTransaction = sequelize.define('WalletTransaction', {
   timestamps: true,
   indexes: [
     {
-      fields: ['wallet_id']
-    },
-    {
-      fields: ['user_id']
-    },
-    {
       fields: ['type']
     },
     {

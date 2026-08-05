@@ -76,8 +76,6 @@ const AirtelTransaction = sequelize.define('AirtelTransaction', {
   indexes: [
     { fields: ['transaction_id'] },
     { fields: ['reference'] },
-    { fields: ['order_id'] },
-    { fields: ['shop_subscription_id'] },
     { fields: ['status'] },
     { fields: ['createdAt'] }
   ]

@@ -159,9 +159,6 @@ const Order = sequelize.define('Order', {
   timestamps: true,
   indexes: [
     {
-      fields: ['user_id']
-    },
-    {
       fields: ['order_number']
     },
     {

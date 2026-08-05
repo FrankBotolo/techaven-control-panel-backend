@@ -28,13 +28,7 @@ const Wallet = sequelize.define('Wallet', {
   }
 }, {
   tableName: 'wallets',
-  timestamps: true,
-  indexes: [
-    {
-      unique: true,
-      fields: ['user_id']
-    }
-  ]
+  timestamps: true
 });
 
 export default Wallet;

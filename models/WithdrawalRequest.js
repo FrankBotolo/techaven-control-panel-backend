@@ -62,7 +62,6 @@ const WithdrawalRequest = sequelize.define('WithdrawalRequest', {
   tableName: 'withdrawal_requests',
   timestamps: true,
   indexes: [
-    { fields: ['user_id'] },
     { fields: ['status'] },
     { fields: ['createdAt'] }
   ]

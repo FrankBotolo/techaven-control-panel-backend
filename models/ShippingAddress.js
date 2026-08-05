@@ -45,8 +45,7 @@ const ShippingAddress = sequelize.define('ShippingAddress', {
   }
 }, {
   tableName: 'shipping_addresses',
-  timestamps: true,
-  indexes: [{ fields: ['user_id'] }]
+  timestamps: true
 });
 
 export default ShippingAddress;

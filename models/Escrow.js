@@ -54,12 +54,6 @@ const Escrow = sequelize.define('Escrow', {
   timestamps: true,
   indexes: [
     {
-      fields: ['order_id']
-    },
-    {
-      fields: ['seller_id']
-    },
-    {
       fields: ['status']
     }
   ]

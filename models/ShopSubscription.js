@@ -79,7 +79,6 @@ const ShopSubscription = sequelize.define(
     tableName: 'shop_subscriptions',
     timestamps: true,
     indexes: [
-      { fields: ['shop_id'] },
       { fields: ['status'] },
       { fields: ['current_period_end'] }
     ]

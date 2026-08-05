@@ -37,9 +37,6 @@ const UserShopPoints = sequelize.define(
       {
         unique: true,
         fields: ['user_id', 'shop_id']
-      },
-      {
-        fields: ['user_id']
       }
     ]
   }
