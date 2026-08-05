@@ -132,7 +132,11 @@ export async function postAirtelCollect(payload) {
     }
   };
 
-  const response = await fetch(`${getAirtelBaseUrl()}/merchant/v1/payments/`, {
+  const url = `${getAirtelBaseUrl()}/merchant/v1/payments/`;
+  console.log('[Airtel collect] POST', url);
+  console.log('[Airtel collect] Request payload:', JSON.stringify(body, null, 2));
+
+  const response = await fetch(url, {
     method: 'POST',
     headers: {
       Accept: '*/*',
@@ -144,6 +148,7 @@ export async function postAirtelCollect(payload) {
     body: JSON.stringify(body)
   });
   const data = await response.json().catch(() => ({}));
+  console.log('[Airtel collect] Response:', response.status, JSON.stringify(data, null, 2));
   const success = response.ok && isAirtelCollectSuccess(data);
   return {
     configured: true,
