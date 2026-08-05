@@ -42,6 +42,24 @@ const fixInvitationsTimestamps = async (queryInterface, sequelize) => {
   }
 };
 
+/** Drop every table in the current schema (including legacy/orphan tables not in Sequelize models). */
+async function dropAllTables(sequelize) {
+  await sequelize.query('SET FOREIGN_KEY_CHECKS = 0');
+  try {
+    const [tables] = await sequelize.query(
+      'SELECT TABLE_NAME AS name FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE()'
+    );
+    for (const row of tables) {
+      const tableName = row.name || row.TABLE_NAME;
+      if (!tableName) continue;
+      await sequelize.query(`DROP TABLE IF EXISTS \`${tableName}\``);
+      console.log(`   dropped ${tableName}`);
+    }
+  } finally {
+    await sequelize.query('SET FOREIGN_KEY_CHECKS = 1');
+  }
+}
+
 const migrateFresh = async () => {
   try {
     console.log('🔄 Migrate fresh: dropping all tables and re-syncing...');
@@ -49,8 +67,11 @@ const migrateFresh = async () => {
     await db.sequelize.authenticate();
     console.log('✅ Database connection established.');
 
-    await db.sequelize.sync({ force: true });
-    console.log('✅ All tables dropped and recreated.');
+    console.log('🗑️  Dropping all tables (including legacy/orphan tables)...');
+    await dropAllTables(db.sequelize);
+
+    await db.sequelize.sync();
+    console.log('✅ All tables recreated from models.');
 
     const queryInterface = db.sequelize.getQueryInterface();
     await fixInvitationsTimestamps(queryInterface, db.sequelize);
