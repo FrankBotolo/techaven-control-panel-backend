@@ -277,7 +277,8 @@ const seedDatabase = async () => {
         ...product,
         name: `[Testing] ${stripped}`,
         price: SEED_TEST_PRODUCT_PRICE,
-        original_price: product.original_price != null ? SEED_TEST_PRODUCT_PRICE * 2 : null
+        original_price: product.original_price != null ? SEED_TEST_PRODUCT_PRICE * 2 : null,
+        stock: 100
       };
     }
 
