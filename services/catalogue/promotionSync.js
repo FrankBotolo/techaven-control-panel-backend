@@ -72,6 +72,27 @@ export async function enqueueShop(shopId, { transaction, reason = `change:${Date
   return append('shop', payload.externalId, payload, key('shop', shopId, reason), transaction);
 }
 
+export async function enqueueShopDevices(shopId, options = {}) {
+  const listings = await SellerListing.findAll({
+    where: { shop_id: shopId }, attributes: ['device_variant_id'],
+    include: [{ model: DeviceVariant, as: 'variant', attributes: ['device_id'] }],
+    transaction: options.transaction
+  });
+  const deviceIds = [...new Set(listings.map((listing) => listing.variant?.device_id).filter(Boolean))];
+  for (const deviceId of deviceIds) {
+    await enqueueDevice(deviceId, { ...options, reason: `${options.reason || `shop:${Date.now()}`}:device:${deviceId}` });
+  }
+  return deviceIds.length;
+}
+
+export async function enqueueBrandDevices(brandId, options = {}) {
+  const devices = await Device.findAll({ where: { brand_id: brandId }, attributes: ['id'], transaction: options.transaction });
+  for (const device of devices) {
+    await enqueueDevice(device.id, { ...options, reason: `${options.reason || `brand:${Date.now()}`}:device:${device.id}` });
+  }
+  return devices.length;
+}
+
 export async function enqueueTombstone(kind, id, snapshot = {}, { transaction, reason = `deleted:${Date.now()}` } = {}) {
   const externalId = kind === 'device' ? `device:${id}` : String(id);
   const payload = {

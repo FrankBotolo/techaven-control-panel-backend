@@ -1,7 +1,7 @@
 import db from '../models/index.js';
 import { canonicalVariantKey, slugify } from '../services/catalogue/normalization.js';
 import { CatalogueError, sendCatalogueError } from '../services/catalogue/errors.js';
-import { enqueueDevice } from '../services/catalogue/promotionSync.js';
+import { enqueueBrandDevices, enqueueDevice } from '../services/catalogue/promotionSync.js';
 
 const { Brand, Category, Device, DeviceVariant, Color, DeviceVariantColor, DeviceMedia, sequelize } = db;
 
@@ -28,6 +28,7 @@ export async function updateBrand(req, res) {
     for (const field of ['name', 'is_active']) if (req.body[field] !== undefined) brand[field] = req.body[field];
     if (req.body.slug !== undefined) brand.slug = slugify(req.body.slug);
     await brand.save();
+    await enqueueBrandDevices(brand.id, { reason: `brand-update:${brand.updatedAt.toISOString()}` });
     return ok(res, 'Brand updated', brand);
   } catch (error) { return sendCatalogueError(res, error); }
 }
@@ -168,6 +169,7 @@ export async function deactivate(req, res) {
     await record.save();
     if (req.params.resource === 'devices') await enqueueDevice(record.id, { reason: `device-deactivate:${record.updatedAt.toISOString()}` });
     if (req.params.resource === 'variants') await enqueueDevice(record.device_id, { reason: `variant-deactivate:${record.id}:${record.updatedAt.toISOString()}` });
+    if (req.params.resource === 'brands') await enqueueBrandDevices(record.id, { reason: `brand-deactivate:${record.updatedAt.toISOString()}` });
     return ok(res, 'Catalogue record deactivated', record);
   } catch (error) { return sendCatalogueError(res, error); }
 }
