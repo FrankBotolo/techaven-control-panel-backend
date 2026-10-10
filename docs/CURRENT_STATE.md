@@ -3,95 +3,83 @@
 Last updated: 2026-10-10 (Africa/Blantyre)
 Repository/workspace: `techaven_backend`
 Branch: `main`
-Checkpoint commit: documentation baseline is the commit containing this file; pre-change checkpoint was `ccc3dd4`
-Working tree: clean before this documentation change; verify with `git status` at session start
+Checkpoint commit: catalogue implementation through `7afbb16`; documentation is the final local checkpoint
+Working tree: expected clean after the documentation checkpoint; verify at session start
 
 ## Project in One Paragraph
 
-This repository contains an ES-module Node.js/Express API backed by MySQL through Sequelize. It serves customer, seller, administrator, courier, payment, subscription, notification, and supporting endpoints under `/api`, plus a health endpoint and a small Expo mobile-client scaffold. `server.js` starts the shared database connection, background subscription-expiry work, Airtel token warmup, and HTTP server.
+This is a MySQL/Sequelize Express API. Legacy `/api/products`, cart, order, and mobile contracts remain v1. An additive `/api/v2` separates Techaven-owned brands/devices/variants/colors/media from shop-owned listings, listing images, stock, price, carts, and orders.
 
 ## Current Objective
 
-No active implementation task established; awaiting the next task. The persistent agent-state and documentation navigation baseline has been established.
+Catalogue Marketplace API v2 is implemented in code and awaiting migration against a configured test/staging MySQL database before deployment.
 
 ## Current Phase / Status
 
-- Verified: application entry point, central route registry, model registry/associations, package scripts, documentation inventory, and Git baseline.
-- Needs verification: runtime behavior against a configured MySQL instance and third-party integrations.
-
-## Completed and Stable
-
-- Root working protocol: `AGENTS.md`.
-- Codebase navigation index: `docs/COMPONENT_MAP.md`.
-- Documentation authority decision: `docs/DECISIONS.md#d-001--documentation-authority-and-precedence`.
-
-## In Progress
-
-- Nothing recorded.
-
-## Active Spec / Task Context
-
-- No active feature specification.
+- Implemented: ordered migration runner; canonical schema/models; admin catalogue management; TechAPI importer; seller listings and product requests; public catalogue/marketplace reads; v2 cart/checkout; staged legacy mapping; documentation.
+- Verified locally: module syntax/loading, model associations, route registration, importer dry run, and 15 isolated unit tests.
+- Needs verification: applying/reverting migrations and end-to-end API behavior against a dedicated MySQL test database.
 
 ## Documentation Authority / Approval
 
-- Inventory: 16 pre-existing Markdown files were inventoried by path and heading; dependency and generated trees were excluded. See `docs/COMPONENT_MAP.md#documentation-index`.
-- Frontend/mobile authority: no approved frontend requirements document; `mobile-app/README.md` is reference only.
-- Backend authority: `API_DOCUMENTATION.md` is primary. `docs/AIRTEL_WEBHOOK.md`, `docs/OWNER_REGISTRATION.md`, and `docs/SUBSCRIPTION_PACKAGES.md` are authoritative only within their named areas.
-- Approval evidence and precedence: user selected the proposed tiered-authority option on 2026-10-10; see `docs/DECISIONS.md`.
-- Conflicts: overlapping API documents and Chiwaya/Techaven/TecHaven naming remain unresolved. Two subscription documents formerly referenced by the README are absent.
+- `API_DOCUMENTATION.md` remains the primary backend contract; `docs/CATALOGUE_API_V2.md` is the approved v2 catalogue contract for this work.
+- Airtel, owner-registration, and subscription focused-document authority is unchanged.
+- Existing reference documentation remains in place. See `docs/DECISIONS.md` for precedence and the accepted v2 decision.
 
 ## Module Boundaries / Failure Isolation
 
-- `server.js` owns process startup, global middleware, `/api` mounting, error/404 handling, schedulers, and shutdown.
-- `routes/index.js` is the public API route registry; route modules delegate to controllers, which use models, services, and utilities.
-- `models/index.js` owns the shared Sequelize model registry and associations; `config/database.js` owns the connection.
-- Startup requires successful database authentication. A database failure prevents the HTTP server and background jobs from starting. Database and other shared infrastructure remain cross-module failure risks.
-- Airtel, PayChangu, email, and SMS integrations have focused adapters/utilities but require environment configuration and external systems. Their fallback and retry behavior must be verified per task.
-- There is no configured automated test runner. `scripts/test-*` files are credential- or integration-dependent utilities, not an isolated automated suite.
+- `routes/v2/` is mounted beneath the existing `/api` router and does not replace v1 routes.
+- `services/catalogue/` owns normalization, errors, DTOs, media resolution, import, and legacy matching. `services/marketplace/` owns listing rules.
+- Import and legacy migration run as explicit CLI jobs; they are not part of server startup.
+- MySQL remains shared infrastructure. V2 handlers fail with structured errors, but database unavailability still affects the whole API.
+- Checkout locks listing rows, validates stock, creates one order per shop, stores immutable snapshots, and decrements listing quantity in one transaction.
 
 ## Working Set — Start Here
 
-- `AGENTS.md` — permanent workflow and authority rules.
-- `docs/COMPONENT_MAP.md` — task ownership and navigation.
-- `docs/DECISIONS.md` — approved authority and unresolved decisions.
-- `API_DOCUMENTATION.md` — primary backend contract when an API task is requested.
-
-## Other Relevant Paths — On Demand
-
-- `server.js` — startup, middleware ordering, global failure behavior, or health checks.
-- `routes/index.js` — route ownership and API mounting.
-- `models/index.js` — model registration and associations.
-- `database/migrations/` — database evolution and compatibility evidence.
-- `mobile-app/src/api/client.js` — bundled mobile API client integration.
+- `docs/CATALOGUE_API_V2.md` — API, migration, import, and compatibility contract.
+- `routes/v2/index.js` — complete v2 route surface.
+- `models/index.js` — catalogue/listing/commerce associations.
+- `database/migrations-js/` — ordered schema changes.
 
 ## Decisions / Constraints
 
-- Existing documentation remains in place; no archival or consolidation has been approved.
-- Do not resolve product naming or documentation contradictions by inference.
-- Preserve public behavior unless a task explicitly requests a contract change.
+- V1 remains unchanged and uses legacy product IDs; v2 carts use seller-listing IDs.
+- MySQL JSON replaces the prompt's PostgreSQL JSONB suggestion.
+- One active offer is allowed per shop/variant/color/condition.
+- Ambiguous legacy products stay operational in v1 and unpublished in v2 until reviewed.
+- TechAPI imports require attribution and never fetch remote data during a run.
 
 ## Known Issues / Risks / Unresolved Questions
 
-- The repository uses Chiwaya, Techaven, and TecHaven names; the canonical product name is not established.
-- Several documents overlap and may describe different implementation periods.
-- `SUBSCRIPTION_API.md` and `docs/SUBSCRIPTION_ACCESS_ARCHITECTURE.md` are referenced in older documentation text but do not exist in this checkout.
-- Runtime checks depend on a database, credentials, or third-party services and have not been run for this documentation baseline.
+- Migrations have not been executed because no dedicated test database was configured.
+- MySQL DDL may implicitly commit; backup and staging validation are required before production migration.
+- The TechAPI dataset contains inconsistent and duplicate source records; importer reports must be reviewed.
+- V2 reviews, favorites, banners, loyalty points, and promotions are intentionally deferred.
+- Canonical product naming across Chiwaya/Techaven/TecHaven remains unresolved.
 
 ## Verification
 
-- Documentation baseline: path/link checks, `git diff --check`, and Git status review are required at its commit checkpoint.
-- Not run: application startup, migrations, database operations, and external integration scripts because this is documentation-only work and those checks require configured dependencies.
+- `npm test`: 15 passed, 0 failed on 2026-10-10.
+- Syntax/model/route import checks: passed for new modules.
+- TechAPI two-record fixture dry run: passed with zero errors.
+- `git diff --check`: required at final checkpoint.
+- Not run: `npm run test:integration`, migration application/rollback, server startup, or external payment/email/SMS checks because no dedicated MySQL test environment was supplied.
 
 ## Chunk Progress / Commit Checkpoints
 
-- Plan: documentation baseline implemented as one focused chunk.
-- Push authorization: not authorized; keep commits local.
-- Next chunk: none established.
-- Remaining blockers: explicit task requirements are needed before application changes.
+- `4600736` — test and migration foundation.
+- `e9e320c` — canonical catalogue schema.
+- `789a72c` — catalogue management services.
+- `c7d97b3` — TechAPI importer.
+- `a843852` — seller listings and product requests.
+- `da589c8` — public catalogue and marketplace reads.
+- `556817b` — listing-based cart and checkout.
+- `290f4a9` — staged legacy migration and review.
+- `7afbb16` — management API completeness.
+- Push authorization: not authorized; all commits remain local.
 
 ## Next Concrete Actions
 
-1. Read the authority record and use the component map to locate the next requested change.
-2. Reconcile only the documentation relevant to that task, preserving unresolved conflicts.
-3. Add focused automated tests when changing behavior in a module that currently lacks coverage.
+1. Create an isolated MySQL test database whose name contains `test` and set `DB_NAME_TEST` plus test credentials.
+2. Apply the ordered migrations and run `npm run test:integration`, route smoke tests, rollback rehearsal, and v1 regression checks.
+3. Run dry-run TechAPI and legacy migration reports against staging data, review conflicts, then approve production rollout separately.

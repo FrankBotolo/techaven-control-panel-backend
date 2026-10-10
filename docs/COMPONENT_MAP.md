@@ -21,6 +21,7 @@ Use this as a task-routing index, not a substitute for reading the relevant impl
 |---|---|---|---|
 | Authentication and users | `routes/auth.js`, `routes/user.js` | `controllers/AuthController.js`, `controllers/UserController.js` | `models/User.js`, `models/Otp.js`, `middleware/auth.js` |
 | Products, categories, search | `routes/products.js`, `routes/categories.js`, `routes/search.js` | `controllers/ProductController.js`, `controllers/CategoryController.js`, `controllers/SearchController.js` | `models/Product.js`, `models/Category.js`, `utils/productDto.js` |
+| Catalogue marketplace v2 | `routes/v2/` | v2 catalogue, marketplace, listing, cart, order, admin, and migration controllers | Canonical catalogue/listing models and `services/catalogue/`; see `docs/CATALOGUE_API_V2.md` |
 | Shops and sellers | `routes/shops.js`, `routes/sellers.js`, `routes/invitations.js` | `controllers/ShopController.js`, seller/admin shop controllers, `controllers/InvitationController.js` | `models/Shop.js`, `models/ShopInvitation.js`, `models/ShopFollow.js` |
 | Cart and checkout | `routes/cart.js`, `routes/orders.js`, `routes/shipping-addresses.js` | `controllers/CartController.js`, `controllers/OrderController.js`, `controllers/AddressController.js` | Cart, order, order-item, shipping-address, escrow, dispute, and delivery models |
 | Wallet and loyalty | `routes/wallet.js`, `routes/platform-settings.js` | `controllers/WalletController.js`, `controllers/PointsController.js`, platform-setting controllers | Wallet models, `models/UserShopPoints.js`, points and commission utilities |
@@ -38,6 +39,7 @@ Use this as a task-routing index, not a substitute for reading the relevant impl
 | Authentication/authorization | `middleware/auth.js`, `middleware/requireActiveSubscription.js` | JWT identity and subscription access gates. |
 | HTTP middleware | `middleware/cors.js`, `middleware/requestLogger.js`, `middleware/upload.js` | Cross-origin policy, request logging, and uploads. |
 | Database evolution | `database/migrations/`, `scripts/migrate.js` | Ordered SQL migrations and runner; review both schema and model impacts. |
+| Catalogue migrations | `database/migrations-js/`, `scripts/run-migrations.js` | Ordered reversible v2 migrations tracked in `schema_migrations`. |
 | Database setup/seed | `scripts/create-db.js`, `scripts/migrate-fresh.js`, `scripts/seed.js` | Destructive or environment-dependent operations; inspect before running. |
 | Background work | `utils/subscriptionExpiryScheduler.js`, `scripts/auto-confirm-delivery.js` | Subscription expiry starts with the server; delivery confirmation is a separate script. |
 | Environment loading | `utils/loadEnv.js` | Imported before application configuration in `server.js`. Never document loaded secret values. |

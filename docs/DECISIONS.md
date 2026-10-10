@@ -40,3 +40,19 @@ Rationale: Renaming could affect public documentation, clients, environment setu
 Consequences: The inconsistency remains visible and must not be “fixed” opportunistically.
 
 Related files: `README.md`, `package.json`, `API_DOCUMENTATION.md`, `mobile-app/README.md`
+
+## D-003 — Additive catalogue marketplace API v2
+
+Status: Accepted
+
+Date or source: User-approved implementation plan on 2026-10-10
+
+Context: The legacy `products` table combines canonical product facts with seller price, stock, media, and shop ownership. Migrating it in place would break current clients and risk production data.
+
+Decision: Keep MySQL and all v1 product contracts. Introduce canonical brands/devices/variants/colors and seller listings beneath `/api/v2`. Use MySQL JSON, keep quantity on seller listings, require condition evidence images, enforce one active offer per shop/variant/color/condition, and stage uncertain legacy matches for administrator review. TechAPI is a normalized, attributed import source rather than the runtime schema.
+
+Rationale: An additive version permits catalogue ownership and multi-seller offers without destructive migration or silent response changes.
+
+Consequences: V1 and v2 coexist until a separately approved retirement. Reviews, favorites, banners, and legacy promotions remain v1 concepts. Deployments must apply ordered v2 migrations before serving v2 traffic.
+
+Related files: `docs/CATALOGUE_API_V2.md`, `routes/v2/`, `database/migrations-js/`

@@ -1,5 +1,7 @@
 # TecHaven API Documentation
 
+> **Catalogue marketplace v2:** The additive canonical-device and seller-listing API is documented in [`docs/CATALOGUE_API_V2.md`](docs/CATALOGUE_API_V2.md). Existing product endpoints in this document remain v1-compatible.
+
 API reference for **Mobile App (Customer)** and **Admin** endpoints. Grouping matches the Postman collection.
 
 ---

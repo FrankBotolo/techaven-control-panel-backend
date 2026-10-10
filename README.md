@@ -9,6 +9,7 @@ This is the Node.js/Express version of the Chiwaya server, converted from Larave
 - [`docs/COMPONENT_MAP.md`](docs/COMPONENT_MAP.md) — navigation map for routes, controllers, services, models, infrastructure, and deeper documentation.
 - [`docs/DECISIONS.md`](docs/DECISIONS.md) — durable decisions, including documentation authority and unresolved naming.
 - [`API_DOCUMENTATION.md`](API_DOCUMENTATION.md) — primary approved backend API contract.
+- [`docs/CATALOGUE_API_V2.md`](docs/CATALOGUE_API_V2.md) — catalogue marketplace v2 API, migrations, import, and compatibility guide.
 
 The repository currently uses Chiwaya, Techaven, and TecHaven names in different places. The canonical name has not been established; see the decisions record before undertaking naming changes.
 
