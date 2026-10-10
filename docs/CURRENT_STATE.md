@@ -3,7 +3,7 @@
 Last updated: 2026-10-10 (Africa/Blantyre)
 Repository/workspace: `techaven_backend`
 Branch: `main`
-Checkpoint commit: `471dc46` adds the v2 promotions feed and marketplace eligibility alignment
+Checkpoint commit: `da6409f` completes event emission for shop and catalogue availability changes
 Working tree: documentation handoff changes may be pending; verify at session start
 
 ## Project in One Paragraph
@@ -89,6 +89,7 @@ Catalogue Marketplace API v2 is implemented. The repository also has a two-servi
 - `adc6791` — final catalogue v2 handoff checkpoint.
 - `b9b06be` — promotions catalogue event/feed contract and eligibility enforcement.
 - `471dc46` — marketplace shop filtering and stable shop sync identity.
+- `da6409f` — shop, brand, device, and availability event emission.
 - Push authorization: not authorized; all commits remain local.
 
 ## Next Concrete Actions
