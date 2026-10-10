@@ -40,6 +40,9 @@ import DeviceVariant from './DeviceVariant.js';
 import Color from './Color.js';
 import DeviceVariantColor from './DeviceVariantColor.js';
 import DeviceMedia from './DeviceMedia.js';
+import SellerListing from './SellerListing.js';
+import ListingImage from './ListingImage.js';
+import CatalogueProductRequest from './CatalogueProductRequest.js';
 
 // Define associations
 Product.belongsTo(Category, { foreignKey: 'category_id', as: 'category' });
@@ -62,6 +65,16 @@ DeviceVariant.hasMany(DeviceMedia, { foreignKey: 'device_variant_id', as: 'media
 DeviceMedia.belongsTo(DeviceVariant, { foreignKey: 'device_variant_id', as: 'variant' });
 DeviceVariantColor.hasMany(DeviceMedia, { foreignKey: 'device_variant_color_id', as: 'media' });
 DeviceMedia.belongsTo(DeviceVariantColor, { foreignKey: 'device_variant_color_id', as: 'variant_color' });
+Shop.hasMany(SellerListing, { foreignKey: 'shop_id', as: 'seller_listings' });
+SellerListing.belongsTo(Shop, { foreignKey: 'shop_id', as: 'shop' });
+DeviceVariant.hasMany(SellerListing, { foreignKey: 'device_variant_id', as: 'seller_listings' });
+SellerListing.belongsTo(DeviceVariant, { foreignKey: 'device_variant_id', as: 'variant' });
+DeviceVariantColor.hasMany(SellerListing, { foreignKey: 'device_variant_color_id', as: 'seller_listings' });
+SellerListing.belongsTo(DeviceVariantColor, { foreignKey: 'device_variant_color_id', as: 'variant_color' });
+SellerListing.hasMany(ListingImage, { foreignKey: 'listing_id', as: 'images' });
+ListingImage.belongsTo(SellerListing, { foreignKey: 'listing_id', as: 'listing' });
+Shop.hasMany(CatalogueProductRequest, { foreignKey: 'shop_id', as: 'catalogue_product_requests' });
+CatalogueProductRequest.belongsTo(Shop, { foreignKey: 'shop_id', as: 'shop' });
 Banner.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
 Notification.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 Notification.belongsTo(Order, { foreignKey: 'order_id', as: 'order' });
@@ -251,7 +264,10 @@ const db = {
   DeviceVariant,
   Color,
   DeviceVariantColor,
-  DeviceMedia
+  DeviceMedia,
+  SellerListing,
+  ListingImage,
+  CatalogueProductRequest
 };
 
 export default db;
