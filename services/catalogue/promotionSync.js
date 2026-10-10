@@ -41,7 +41,7 @@ export async function projectShop(shopId, transaction) {
   const shop = await Shop.findByPk(shopId, { transaction });
   if (!shop) return null;
   return {
-    externalId: `shop:${shop.id}`,
+    externalId: String(shop.id),
     slug: `shop-${shop.id}`,
     name: shop.name,
     logoUrl: shop.logo || null,
@@ -73,7 +73,7 @@ export async function enqueueShop(shopId, { transaction, reason = `change:${Date
 }
 
 export async function enqueueTombstone(kind, id, snapshot = {}, { transaction, reason = `deleted:${Date.now()}` } = {}) {
-  const externalId = `${kind}:${id}`;
+  const externalId = kind === 'device' ? `device:${id}` : String(id);
   const payload = {
     externalId,
     slug: snapshot.slug || `${kind}-${id}`,

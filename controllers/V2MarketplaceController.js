@@ -13,6 +13,7 @@ const offerInclude = (query = {}) => ({
     status: 'active', quantity: { [Op.gt]: 0 },
     ...(query.min_price || query.max_price ? { price: { ...(query.min_price ? { [Op.gte]: Number(query.min_price) } : {}), ...(query.max_price ? { [Op.lte]: Number(query.max_price) } : {}) } } : {}),
     ...(query.condition ? { condition: query.condition } : {}),
+    ...(query.shop_id ? { shop_id: Number(query.shop_id) } : {}),
     ...(query.color_id ? { device_variant_color_id: query.color_id } : {})
   },
   include: [{ model: Shop, as: 'shop', required: true, where: { status: 'active', application_status: 'approved' }, attributes: ['id', 'name'] }, { model: ListingImage, as: 'images' }]
