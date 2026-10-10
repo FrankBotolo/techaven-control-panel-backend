@@ -43,6 +43,7 @@ import DeviceMedia from './DeviceMedia.js';
 import SellerListing from './SellerListing.js';
 import ListingImage from './ListingImage.js';
 import CatalogueProductRequest from './CatalogueProductRequest.js';
+import LegacyProductCatalogueLink from './LegacyProductCatalogueLink.js';
 
 // Define associations
 Product.belongsTo(Category, { foreignKey: 'category_id', as: 'category' });
@@ -75,6 +76,12 @@ SellerListing.hasMany(ListingImage, { foreignKey: 'listing_id', as: 'images' });
 ListingImage.belongsTo(SellerListing, { foreignKey: 'listing_id', as: 'listing' });
 Shop.hasMany(CatalogueProductRequest, { foreignKey: 'shop_id', as: 'catalogue_product_requests' });
 CatalogueProductRequest.belongsTo(Shop, { foreignKey: 'shop_id', as: 'shop' });
+Product.hasOne(LegacyProductCatalogueLink, { foreignKey: 'product_id', as: 'catalogue_link' });
+LegacyProductCatalogueLink.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
+DeviceVariant.hasMany(LegacyProductCatalogueLink, { foreignKey: 'candidate_variant_id', as: 'legacy_candidates' });
+LegacyProductCatalogueLink.belongsTo(DeviceVariant, { foreignKey: 'candidate_variant_id', as: 'candidate_variant' });
+SellerListing.hasOne(LegacyProductCatalogueLink, { foreignKey: 'seller_listing_id', as: 'legacy_link' });
+LegacyProductCatalogueLink.belongsTo(SellerListing, { foreignKey: 'seller_listing_id', as: 'seller_listing' });
 Banner.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
 Notification.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 Notification.belongsTo(Order, { foreignKey: 'order_id', as: 'order' });
@@ -271,7 +278,8 @@ const db = {
   DeviceMedia,
   SellerListing,
   ListingImage,
-  CatalogueProductRequest
+  CatalogueProductRequest,
+  LegacyProductCatalogueLink
 };
 
 export default db;

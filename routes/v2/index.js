@@ -6,6 +6,7 @@ import catalogueRoutes from './catalogue.js';
 import marketplaceRoutes from './marketplace.js';
 import cartRoutes from './cart.js';
 import orderRoutes from './orders.js';
+import adminMigrationRoutes from './admin-migration.js';
 
 const router = express.Router();
 router.use('/admin/catalog', adminCatalogueRoutes);
@@ -15,5 +16,6 @@ router.use('/catalog', catalogueRoutes);
 router.use('/marketplace', marketplaceRoutes);
 router.use('/cart', cartRoutes);
 router.use('/orders', orderRoutes);
+router.use('/admin/catalog', adminMigrationRoutes);
 
 export default router;
