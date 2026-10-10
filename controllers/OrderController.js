@@ -290,7 +290,7 @@ export const createOrder = async (req, res) => {
 
     // Get cart items with products and shops
     const cartItems = await Cart.findAll({
-      where: { user_id: userId },
+      where: { user_id: userId, product_id: { [Op.ne]: null } },
       include: [{ 
         model: Product, 
         as: 'product',
@@ -424,7 +424,7 @@ export const createOrder = async (req, res) => {
 
     // Clear cart
     await Cart.destroy({
-      where: { user_id: userId }
+      where: { user_id: userId, product_id: { [Op.ne]: null } }
     });
 
     // Create pending wallet transaction for seller (shows in seller's transaction list)
@@ -1931,4 +1931,3 @@ export const payWithPayChangu = async (req, res) => {
     });
   }
 };
-

@@ -139,6 +139,8 @@ Cart.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 Cart.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
 User.hasMany(Cart, { foreignKey: 'user_id', as: 'cart' });
 Product.hasMany(Cart, { foreignKey: 'product_id', as: 'carts' });
+SellerListing.hasMany(Cart, { foreignKey: 'seller_listing_id', as: 'carts' });
+Cart.belongsTo(SellerListing, { foreignKey: 'seller_listing_id', as: 'seller_listing' });
 
 // Order associations
 Order.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
@@ -150,6 +152,8 @@ User.hasMany(Order, { foreignKey: 'user_id', as: 'orders' });
 OrderItem.belongsTo(Order, { foreignKey: 'order_id', as: 'order' });
 OrderItem.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
 Product.hasMany(OrderItem, { foreignKey: 'product_id', as: 'order_items' });
+SellerListing.hasMany(OrderItem, { foreignKey: 'seller_listing_id', as: 'order_items' });
+OrderItem.belongsTo(SellerListing, { foreignKey: 'seller_listing_id', as: 'seller_listing' });
 
 // Favorite associations
 Favorite.belongsTo(User, { foreignKey: 'user_id', as: 'user' });

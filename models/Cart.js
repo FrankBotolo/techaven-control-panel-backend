@@ -17,11 +17,16 @@ const Cart = sequelize.define('Cart', {
   },
   product_id: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    allowNull: true,
     references: {
       model: 'products',
       key: 'id'
     }
+  },
+  seller_listing_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: { model: 'seller_listings', key: 'id' }
   },
   quantity: {
     type: DataTypes.INTEGER,
@@ -38,12 +43,15 @@ const Cart = sequelize.define('Cart', {
     {
       unique: true,
       fields: ['user_id', 'product_id']
+    },
+    {
+      unique: true,
+      fields: ['user_id', 'seller_listing_id']
     }
   ]
 });
 
 export default Cart;
-
 
 
 

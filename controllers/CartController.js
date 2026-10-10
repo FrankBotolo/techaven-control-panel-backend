@@ -1,5 +1,6 @@
 import db from '../models/index.js';
 import { getSellerCommissionPercent, computeSellerEscrowSplit } from '../utils/sellerCommission.js';
+import { Op } from 'sequelize';
 
 const { Cart, Product, Category, Shop } = db;
 
@@ -9,7 +10,7 @@ export const getCart = async (req, res) => {
     const commissionPct = await getSellerCommissionPercent();
 
     const cartItems = await Cart.findAll({
-      where: { user_id: userId },
+      where: { user_id: userId, product_id: { [Op.ne]: null } },
         include: [
           {
             model: Product,
@@ -135,7 +136,7 @@ export const addToCart = async (req, res) => {
     });
 
     // Get updated cart count
-    const cartItemCount = await Cart.count({ where: { user_id: userId } });
+    const cartItemCount = await Cart.count({ where: { user_id: userId, product_id: { [Op.ne]: null } } });
 
     return res.status(201).json({
       success: true,
@@ -174,7 +175,8 @@ export const updateCartItem = async (req, res) => {
     const cartItem = await Cart.findOne({
       where: {
         id: numericId,
-        user_id: userId
+        user_id: userId,
+        product_id: { [Op.ne]: null }
       },
       include: [{ model: Product, as: 'product' }]
     });
@@ -229,7 +231,8 @@ export const removeFromCart = async (req, res) => {
     const cartItem = await Cart.findOne({
       where: {
         id: numericId,
-        user_id: userId
+        user_id: userId,
+        product_id: { [Op.ne]: null }
       }
     });
 
@@ -243,7 +246,7 @@ export const removeFromCart = async (req, res) => {
     await cartItem.destroy();
 
     // Get updated cart count
-    const cartItemCount = await Cart.count({ where: { user_id: userId } });
+    const cartItemCount = await Cart.count({ where: { user_id: userId, product_id: { [Op.ne]: null } } });
 
     return res.json({
       success: true,
@@ -267,7 +270,7 @@ export const clearCart = async (req, res) => {
     const userId = req.user.id;
 
     await Cart.destroy({
-      where: { user_id: userId }
+      where: { user_id: userId, product_id: { [Op.ne]: null } }
     });
 
     return res.json({
@@ -284,4 +287,3 @@ export const clearCart = async (req, res) => {
     });
   }
 };
-
