@@ -43,6 +43,7 @@ Use this as a task-routing index, not a substitute for reading the relevant impl
 | Database setup/seed | `scripts/create-db.js`, `scripts/migrate-fresh.js`, `scripts/seed.js` | Destructive or environment-dependent operations; inspect before running. |
 | Background work | `utils/subscriptionExpiryScheduler.js`, `scripts/auto-confirm-delivery.js` | Subscription expiry starts with the server; delivery confirmation is a separate script. |
 | Environment loading | `utils/loadEnv.js` | Imported before application configuration in `server.js`. Never document loaded secret values. |
+| Container deployment | `Dockerfile`, `docker-compose.yml` | Two-service backend/MySQL stack with named data, upload, and log volumes. |
 | Integration checks | `scripts/test-*.js` | Manual utilities for Airtel, email, notification, SMS, and SMTP; not an automated test suite. |
 
 ## Documentation Index

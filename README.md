@@ -72,6 +72,20 @@ npm start
 
 The server will start on `http://localhost:8000` (or the port specified in `.env`).
 
+### Docker Compose
+
+The Compose stack runs exactly two services: `backend` and `database` (MySQL 8.4).
+
+```bash
+cp .env.example .env
+# Replace JWT_SECRET, DB_PASSWORD, and DB_ROOT_PASSWORD before shared or production use.
+docker compose up --build -d
+docker compose ps
+curl http://localhost:8000/health
+```
+
+Uploaded files, logs, and MySQL data are stored in named volumes. `DB_BOOTSTRAP=true` performs a non-destructive schema bootstrap suitable for a fresh database. Set it to `false` for an existing staging/production database and apply reviewed migrations separately. Stop the stack with `docker compose down`; add `--volumes` only when you intentionally want to delete all container-managed data.
+
 ## API Endpoints
 
 ### Authentication

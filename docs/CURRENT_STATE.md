@@ -3,7 +3,7 @@
 Last updated: 2026-10-10 (Africa/Blantyre)
 Repository/workspace: `techaven_backend`
 Branch: `main`
-Checkpoint commit: catalogue implementation through `cb097e7`; final state update follows that local checkpoint
+Checkpoint commit: Docker Compose baseline is the commit containing this file; pre-Docker checkpoint was `adc6791`
 Working tree: expected clean after the documentation checkpoint; verify at session start
 
 ## Project in One Paragraph
@@ -12,11 +12,12 @@ This is a MySQL/Sequelize Express API. Legacy `/api/products`, cart, order, and 
 
 ## Current Objective
 
-Catalogue Marketplace API v2 is implemented in code and awaiting migration against a configured test/staging MySQL database before deployment.
+Catalogue Marketplace API v2 is implemented. The repository also has a two-service Docker Compose stack for the backend and MySQL; a live container smoke test awaits an available Docker daemon.
 
 ## Current Phase / Status
 
 - Implemented: ordered migration runner; canonical schema/models; admin catalogue management; TechAPI importer; seller listings and product requests; public catalogue/marketplace reads; v2 cart/checkout; staged legacy mapping; documentation.
+- Implemented: multi-stage backend `Dockerfile`, MySQL 8.4 Compose service, health checks, named volumes, non-root runtime, fresh-database bootstrap, and Node-specific environment template.
 - Verified locally: module syntax/loading, model associations, route registration, importer dry run, and 15 isolated unit tests.
 - Needs verification: applying/reverting migrations and end-to-end API behavior against a dedicated MySQL test database.
 
@@ -32,6 +33,7 @@ Catalogue Marketplace API v2 is implemented in code and awaiting migration again
 - `services/catalogue/` owns normalization, errors, DTOs, media resolution, import, and legacy matching. `services/marketplace/` owns listing rules.
 - Import and legacy migration run as explicit CLI jobs; they are not part of server startup.
 - MySQL remains shared infrastructure. V2 handlers fail with structured errors, but database unavailability still affects the whole API.
+- Docker startup waits for MySQL health, retries authentication, and optionally bootstraps only missing schema objects with `alter: false` and `force: false`.
 - Checkout locks listing rows, validates stock, creates one order per shop, stores immutable snapshots, and decrements listing quantity in one transaction.
 
 ## Working Set — Start Here
@@ -40,6 +42,7 @@ Catalogue Marketplace API v2 is implemented in code and awaiting migration again
 - `routes/v2/index.js` — complete v2 route surface.
 - `models/index.js` — catalogue/listing/commerce associations.
 - `database/migrations-js/` — ordered schema changes.
+- `docker-compose.yml` and `Dockerfile` — two-container local/deployment entry points.
 
 ## Decisions / Constraints
 
@@ -52,6 +55,7 @@ Catalogue Marketplace API v2 is implemented in code and awaiting migration again
 ## Known Issues / Risks / Unresolved Questions
 
 - Migrations have not been executed because no dedicated test database was configured.
+- Docker image/runtime smoke testing is blocked until the local Docker daemon is running.
 - MySQL DDL may implicitly commit; backup and staging validation are required before production migration.
 - The TechAPI dataset contains inconsistent and duplicate source records; importer reports must be reviewed.
 - V2 reviews, favorites, banners, loyalty points, and promotions are intentionally deferred.
@@ -63,6 +67,8 @@ Catalogue Marketplace API v2 is implemented in code and awaiting migration again
 - Syntax/model/route import checks: passed for new modules.
 - TechAPI two-record fixture dry run: passed with zero errors.
 - `git diff --check`: required at final checkpoint.
+- `docker compose config --quiet`: passed; exactly `backend` and `database` services resolve.
+- Docker image build/start: not run successfully because the installed Docker CLI could not connect to the Docker Desktop daemon.
 - Not run: `npm run test:integration`, migration application/rollback, server startup, or external payment/email/SMS checks because no dedicated MySQL test environment was supplied.
 
 ## Chunk Progress / Commit Checkpoints
@@ -78,10 +84,11 @@ Catalogue Marketplace API v2 is implemented in code and awaiting migration again
 - `7afbb16` — management API completeness.
 - `d6fd6c4` — v2 API, migration, importer, and handoff documentation.
 - `cb097e7` — listing-stock restoration for v2 order cancellation/rejection.
+- `adc6791` — final catalogue v2 handoff checkpoint.
 - Push authorization: not authorized; all commits remain local.
 
 ## Next Concrete Actions
 
-1. Create an isolated MySQL test database whose name contains `test` and set `DB_NAME_TEST` plus test credentials.
-2. Apply the ordered migrations and run `npm run test:integration`, route smoke tests, rollback rehearsal, and v1 regression checks.
+1. Start Docker Desktop/Engine, run `docker compose up --build -d`, and verify both health checks plus `GET /health`.
+2. Create an isolated MySQL test database whose name contains `test`, apply migrations, and run integration, rollback, and v1 regression checks.
 3. Run dry-run TechAPI and legacy migration reports against staging data, review conflicts, then approve production rollout separately.

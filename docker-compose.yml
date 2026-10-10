@@ -1,0 +1,84 @@
+services:
+  database:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-techaven}
+      MYSQL_USER: ${DB_USER:-techaven}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-techaven_dev_password}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_dev_password}
+    ports:
+      - "${DB_PUBLISHED_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$${MYSQL_USER} -p$${MYSQL_PASSWORD} --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: techaven-backend:local
+    restart: unless-stopped
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 8000
+      DB_HOST: database
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-techaven}
+      DB_USER: ${DB_USER:-techaven}
+      DB_PASSWORD: ${DB_PASSWORD:-techaven_dev_password}
+      DB_BOOTSTRAP: ${DB_BOOTSTRAP:-true}
+      DB_CONNECT_RETRIES: ${DB_CONNECT_RETRIES:-30}
+      DB_CONNECT_RETRY_MS: ${DB_CONNECT_RETRY_MS:-2000}
+      JWT_SECRET: ${JWT_SECRET:-change-this-development-jwt-secret}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-30d}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      APP_URL: ${APP_URL:-http://localhost:8000}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      MAX_FILE_SIZE: ${MAX_FILE_SIZE:-5242880}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL:-}
+      SMTP_DEBUG: ${SMTP_DEBUG:-false}
+      SMS_API_URL: ${SMS_API_URL:-}
+      SMS_BALANCE_URL: ${SMS_BALANCE_URL:-}
+      SMS_BEARER_TOKEN: ${SMS_BEARER_TOKEN:-}
+      SMS_SENDER_ID: ${SMS_SENDER_ID:-TECHAVEN}
+      SMS_ORG_ID: ${SMS_ORG_ID:-}
+      AIRTEL_ENV: ${AIRTEL_ENV:-staging}
+      AIRTEL_API_BASE_URL: ${AIRTEL_API_BASE_URL:-}
+      AIRTEL_CLIENT_ID: ${AIRTEL_CLIENT_ID:-}
+      AIRTEL_CLIENT_SECRET: ${AIRTEL_CLIENT_SECRET:-}
+      AIRTEL_WEBHOOK_SECRET: ${AIRTEL_WEBHOOK_SECRET:-}
+      AIRTEL_TOKEN_REFRESH_BUFFER_SEC: ${AIRTEL_TOKEN_REFRESH_BUFFER_SEC:-30}
+      PAYCHANGU_SECRET_KEY: ${PAYCHANGU_SECRET_KEY:-}
+      PAYCHANGU_WEBHOOK_SECRET: ${PAYCHANGU_WEBHOOK_SECRET:-}
+      PAYCHANGU_REDIRECT_SUCCESS: ${PAYCHANGU_REDIRECT_SUCCESS:-}
+      PAYCHANGU_REDIRECT_FAILURE: ${PAYCHANGU_REDIRECT_FAILURE:-}
+      PUBLIC_API_BASE_URL: ${PUBLIC_API_BASE_URL:-http://localhost:8000}
+      SUBSCRIPTION_AUTO_ACTIVATE: ${SUBSCRIPTION_AUTO_ACTIVATE:-false}
+      SUBSCRIPTION_PAYMENT_SIMULATE_FAILURE: ${SUBSCRIPTION_PAYMENT_SIMULATE_FAILURE:-false}
+      SUBSCRIPTION_EXPIRY_INTERVAL_HOURS: ${SUBSCRIPTION_EXPIRY_INTERVAL_HOURS:-6}
+      WEBHOOK_CAPTURE_ONLY: ${WEBHOOK_CAPTURE_ONLY:-false}
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    volumes:
+      - uploads_data:/app/uploads
+      - logs_data:/app/logs
+    init: true
+
+volumes:
+  mysql_data:
+  uploads_data:
+  logs_data:

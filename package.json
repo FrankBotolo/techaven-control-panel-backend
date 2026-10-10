@@ -9,6 +9,7 @@
     "test:integration": "node scripts/run-integration-tests.js",
     "test:all": "npm test && npm run test:integration",
     "start": "node server.js",
+    "docker:bootstrap": "node scripts/bootstrap-database.js",
     "dev": "nodemon server.js",
     "create-db": "node scripts/create-db.js",
     "migrate": "node scripts/migrate.js",
