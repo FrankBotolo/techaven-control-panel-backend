@@ -44,6 +44,7 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       APP_URL: ${APP_URL:-http://localhost:8000}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      COMMERCE_SYNC_TOKEN: ${COMMERCE_SYNC_TOKEN:-}
       MAX_FILE_SIZE: ${MAX_FILE_SIZE:-5242880}
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}

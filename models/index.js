@@ -44,6 +44,7 @@ import SellerListing from './SellerListing.js';
 import ListingImage from './ListingImage.js';
 import CatalogueProductRequest from './CatalogueProductRequest.js';
 import LegacyProductCatalogueLink from './LegacyProductCatalogueLink.js';
+import PromotionCatalogueEvent from './PromotionCatalogueEvent.js';
 
 // Define associations
 Product.belongsTo(Category, { foreignKey: 'category_id', as: 'category' });
@@ -279,7 +280,8 @@ const db = {
   SellerListing,
   ListingImage,
   CatalogueProductRequest,
-  LegacyProductCatalogueLink
+  LegacyProductCatalogueLink,
+  PromotionCatalogueEvent
 };
 
 export default db;

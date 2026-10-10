@@ -19,6 +19,7 @@
     "migrate:v2:down": "node scripts/run-migrations.js down",
     "catalog:import:techapi": "node scripts/import-techapi.js",
     "catalog:migrate-legacy": "node scripts/migrate-legacy-products.js",
+    "catalog:backfill-promotions": "node scripts/backfill-promotion-catalogue.js",
     "migrate:fresh": "node scripts/migrate-fresh.js",
     "migrate:fresh:seed": "node scripts/migrate-fresh.js && node scripts/seed.js",
     "add-specifications": "node scripts/add-specifications-column.js",

@@ -1,6 +1,7 @@
 import db from '../models/index.js';
 import { CatalogueError, sendCatalogueError } from '../services/catalogue/errors.js';
 import { getSellerCommissionPercent, computeSellerEscrowSplit } from '../utils/sellerCommission.js';
+import { enqueueDevice } from '../services/catalogue/promotionSync.js';
 
 const { Cart, SellerListing, DeviceVariant, Device, Brand, Shop, User, Order, OrderItem, ShippingAddress, sequelize } = db;
 const orderNumber = () => `ORD${new Date().toISOString().slice(0, 10).replace(/-/g, '')}${Math.floor(Math.random() * 1e8).toString().padStart(8, '0')}`;
@@ -18,7 +19,7 @@ export async function checkout(req, res) {
     for (const request of requested) {
       if (!request.seller_listing_id || !Number.isInteger(request.quantity) || request.quantity < 1) throw new CatalogueError('INVALID_QUANTITY', 'Every item requires a valid listing and quantity');
       const listing = await SellerListing.findByPk(request.seller_listing_id, { include: [{ model: Shop, as: 'shop' }, { model: DeviceVariant, as: 'variant', include: [{ model: Device, as: 'device', include: [{ model: Brand, as: 'brand' }] }] }], transaction, lock: transaction.LOCK.UPDATE });
-      if (!listing || listing.status !== 'active') throw new CatalogueError('LISTING_NOT_FOUND', `Active listing not found: ${request.seller_listing_id}`, 404);
+      if (!listing || listing.status !== 'active' || !listing.variant?.is_active || !listing.variant?.device?.is_active || !listing.variant?.device?.brand?.is_active || listing.shop?.status !== 'active' || listing.shop?.application_status !== 'approved') throw new CatalogueError('LISTING_NOT_FOUND', `Eligible active listing not found: ${request.seller_listing_id}`, 404);
       if (listing.quantity < request.quantity) throw new CatalogueError('INSUFFICIENT_STOCK', `Insufficient stock for listing ${listing.id}`, 409);
       const rows = groups.get(listing.shop_id) || [];
       rows.push({ listing, quantity: request.quantity });
@@ -52,6 +53,7 @@ export async function checkout(req, res) {
         }, { transaction });
         listing.quantity -= quantity;
         await listing.save({ transaction });
+        await enqueueDevice(device.id, { transaction, reason: `checkout:${order.id}:${listing.id}:${listing.updatedAt.toISOString()}` });
       }
       orders.push(order);
     }

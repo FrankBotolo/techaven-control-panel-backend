@@ -1,6 +1,7 @@
 import db from '../models/index.js';
 import { canonicalVariantKey, slugify } from '../services/catalogue/normalization.js';
 import { CatalogueError, sendCatalogueError } from '../services/catalogue/errors.js';
+import { enqueueDevice } from '../services/catalogue/promotionSync.js';
 
 const { Brand, Category, Device, DeviceVariant, Color, DeviceVariantColor, DeviceMedia, sequelize } = db;
 
@@ -44,6 +45,7 @@ export async function createDevice(req, res) {
     if (!brand) throw new CatalogueError('BRAND_NOT_FOUND', 'Brand not found', 404);
     if (!category || category.shop_id !== null || category.status !== 'approved') throw new CatalogueError('CATEGORY_NOT_FOUND', 'Approved global category not found', 404);
     const device = await Device.create({ ...req.body, slug: slugify(req.body.slug || name) });
+    await enqueueDevice(device.id, { reason: `device-create:${device.updatedAt.toISOString()}` });
     return ok(res, 'Device created', device, 201);
   } catch (error) { return sendCatalogueError(res, error); }
 }
@@ -56,6 +58,7 @@ export async function updateDevice(req, res) {
     for (const field of allowed) if (req.body[field] !== undefined) device[field] = req.body[field];
     if (req.body.slug !== undefined) device.slug = slugify(req.body.slug);
     await device.save();
+    await enqueueDevice(device.id, { reason: `device-update:${device.updatedAt.toISOString()}` });
     return ok(res, 'Device updated', device);
   } catch (error) { return sendCatalogueError(res, error); }
 }
@@ -72,6 +75,7 @@ export async function createVariant(req, res) {
     if (!device) throw new CatalogueError('DEVICE_NOT_FOUND', 'Device not found', 404);
     const canonical_key = canonicalVariantKey(device.slug, req.body);
     const variant = await DeviceVariant.create({ ...req.body, canonical_key }, { transaction });
+    await enqueueDevice(device.id, { transaction, reason: `variant-create:${variant.id}:${variant.updatedAt.toISOString()}` });
     await transaction.commit();
     return ok(res, 'Variant created', variant, 201);
   } catch (error) {
@@ -89,6 +93,7 @@ export async function updateVariant(req, res) {
     for (const field of allowed) if (req.body[field] !== undefined) variant[field] = req.body[field];
     variant.canonical_key = canonicalVariantKey(variant.device.slug, variant);
     await variant.save();
+    await enqueueDevice(variant.device_id, { reason: `variant-update:${variant.id}:${variant.updatedAt.toISOString()}` });
     return ok(res, 'Variant updated', variant);
   } catch (error) { return sendCatalogueError(res, error); }
 }
@@ -161,6 +166,8 @@ export async function deactivate(req, res) {
     if (!record) throw new CatalogueError('CATALOGUE_RECORD_NOT_FOUND', 'Catalogue record not found', 404);
     record.is_active = false;
     await record.save();
+    if (req.params.resource === 'devices') await enqueueDevice(record.id, { reason: `device-deactivate:${record.updatedAt.toISOString()}` });
+    if (req.params.resource === 'variants') await enqueueDevice(record.device_id, { reason: `variant-deactivate:${record.id}:${record.updatedAt.toISOString()}` });
     return ok(res, 'Catalogue record deactivated', record);
   } catch (error) { return sendCatalogueError(res, error); }
 }
