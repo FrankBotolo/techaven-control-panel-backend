@@ -39,6 +39,7 @@ export async function getOne(req, res) {
 export async function create(req, res) {
   const transaction = await sequelize.transaction();
   try {
+    if (req.body.images !== undefined && !Array.isArray(req.body.images)) throw new CatalogueError('INVALID_LISTING_IMAGES', 'images must be an array');
     const images = Array.isArray(req.body.images) ? req.body.images : [];
     const values = validateListingInput(req.body, images.length);
     await validatedVariant(req.body.device_variant_id, req.body.device_variant_color_id, transaction);
@@ -57,6 +58,7 @@ export async function create(req, res) {
 export async function update(req, res) {
   const transaction = await sequelize.transaction();
   try {
+    if (req.body.images !== undefined && !Array.isArray(req.body.images)) throw new CatalogueError('INVALID_LISTING_IMAGES', 'images must be an array');
     const listing = await SellerListing.findOne({ where: { id: req.params.id, shop_id: req.params.shopId }, include: [{ model: ListingImage, as: 'images' }], transaction });
     if (!listing) throw new CatalogueError('LISTING_NOT_FOUND', 'Listing not found', 404);
     const next = { ...listing.get({ plain: true }), ...req.body };

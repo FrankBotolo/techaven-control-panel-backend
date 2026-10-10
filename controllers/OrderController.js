@@ -7,6 +7,7 @@ import { getAirtelTransactionSummary } from '../utils/airtelTransactions.js';
 import { getSellerCommissionPercent, computeSellerEscrowSplit } from '../utils/sellerCommission.js';
 import { verifyPayChanguTxRef, paychanguVerifyDataIndicatesPaid } from '../utils/paychanguVerify.js';
 import { completeOrderPaidWithEscrow } from '../utils/orderEscrowFinalize.js';
+import { restoreOrderItemStock } from '../utils/orderItemStock.js';
 
 const { Order, OrderItem, Cart, Product, User, Notification, Shop, Escrow, Wallet, WalletTransaction, ShippingAddress, CourierService, UserShopPoints } = db;
 
@@ -1400,11 +1401,7 @@ export const cancelOrder = async (req, res) => {
 
     // Restore product stock
     for (const item of order.items) {
-      const product = await Product.findByPk(item.product_id);
-      if (product) {
-        product.stock += item.quantity;
-        await product.save();
-      }
+      await restoreOrderItemStock(item);
     }
 
     order.status = 'cancelled';
