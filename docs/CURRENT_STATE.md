@@ -3,8 +3,8 @@
 Last updated: 2026-10-10 (Africa/Blantyre)
 Repository/workspace: `techaven_backend`
 Branch: `main`
-Checkpoint commit: Docker Compose baseline is the commit containing this file; pre-Docker checkpoint was `adc6791`
-Working tree: expected clean after the documentation checkpoint; verify at session start
+Checkpoint commit: `471dc46` adds the v2 promotions feed and marketplace eligibility alignment
+Working tree: documentation handoff changes may be pending; verify at session start
 
 ## Project in One Paragraph
 
@@ -18,8 +18,9 @@ Catalogue Marketplace API v2 is implemented. The repository also has a two-servi
 
 - Implemented: ordered migration runner; canonical schema/models; admin catalogue management; TechAPI importer; seller listings and product requests; public catalogue/marketplace reads; v2 cart/checkout; staged legacy mapping; documentation.
 - Implemented: multi-stage backend `Dockerfile`, MySQL 8.4 Compose service, health checks, named volumes, non-root runtime, fresh-database bootstrap, and Node-specific environment template.
-- Verified locally: module syntax/loading, model associations, route registration, importer dry run, and 15 isolated unit tests.
-- Needs verification: applying/reverting migrations and end-to-end API behavior against a dedicated MySQL test database.
+- Implemented: token-protected promotions feeds for canonical devices and shops, durable cursor events, idempotent backfill, marketplace ID/slug lookup, and approved-shop eligibility enforcement.
+- Verified locally: module syntax/loading, model associations, route registration, importer dry run, and 17 isolated unit tests.
+- Needs verification: apply the promotions-event migration and run its backfill after Docker/MySQL is available and the TechAPI import has finished.
 
 ## Documentation Authority / Approval
 
@@ -31,6 +32,7 @@ Catalogue Marketplace API v2 is implemented. The repository also has a two-servi
 
 - `routes/v2/` is mounted beneath the existing `/api` router and does not replace v1 routes.
 - `services/catalogue/` owns normalization, errors, DTOs, media resolution, import, and legacy matching. `services/marketplace/` owns listing rules.
+- `services/catalogue/promotionSync.js` owns CMS projections and durable cursor events; its HTTP feed fails closed without a dedicated bearer token.
 - Import and legacy migration run as explicit CLI jobs; they are not part of server startup.
 - MySQL remains shared infrastructure. V2 handlers fail with structured errors, but database unavailability still affects the whole API.
 - Docker startup waits for MySQL health, retries authentication, and optionally bootstraps only missing schema objects with `alter: false` and `force: false`.
@@ -55,7 +57,7 @@ Catalogue Marketplace API v2 is implemented. The repository also has a two-servi
 ## Known Issues / Risks / Unresolved Questions
 
 - Migrations have not been executed because no dedicated test database was configured.
-- Docker image/runtime smoke testing is blocked until the local Docker daemon is running.
+- Docker previously passed backend/database health checks, but the Docker Desktop daemon was unavailable during the promotions rollout checkpoint.
 - MySQL DDL may implicitly commit; backup and staging validation are required before production migration.
 - The TechAPI dataset contains inconsistent and duplicate source records; importer reports must be reviewed.
 - V2 reviews, favorites, banners, loyalty points, and promotions are intentionally deferred.
@@ -63,7 +65,7 @@ Catalogue Marketplace API v2 is implemented. The repository also has a two-servi
 
 ## Verification
 
-- `npm test`: 15 passed, 0 failed on 2026-10-10.
+- `npm test`: 17 passed, 0 failed on 2026-10-10.
 - Syntax/model/route import checks: passed for new modules.
 - TechAPI two-record fixture dry run: passed with zero errors.
 - `git diff --check`: required at final checkpoint.
@@ -85,10 +87,12 @@ Catalogue Marketplace API v2 is implemented. The repository also has a two-servi
 - `d6fd6c4` — v2 API, migration, importer, and handoff documentation.
 - `cb097e7` — listing-stock restoration for v2 order cancellation/rejection.
 - `adc6791` — final catalogue v2 handoff checkpoint.
+- `b9b06be` — promotions catalogue event/feed contract and eligibility enforcement.
+- `471dc46` — marketplace shop filtering and stable shop sync identity.
 - Push authorization: not authorized; all commits remain local.
 
 ## Next Concrete Actions
 
-1. Start Docker Desktop/Engine, run `docker compose up --build -d`, and verify both health checks plus `GET /health`.
-2. Create an isolated MySQL test database whose name contains `test`, apply migrations, and run integration, rollback, and v1 regression checks.
-3. Run dry-run TechAPI and legacy migration reports against staging data, review conflicts, then approve production rollout separately.
+1. Start Docker Desktop/Engine and confirm whether `techaven-techapi-import` completed before changing catalogue schema.
+2. Apply `202610100005-create-promotion-catalogue-events.js`, run `npm run catalog:backfill-promotions`, and verify authenticated feed pagination.
+3. Only then run the CMS one-time v2 reference reset and enable reconciliation; keep both flags false on any failure.

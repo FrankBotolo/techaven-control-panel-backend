@@ -109,6 +109,18 @@ npm run catalog:import:techapi -- \
 
 Remove `--dry-run` only after reviewing the report and applying v2 migrations. The importer records source paths, URLs, verification state, and Git revision when available. Malformed records are reported and skipped. Existing verified values are preserved over lower-confidence imports.
 
+## Promotions Catalogue Synchronization
+
+The promotions CMS consumes durable canonical-device and shop events rather than polling v1 products. Configure the same long random `COMMERCE_SYNC_TOKEN` in the backend and `TECHAVEN_COMMERCE_API_TOKEN` in the CMS, then call:
+
+```text
+GET /api/v2/integrations/promotions/devices?after=0&limit=250
+GET /api/v2/integrations/promotions/shops?after=0&limit=250
+Authorization: Bearer <shared token>
+```
+
+Each standard response envelope contains `items`, `next_cursor`, and `has_more`. Device identities use `device:<id>` and tombstones set `active` to `false`. Apply migrations and run `npm run catalog:backfill-promotions` once before enabling CMS reconciliation.
+
 ## Legacy Migration
 
 ```bash
