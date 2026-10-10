@@ -29,8 +29,11 @@ import onboardingRoutes from './onboarding.js';
 import subscriptionPackageRoutes from './subscription-packages.js';
 import subscriptionAccessRoutes from './subscription-access.js';
 import platformSettingsRoutes from './platform-settings.js';
+import v2Routes from './v2/index.js';
 
 const router = express.Router();
+
+router.use('/v2', v2Routes);
 
 router.use('/auth', authRoutes);
 router.use('/user', userRoutes);
@@ -64,4 +67,3 @@ router.use('/subscription-packages', subscriptionPackageRoutes);
 router.use('/', subscriptionAccessRoutes);
 
 export default router;
-
