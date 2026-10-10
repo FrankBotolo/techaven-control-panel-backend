@@ -3,7 +3,7 @@
 Last updated: 2026-10-10 (Africa/Blantyre)
 Repository/workspace: `techaven_backend`
 Branch: `main`
-Checkpoint commit: catalogue implementation through `7afbb16`; documentation is the final local checkpoint
+Checkpoint commit: catalogue implementation through `cb097e7`; final state update follows that local checkpoint
 Working tree: expected clean after the documentation checkpoint; verify at session start
 
 ## Project in One Paragraph
@@ -76,6 +76,8 @@ Catalogue Marketplace API v2 is implemented in code and awaiting migration again
 - `556817b` — listing-based cart and checkout.
 - `290f4a9` — staged legacy migration and review.
 - `7afbb16` — management API completeness.
+- `d6fd6c4` — v2 API, migration, importer, and handoff documentation.
+- `cb097e7` — listing-stock restoration for v2 order cancellation/rejection.
 - Push authorization: not authorized; all commits remain local.
 
 ## Next Concrete Actions
