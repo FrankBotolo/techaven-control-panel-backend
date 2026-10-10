@@ -6,6 +6,7 @@ const router = express.Router();
 router.use(authenticate, authorizeRoles('seller'), requireApprovedSeller, requireShopOwnerForShopParam('shopId'));
 router.get('/:shopId/listings', controller.list);
 router.post('/:shopId/listings', controller.create);
+router.get('/:shopId/listings/:id', controller.getOne);
 router.patch('/:shopId/listings/:id', controller.update);
 router.delete('/:shopId/listings/:id', controller.remove);
 

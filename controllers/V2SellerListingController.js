@@ -28,6 +28,14 @@ export async function list(req, res) {
   } catch (error) { return sendCatalogueError(res, error); }
 }
 
+export async function getOne(req, res) {
+  try {
+    const listing = await SellerListing.findOne({ where: { id: req.params.id, shop_id: req.params.shopId }, include });
+    if (!listing) throw new CatalogueError('LISTING_NOT_FOUND', 'Listing not found', 404);
+    return res.json({ success: true, message: 'Listing retrieved', data: listing });
+  } catch (error) { return sendCatalogueError(res, error); }
+}
+
 export async function create(req, res) {
   const transaction = await sequelize.transaction();
   try {
