@@ -7,7 +7,7 @@ if (!testDatabase || !/(^|[_-])test([_-]|$)/i.test(testDatabase)) {
   process.exit(1);
 }
 
-const child = spawn(process.execPath, ['--test', 'tests/integration/*.test.js'], {
+const child = spawn(process.execPath, ['--test', '--test-concurrency=1', 'tests/integration/*.test.js'], {
   stdio: 'inherit',
   env: { ...process.env, DB_NAME: testDatabase, NODE_ENV: 'test' },
   shell: true

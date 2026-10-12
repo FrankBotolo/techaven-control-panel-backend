@@ -1,10 +1,10 @@
 # Current State
 
-Last updated: 2026-10-10 (Africa/Blantyre)
+Last updated: 2026-10-12 (Africa/Johannesburg)
 Repository/workspace: `techaven_backend`
 Branch: `main`
-Checkpoint commit: `3feb64c` updates the marketplace synchronization handoff
-Working tree: clean at the latest verified checkpoint
+Checkpoint commit: `78dff35` validates backend auth transaction ordering; frontend auth is `b46adc0` in the sibling repository.
+Working tree: auth is split into focused local commits; unrelated media/UI handoff changes remain unstaged. No auth commits pushed.
 
 ## Project in One Paragraph
 
@@ -12,7 +12,7 @@ This is a MySQL/Sequelize Express API. Legacy `/api/products`, cart, order, and 
 
 ## Current Objective
 
-Catalogue Marketplace API v2 is implemented. The repository also has a two-service Docker Compose stack for the backend and MySQL; a live container smoke test awaits an available Docker daemon.
+Customer authentication API v2 is implemented and running locally. Session/password flows are verified; live Google sign-in and email delivery await provider configuration. See the auth checkpoint below.
 
 ## Current Phase / Status
 
@@ -97,3 +97,16 @@ Catalogue Marketplace API v2 is implemented. The repository also has a two-servi
 1. Start Docker Desktop/Engine and confirm whether `techaven-techapi-import` completed before changing catalogue schema.
 2. Apply `202610100005-create-promotion-catalogue-events.js`, run `npm run catalog:backfill-promotions`, and verify authenticated feed pagination.
 3. Only then run the CMS one-time v2 reference reset and enable reconciliation; keep both flags false on any failure.
+
+## Auth v2 implementation checkpoint � 2026-10-12
+
+Customer auth is implemented under `/api/v2/auth`, with email/password and Google linking, one-time verification/recovery challenges, rotated HttpOnly refresh cookies, immediate v2 session revocation and v1 access-token compatibility. The storefront uses in-memory access tokens, expiry renewal, same-origin development/production API forwarding and authenticated basket ownership guards.
+
+- Additive auth migration applied to local MySQL; second application made no changes. Existing catalogue ledger discrepancy is preserved, not hidden: only `202610120001-create-auth-v2.js` was selected.
+- Checks passed: 23 backend unit tests; 14 auth MySQL integration tests plus the integration foundation check (provider calls replaced by controlled test doubles); 41 frontend tests; production build and built-proxy login/cookie/refresh/profile/logout/origin checks. Desktop/mobile checks confirmed email sign-in, reload restoration, Galaxy A05 basket add/clear, logout, signup fields and keyboard recovery. Temporary local test account and basket were removed.
+- Auth working-set TypeScript files have no diagnostics; unrelated existing strictness errors still prevent a clean standalone project typecheck.
+- Runtime: backend/frontend remain healthy locally, with an ignored generated v2 secret. New origins must be allowlisted explicitly. Current local Wi-Fi origin is `http://192.168.1.126:3001`; HTTPS tunnel origin remains `https://fleta-noncontinuable-freya.ngrok-free.dev`.
+- Outstanding setup: Google OAuth web client and SMTP credentials are absent. Existing verified customers can use email/password; new verification/recovery email delivery and real Google sign-in cannot be declared verified until configured. See `docs/AUTH_API_V2.md` for setup.
+- Local commits are split by session foundation, customer endpoints, transaction hardening, storefront integration and verification/setup docs. No auth changes have been pushed. Earlier unrelated UI/media changes remain outside these commits.
+
+Next concrete auth action: create/configure the Google web client and email provider, restart the backend, then verify real Google sign-in/linking and email delivery. The older catalogue/CMS follow-ups above remain separate.

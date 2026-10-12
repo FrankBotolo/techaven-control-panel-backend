@@ -1016,3 +1016,7 @@ All admin endpoints require `Authorization: Bearer <access_token>` and user role
 ## Postman collection
 
 Import **Techaven_API.postman_collection.json** for the same grouping and example requests. Set `base_url` (e.g. `http://localhost:8000`) and `access_token` for protected routes.
+
+## Customer authentication API v2
+
+The storefront now uses `/api/v2/auth` for customer registration, email/password and Google sign-in, verification, recovery, refresh, logout and current-user reads. See [the approved v2 auth contract](docs/AUTH_API_V2.md) for request bodies, cookie/session behavior, error codes, setup and compatibility. V1 routes and other-role flows remain available. V2 refresh tokens are HttpOnly cookies and are never returned in JSON.

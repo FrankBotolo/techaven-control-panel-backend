@@ -56,3 +56,11 @@ Rationale: An additive version permits catalogue ownership and multi-seller offe
 Consequences: V1 and v2 coexist until a separately approved retirement. Reviews, favorites, banners, and legacy promotions remain v1 concepts. Deployments must apply ordered v2 migrations before serving v2 traffic.
 
 Related files: `docs/CATALOGUE_API_V2.md`, `routes/v2/`, `database/migrations-js/`
+
+## D-004 — Customer authentication API v2
+
+Status: Accepted
+
+Source: User-approved implementation plan, 2026-10-12.
+
+Customer storefront authentication supports Google and email/password beneath `/api/v2/auth`. Existing accounts and v1 APIs are preserved. V2 uses fifteen-minute access JWTs and thirty-day absolute, revocable sessions with rotated HttpOnly refresh cookies; storefront access tokens remain in memory. Google email matches require the existing password before linking, and new identities are customers only. Seller/admin/delivery-agent and Strapi admin flows remain separate. The full contract and configuration are in `docs/AUTH_API_V2.md`. Live Google verification depends on creating the OAuth web client; verification/recovery delivery requires configured SMTP.

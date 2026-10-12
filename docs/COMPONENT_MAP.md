@@ -76,3 +76,14 @@ Use this as a task-routing index, not a substitute for reading the relevant impl
 - Global Express error handling returns a sanitized production response, with special handling for malformed Airtel webhook JSON. Verify critical endpoint-specific error contracts independently.
 - External payments, email, and SMS depend on configured providers. Do not run integration utilities without appropriate authorization and environment setup.
 - No automated unit/integration test directory or test script is currently configured. Record exactly which manual, syntax, startup, or integration checks are run for each change.
+
+## Customer authentication v2 ownership
+
+| Entry point | Owner | State and compatibility |
+| --- | --- | --- |
+| `/api/v2/auth/*` via `routes/v2/auth.js` | `controllers/v2/AuthController.js`, `services/auth/` | Customer-only Google/password/verification/recovery; rotated cookie sessions in `models/AuthSession.js`. |
+| Shared protected routes | `middleware/auth.js` | Recognises v2 session JWTs and checks revocation; preserves legacy access-token clients. |
+| Auth schema and maintenance | `database/migrations-js/202610120001-create-auth-v2.js`, `scripts/cleanup-auth-v2.js` | Four additive auth tables; explicit expiry cleanup. |
+| Public auth contract | `docs/AUTH_API_V2.md`, linked by `API_DOCUMENTATION.md` | Approved v2 auth bodies, cookies, errors, configuration and Google setup. |
+
+Node unit/integration tests are now configured. Auth integration tests require an explicitly named test database and run sequentially to avoid schema setup races. External Google/email calls are stubbed in integration tests; real provider verification remains a separate setup check.
