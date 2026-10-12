@@ -133,7 +133,7 @@ export const getEmailStyles = () => `
   </style>
 `;
 
-export const getOTPEmailTemplate = (otpCode, type = 'verification') => {
+export const getOTPEmailTemplate = (otpCode, type = 'verification', expiryMinutes) => {
   const typeMessages = {
     signup: 'Welcome to Techaven! Please verify your email address to complete your registration.',
     login: 'Please use this code to complete your login.',
@@ -166,7 +166,7 @@ export const getOTPEmailTemplate = (otpCode, type = 'verification') => {
             <div class="info-box">
               <p style="margin: 0; color: #6c757d;">
                 <strong>⚠️ Security Notice:</strong><br>
-                This code will expire in 12 hours. Never share this code with anyone. 
+                This code will expire in ${expiryMinutes ? `${expiryMinutes} minutes` : '12 hours'}. Never share this code with anyone. 
                 Techaven staff will never ask for your verification code.
               </p>
             </div>

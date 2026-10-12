@@ -37,8 +37,10 @@ export function requireCustomer(user) {
   if (!user || !user.is_active || user.role !== 'customer') throw new AuthError('ACCOUNT_UNAVAILABLE', 'This account cannot sign in to the customer storefront', 403);
   return user;
 }
-export function cookieOptions() {
-  return { httpOnly: true, secure: process.env.AUTH_V2_ALLOW_HTTP !== 'true', sameSite: 'lax', path: COOKIE_PATH };
+export function cookieOptions(req) {
+  const localHttp = process.env.AUTH_V2_ALLOW_HTTP === 'true' &&
+    req?.headers?.origin?.startsWith('http://') && originAllowed(req.headers.origin);
+  return { httpOnly: true, secure: !localHttp, sameSite: 'lax', path: COOKIE_PATH };
 }
 export function readRefreshCookie(req) {
   const part = (req.headers.cookie || '').split(';').map(s => s.trim()).find(s => s.startsWith(`${COOKIE_NAME}=`));

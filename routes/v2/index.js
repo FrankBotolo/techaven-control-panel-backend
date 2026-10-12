@@ -8,8 +8,10 @@ import cartRoutes from './cart.js';
 import orderRoutes from './orders.js';
 import adminMigrationRoutes from './admin-migration.js';
 import promotionSyncRoutes from './promotion-sync.js';
+import authRoutes from './auth.js';
 
 const router = express.Router();
+router.use('/auth', authRoutes);
 router.use('/admin/catalog', adminCatalogueRoutes);
 router.use('/sellers', sellerListingRoutes);
 router.use('/catalog/product-requests', productRequestRoutes);

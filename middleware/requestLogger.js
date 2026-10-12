@@ -7,7 +7,7 @@
  * the response itself rather than any one failure path.
  */
 
-const SENSITIVE_KEYS = ['password', 'new_password', 'new_password_confirmation', 'otp', 'access_token', 'refresh_token'];
+const SENSITIVE_KEYS = ['password', 'new_password', 'new_password_confirmation', 'otp', 'access_token', 'refresh_token', 'id_token', 'nonce', 'challenge'];
 
 function redact(obj) {
   if (obj == null || typeof obj !== 'object') return obj;

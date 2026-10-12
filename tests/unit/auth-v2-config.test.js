@@ -33,8 +33,11 @@ test('cookies are host-only, HttpOnly, scoped and secure by default; origins mat
   const origins = process.env.AUTH_V2_ALLOWED_ORIGINS;
   delete process.env.AUTH_V2_ALLOW_HTTP;
   assert.deepEqual(cookieOptions(), { httpOnly: true, secure: true, sameSite: 'lax', path: '/api/v2/auth' });
-  process.env.AUTH_V2_ALLOW_HTTP = 'true'; assert.equal(cookieOptions().secure, false);
+  process.env.AUTH_V2_ALLOW_HTTP = 'true';
   process.env.AUTH_V2_ALLOWED_ORIGINS = 'http://localhost:3001,https://store.example';
+  assert.equal(cookieOptions({ headers: { origin: 'http://localhost:3001' } }).secure, false);
+  assert.equal(cookieOptions({ headers: { origin: 'https://store.example' } }).secure, true);
+  assert.equal(cookieOptions({ headers: { origin: 'http://attacker.test' } }).secure, true);
   assert.equal(originAllowed('https://store.example'), true);
   assert.equal(originAllowed('https://store.example.attacker.test'), false);
   assert.equal(originAllowed(undefined), false);
