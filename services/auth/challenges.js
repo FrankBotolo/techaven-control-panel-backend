@@ -47,9 +47,16 @@ export async function sendCode(user, type) {
 }
 // Return failures from transactions before throwing so failed attempts are persisted.
 export async function consumeChallenge({ id, identifier, type, secret }, action) {
+  if ((!id && !identifier) || (id && !/^[\da-f-]{36}$/i.test(id))) throw new AuthError('CHALLENGE_INVALID', 'This verification has expired. Please start again', 401);
+  const where = { type, ...(id ? { id } : { identifier, consumed_at: null }) };
+  const candidate = await AuthChallenge.findOne({ where, order: [['createdAt', 'DESC']] });
+  if (!candidate) throw new AuthError('CHALLENGE_INVALID', 'This verification has expired. Please start again', 401);
   const result = await sequelize.transaction(async transaction => {
-    const where = { type, ...(id ? { id } : { identifier, consumed_at: null }) };
-    const row = await AuthChallenge.findOne({ where, order: [['createdAt', 'DESC']], transaction, lock: transaction.LOCK.UPDATE });
+    if (candidate.user_id) {
+      const User = (await import('../../models/User.js')).default;
+      await User.findByPk(candidate.user_id, { transaction, lock: transaction.LOCK.UPDATE });
+    }
+    const row = await AuthChallenge.findByPk(candidate.id, { transaction, lock: transaction.LOCK.UPDATE });
     if (!row || row.consumed_at || new Date(row.expires_at) <= new Date() || row.attempts >= 5) return { error: new AuthError('CHALLENGE_INVALID', 'This verification has expired. Please start again', 401) };
     await row.update({ attempts: row.attempts + 1 }, { transaction });
     if (!equalHash(row.secret_hash, hash(typeof secret === 'string' ? secret : ''))) return { error: new AuthError('CHALLENGE_INVALID', 'Incorrect verification code', 401) };

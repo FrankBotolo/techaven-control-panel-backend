@@ -27,15 +27,17 @@ export async function createSession(user, transaction) {
 export async function rotateSession(refresh) {
   signingSecret();
   if (!refresh || !/^[\w-]{43}$/.test(refresh)) throw new AuthError('SESSION_INVALID', 'Please sign in again', 401);
-  // Discover the immutable session ID, then always lock session before token to avoid deadlocks.
+  // Lock user before session/token, consistent with password reset and credential checks.
   const known = await AuthRefreshToken.findByPk(hash(refresh));
   if (!known) throw new AuthError('SESSION_INVALID', 'Please sign in again', 401);
+  const knownSession = await AuthSession.findByPk(known.session_id);
+  if (!knownSession) throw new AuthError('SESSION_INVALID', 'Please sign in again', 401);
   const result = await sequelize.transaction(async transaction => {
+    const user = await User.findByPk(knownSession.user_id, { transaction, lock: transaction.LOCK.UPDATE });
     const session = await AuthSession.findByPk(known.session_id, { transaction, lock: transaction.LOCK.UPDATE });
     const token = await AuthRefreshToken.findByPk(known.hash, { transaction, lock: transaction.LOCK.UPDATE });
     if (!session || session.revoked_at || new Date(session.expires_at) <= new Date()) return null;
     if (token.used_at) { await session.update({ revoked_at: new Date() }, { transaction }); return null; }
-    const user = await User.findByPk(session.user_id, { transaction, lock: transaction.LOCK.UPDATE });
     if (!user || !user.is_active || user.role !== 'customer') { await session.update({ revoked_at: new Date() }, { transaction }); return null; }
     await token.update({ used_at: new Date() }, { transaction });
     const next = opaque();

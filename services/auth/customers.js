@@ -18,11 +18,13 @@ export async function loginCustomer(body) {
   signingSecret();
   const email = emailValue(body.email);
   await rateLimit('login', email);
-  const user = await User.findOne({ where: { email } });
-  if (!user?.password || typeof body.password !== 'string' || Buffer.byteLength(body.password) > 72 || !(await user.comparePassword(body.password))) throw credentialError();
-  requireCustomer(user);
-  if (!user.email_verified_at) throw new AuthError('EMAIL_UNVERIFIED', 'Verify your email before signing in', 403);
-  return sequelize.transaction(transaction => createSession(user, transaction));
+  return sequelize.transaction(async transaction => {
+    const user = await User.findOne({ where: { email }, transaction, lock: transaction.LOCK.UPDATE });
+    if (!user?.password || typeof body.password !== 'string' || Buffer.byteLength(body.password) > 72 || !(await user.comparePassword(body.password))) throw credentialError();
+    requireCustomer(user);
+    if (!user.email_verified_at) throw new AuthError('EMAIL_UNVERIFIED', 'Verify your email before signing in', 403);
+    return createSession(user, transaction);
+  });
 }
 export async function registerCustomer(body) {
   signingSecret();
@@ -121,6 +123,7 @@ export async function linkGoogleCustomer(body) {
   signingSecret();
   if (typeof body.linking_challenge !== 'string' || typeof body.password !== 'string' || Buffer.byteLength(body.password) > 72) throw credentialError();
   const [id, secret] = body.linking_challenge.split('.');
+  if (!id || !secret || body.linking_challenge.split('.').length !== 2) throw new AuthError('CHALLENGE_INVALID', 'This verification has expired. Please start again', 401);
   return consumeChallenge({ id, type: 'google_link', secret }, async (row, transaction) => {
     const user = requireCustomer(await User.findByPk(row.user_id, { transaction, lock: transaction.LOCK.UPDATE }));
     if (!user.password || !(await user.comparePassword(body.password))) throw credentialError();
