@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import db from '../models/index.js';
+import { authenticateV2 } from '../services/auth/sessions.js';
 
 const { User, Shop } = db;
 
@@ -18,7 +19,14 @@ export const authenticate = async (req, res, next) => {
     }
 
     const token = authHeader.substring(7);
+    if (jwt.decode(token)?.version === 2) {
+      const identity = await authenticateV2(token);
+      req.user = identity.user;
+      req.authSession = identity.session;
+      return next();
+    }
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-this-in-production');
+    if (decoded.type && decoded.type !== 'access') throw new Error('Invalid token type');
     
     const user = await User.findByPk(decoded.id);
     
@@ -39,8 +47,9 @@ export const authenticate = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
-    return res.status(401).json({
+    return res.status(error.status || 401).json({
       success: false,
+      ...(error.code ? { code: error.code } : {}),
       message: 'Invalid or expired token'
     });
   }
@@ -55,7 +64,14 @@ export const optionalAuthenticate = async (req, res, next) => {
       return next();
     }
     const token = authHeader.substring(7);
+    if (jwt.decode(token)?.version === 2) {
+      const identity = await authenticateV2(token);
+      req.user = identity.user;
+      req.authSession = identity.session;
+      return next();
+    }
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-this-in-production');
+    if (decoded.type && decoded.type !== 'access') throw new Error('Invalid token type');
     const user = await User.findByPk(decoded.id);
     if (user && user.is_active) {
       req.user = user;

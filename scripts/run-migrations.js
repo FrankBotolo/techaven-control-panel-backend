@@ -8,6 +8,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const migrationsDir = path.join(__dirname, '..', 'database', 'migrations-js');
 const command = process.argv[2] || 'status';
 const dryRun = process.argv.includes('--dry-run');
+const only = process.argv.find(arg => arg.startsWith('--only='))?.slice(7);
 
 if (!['up', 'down', 'status'].includes(command)) {
   console.error('Usage: node scripts/run-migrations.js <up|down|status> [--dry-run]');
@@ -41,7 +42,11 @@ async function appliedNames() {
 async function main() {
   await sequelize.authenticate();
   await ensureMigrationsTable();
-  const migrations = await loadMigrations();
+  let migrations = await loadMigrations();
+  if (only) {
+    if (command === 'down' || !migrations.some(m => m.name === only)) throw new Error('--only must name an existing migration and is supported only for up/status');
+    migrations = migrations.filter(m => m.name === only);
+  }
   const applied = await appliedNames();
 
   if (command === 'status') {
