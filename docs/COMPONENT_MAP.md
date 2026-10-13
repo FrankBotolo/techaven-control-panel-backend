@@ -1,5 +1,7 @@
 # Codebase Navigation Map
 
+Shop seed and Loans ownership: scripts/seed-apple-all.js, scripts/seed-saeed-enterprise.js and scripts/data/ manifests; scripts/backfill-stock-photos.js owns traced catalogue photos. Migration 202610140001_listing_categories.js and services/marketplace/category-filter.js own shared offer category membership; V2MarketplaceController filters, CategoryController counts. See docs/SHOP_SEEDS_AND_LOANS.md.
+
 ## Supplied Apple Guy / Edgicate seed ownership
 
 `scripts/seed-apple-edgicate.js` owns transactional, idempotent shop/offer/photo creation; `scripts/data/apple-edgicate.js` holds transcribed facts and user-confirmed corrections. `docs/APPLE_EDGICATE_SEED.md` records boundaries and verification. Supplied files live in the uploads volume under `apple-edgicate/`; local evidence lives in sibling `../shop-seed-apple-edgicate/`.

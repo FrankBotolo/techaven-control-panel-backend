@@ -1,5 +1,7 @@
 # Current State
 
+Latest checkpoint: Apple & All 17 offers; Saeed Enterprise eight offers; seven shops / 188 offers. Loans shares eligible seller offers with Smartphones, verified live with itel Power 80; cash-only sellers excluded. Eight backend tests passed. Stock-first galleries and earlier frontend build/tests verified. See docs/SHOP_SEEDS_AND_LOANS.md. Remaining: public upload base, missing Saeed photos, unavailable IAB visual check, pre-existing migration ledger discrepancy.
+
 ## Apple Guy / Edgicate seed checkpoint — 2026-10-13
 
 Completed user-supplied offer seed (`9860fe1`): Apple Guy ID 4 with two used iPhone offers; Edgicate Store ID 5 with nine used laptop offers. Created eight missing, unverified laptop devices, nine laptop variants, 11 offers and 22 listing photos, with both supplied logos. Both disputed storage values were confirmed as 128 GB; all conditions and retail prices are recorded in `docs/APPLE_EDGICATE_SEED.md`. Source/receipts: sibling `../shop-seed-apple-edgicate/`. Local totals: five shops, 163 offers.
