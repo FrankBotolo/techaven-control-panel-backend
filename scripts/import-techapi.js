@@ -12,9 +12,10 @@ const dataDir = value('--data-dir');
 const categoryId = Number(value('--category-id'));
 const dryRun = args.includes('--dry-run');
 const reportPath = value('--report');
+const categoryType = value('--category-type') || 'smartphone';
 
 if (!dataDir || !categoryId) {
-  console.error('Usage: node scripts/import-techapi.js --data-dir <smartphone-dir> --category-id <id> [--brand slug] [--year YYYY] [--dry-run] [--report file]');
+  console.error('Usage: node scripts/import-techapi.js --data-dir <data-dir> --category-id <id> [--category-type smartphone|laptop] [--brand slug] [--year YYYY] [--dry-run] [--report file]');
   process.exit(1);
 }
 
@@ -27,7 +28,7 @@ if (!sourceRevision) {
 try {
   if (!dryRun) await db.sequelize.authenticate();
   const { records, errors } = await readTechApiRecords(path.resolve(dataDir), { brand: value('--brand'), year: value('--year') });
-  const report = await importTechApi({ records, readErrors: errors, categoryId, sourceRevision, dryRun });
+  const report = await importTechApi({ records, readErrors: errors, categoryId, sourceRevision, dryRun, categoryType });
   const output = JSON.stringify({ ...report, dry_run: dryRun, source_revision: sourceRevision }, null, 2);
   if (reportPath) await writeFile(reportPath, `${output}\n`, 'utf8');
   console.log(output);
