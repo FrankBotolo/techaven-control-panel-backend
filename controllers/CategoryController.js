@@ -11,7 +11,17 @@ export const index = async (req, res) => {
     });
 
     const withCount = await Promise.all(categories.map(async (c) => {
-      const product_count = await Product.count({ where: { category_id: c.id } });
+      let product_count = await Product.count({ where: { category_id: c.id } });
+      if (c.name === 'Loans') {
+        const [rows] = await db.sequelize.query(`SELECT COUNT(DISTINCT v.device_id) AS count
+          FROM seller_listing_categories lc JOIN seller_listings l ON l.id = lc.listing_id
+          JOIN device_variants v ON v.id = l.device_variant_id JOIN devices d ON d.id = v.device_id
+          JOIN shops s ON s.id = l.shop_id JOIN brands b ON b.id = d.brand_id
+          WHERE lc.category_id = ? AND l.status = 'active' AND l.quantity > 0
+          AND v.is_active = 1 AND d.is_active = 1 AND b.is_active = 1
+          AND s.status = 'active' AND s.application_status = 'approved'`, { replacements: [c.id] });
+        product_count = Number(rows[0].count);
+      }
       return {
         id: c.id,
         name: c.name,

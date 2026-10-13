@@ -2,6 +2,7 @@ import { Op } from 'sequelize';
 import db from '../models/index.js';
 import { CatalogueError, sendCatalogueError } from '../services/catalogue/errors.js';
 import { toDeviceDto } from '../services/catalogue/dto.js';
+import { marketplaceCategoryFilter } from '../services/marketplace/category-filter.js';
 
 const { Brand, Category, Device, DeviceVariant, DeviceVariantColor, Color, DeviceMedia, SellerListing, ListingImage, Shop } = db;
 
@@ -10,6 +11,7 @@ const offerInclude = (query = {}) => ({
   as: 'seller_listings',
   required: true,
   where: {
+    ...(query.listingCategoryWhere ?? {}),
     status: 'active', quantity: { [Op.gt]: 0 },
     ...(query.min_price || query.max_price ? { price: { ...(query.min_price ? { [Op.gte]: Number(query.min_price) } : {}), ...(query.max_price ? { [Op.lte]: Number(query.max_price) } : {}) } } : {}),
     ...(query.condition ? { condition: query.condition } : {}),
@@ -44,9 +46,16 @@ export async function listDevices(req, res) {
       requestedIds = [...new Set(raw.map(Number))];
       where.id = { [Op.in]: requestedIds };
     }
-    if (req.query.category_id) where.category_id = req.query.category_id;
+    const query = { ...req.query };
+    if (req.query.category_id) {
+      const category = await Category.findOne({ where: { id: req.query.category_id, shop_id: null, status: 'approved' } });
+      if (!category) throw new CatalogueError('CATEGORY_NOT_FOUND', 'Category not found', 404);
+      const filter = marketplaceCategoryFilter(category);
+      Object.assign(where, filter.deviceWhere);
+      query.listingCategoryWhere = filter.listingWhere;
+    }
     if (req.query.search) where.name = { [Op.like]: `%${req.query.search}%` };
-    const { count, rows } = await Device.findAndCountAll({ where, include: include(req.query), distinct: true, subQuery: false, limit: requestedIds ? 50 : perPage, offset: requestedIds ? 0 : (page - 1) * perPage, order: [['name', 'ASC']] });
+    const { count, rows } = await Device.findAndCountAll({ where, include: include(query), distinct: true, subQuery: false, limit: requestedIds ? 50 : perPage, offset: requestedIds ? 0 : (page - 1) * perPage, order: [['name', 'ASC']] });
     const dtoRows = rows.map((row) => toDeviceDto(row, { includeOffers: true }));
     const devices = requestedIds ? requestedIds.flatMap((id) => dtoRows.filter((row) => row.id === id)) : dtoRows;
     const missing_ids = requestedIds ? requestedIds.filter((id) => !devices.some((row) => row.id === id)) : undefined;
