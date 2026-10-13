@@ -1,5 +1,11 @@
 # Current State
 
+## Apple Guy / Edgicate seed checkpoint — 2026-10-13
+
+Completed user-supplied offer seed (`9860fe1`): Apple Guy ID 4 with two used iPhone offers; Edgicate Store ID 5 with nine used laptop offers. Created eight missing, unverified laptop devices, nine laptop variants, 11 offers and 22 listing photos, with both supplied logos. Both disputed storage values were confirmed as 128 GB; all conditions and retail prices are recorded in `docs/APPLE_EDGICATE_SEED.md`. Source/receipts: sibling `../shop-seed-apple-edgicate/`. Local totals: five shops, 163 offers.
+
+Verified: six focused catalogue unit tests, exact offer price/stock/storage/condition checks, all marketplace detail endpoints, 24 media URLs returning matching image bytes, full rerun with zero duplicates, and identical full-record hashes for the original three shops/152 offers. No existing device/variant updates or schema changes. Next check: visual storefront verification when the browser becomes available; current session had no in-app browser backend. Media URLs use local localhost:8000 and need an explicit public media base before remote deployment. Earlier unrelated media/handoff files remain unstaged.
+
 ## Laptop seed checkpoint — 2026-10-13
 
 Completed local TechAPI laptop import: 1,966 source records at revision `db1dea0c38ff07fcf400aa05d8c8e4393348eb25`, category Laptops ID 2, 1,230 model families and 1,909 configurations across 23 brands. Source checkout/receipts: sibling `../techapi-laptop-data/`. Configuration-aware importer checkpoint: `685748f`; contract and mapping: `docs/TECHAPI_LAPTOP_IMPORT.md`.
