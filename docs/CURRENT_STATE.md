@@ -1,5 +1,11 @@
 # Current State
 
+## Laptop seed checkpoint — 2026-10-13
+
+Completed local TechAPI laptop import: 1,966 source records at revision `db1dea0c38ff07fcf400aa05d8c8e4393348eb25`, category Laptops ID 2, 1,230 model families and 1,909 configurations across 23 brands. Source checkout/receipts: sibling `../techapi-laptop-data/`. Configuration-aware importer checkpoint: `685748f`; contract and mapping: `docs/TECHAPI_LAPTOP_IMPORT.md`.
+
+Validation: 27 backend unit tests passed; all stored configurations/shared specs matched source; catalogue list/detail HTTP 200; full rerun created zero duplicates or errors. Existing 36,999 smartphones, three shops and 152 offers retained identical protected-record hashes. One unverified duplicate intentionally preserved a verified variant. Next step for storefront availability: sellers add laptop offers with real prices and stock. No schema migrations, price changes or provider configuration occurred. Earlier unrelated media/handoff work remains unstaged.
+
 Last updated: 2026-10-12 (Africa/Johannesburg)
 Repository/workspace: `techaven_backend`
 Branch: `main`

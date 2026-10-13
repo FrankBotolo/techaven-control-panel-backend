@@ -1,5 +1,9 @@
 # Codebase Navigation Map
 
+## TechAPI laptop import ownership
+
+`services/catalogue/importers/techapi/laptop.js` owns laptop configuration normalization and common model specs. `importer.js` dispatches by category type; `scripts/import-techapi.js --category-type laptop` is the CLI entry point. `tests/unit/techapi-laptop.test.js` verifies CPU/GPU/storage distinctions and duplicate normalization. See `docs/TECHAPI_LAPTOP_IMPORT.md` for mapping, local counts and rerun evidence.
+
 Use this as a task-routing index, not a substitute for reading the relevant implementation and approved contract.
 
 ## Entry Points
