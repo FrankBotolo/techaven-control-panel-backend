@@ -1,5 +1,7 @@
 # Codebase Navigation Map
 
+Brand navigation: controllers/CategoryController.js owns live stock-qualified brand facets. Frontend BrandTiles.tsx/Header.tsx render navigation; catalog-api.ts maps facets; category.$slug.tsx and resolve-catalog.ts own URL brand filters and category pagination. See docs/BRAND_NAVIGATION.md.
+
 Shop seed and Loans ownership: scripts/seed-apple-all.js, scripts/seed-saeed-enterprise.js and scripts/data/ manifests; scripts/backfill-stock-photos.js owns traced catalogue photos. Migration 202610140001_listing_categories.js and services/marketplace/category-filter.js own shared offer category membership; V2MarketplaceController filters, CategoryController counts. See docs/SHOP_SEEDS_AND_LOANS.md.
 
 ## Supplied Apple Guy / Edgicate seed ownership
