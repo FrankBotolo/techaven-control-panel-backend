@@ -1,0 +1,245 @@
+[
+  {
+    "slug": "iphone-13-pro-max",
+    "model": "iphone 13 pro max",
+    "brand": "apple",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "source_page_title": "Identify your iPhone model - Apple Support",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/2022-spring-iphone13-pro-max-colors.png",
+    "match_scope": "exact model family"
+  },
+  {
+    "slug": "iphone-14-pro",
+    "model": "iphone 14 pro",
+    "brand": "apple",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "source_page_title": "Identify your iPhone model - Apple Support",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/iphone-14-pro-colors.png",
+    "match_scope": "exact model family"
+  },
+  {
+    "slug": "iphone-15",
+    "model": "iphone 15",
+    "brand": "apple",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "source_page_title": "Identify your iPhone model - Apple Support",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/fall-2023-iphone-colors-iphone-15.png",
+    "match_scope": "exact model family"
+  },
+  {
+    "slug": "iphone-15-plus",
+    "model": "iphone 15 plus",
+    "brand": "apple",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "source_page_title": "Identify your iPhone model - Apple Support",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/fall-2023-iphone-colors-iphone-15-plus.png",
+    "match_scope": "exact model family"
+  },
+  {
+    "slug": "iphone-15-pro-max",
+    "model": "iphone 15 pro max",
+    "brand": "apple",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "source_page_title": "Identify your iPhone model - Apple Support",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/fall-2023-iphone-colors-iphone-15-pro-max.png",
+    "match_scope": "exact model family"
+  },
+  {
+    "slug": "iphone-16-pro-max",
+    "model": "iphone 16 pro max",
+    "brand": "apple",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "source_page_title": "Identify your iPhone model - Apple Support",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/iphone-16-pro-max-colors.png",
+    "match_scope": "exact model family"
+  },
+  {
+    "slug": "iphone-17",
+    "model": "iphone 17",
+    "brand": "apple",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "source_page_title": "Identify your iPhone model - Apple Support",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/iphone-17-colors.png",
+    "match_scope": "exact model family"
+  },
+  {
+    "slug": "iphone-17-pro",
+    "model": "iphone 17 pro",
+    "brand": "apple",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "source_page_title": "Identify your iPhone model - Apple Support",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/iphone-17-pro-colors.png",
+    "match_scope": "exact model family"
+  },
+  {
+    "slug": "airpods-4",
+    "model": "AirPods 4",
+    "brand": "apple",
+    "source_page": "https://support.apple.com/en-us/121203",
+    "source_page_title": "AirPods 4 - Tech Specs - Apple Support",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/tech-specs/121203-airpods-4.png",
+    "match_scope": "model family; offered case/colour/connectivity may vary"
+  },
+  {
+    "slug": "airpods-4-anc",
+    "model": "AirPods 4 with ANC",
+    "brand": "apple",
+    "source_page": "https://support.apple.com/en-us/121203",
+    "source_page_title": "AirPods 4 - Tech Specs - Apple Support",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/tech-specs/121203-airpods-4.png",
+    "match_scope": "model family; offered case/colour/connectivity may vary"
+  },
+  {
+    "slug": "airpods-pro-3",
+    "model": "AirPods Pro 3",
+    "brand": "apple",
+    "source_page": "https://support.apple.com/en-us/125135",
+    "source_page_title": "AirPods Pro 3 - Tech Specs - Apple Support",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/tech-specs/airpods-pro-3-hero.png",
+    "match_scope": "model family; offered case/colour/connectivity may vary"
+  },
+  {
+    "slug": "apple-watch-se-2",
+    "model": "Apple Watch SE Gen 2",
+    "brand": "apple",
+    "source_page": "https://support.apple.com/en-us/111853",
+    "source_page_title": "Apple Watch SE (2nd generation) - Tech Specs - Apple Support",
+    "image_url": "https://cdsassets.apple.com/live/SZLF0YNV/images/sp/111853_apple-watch-se-2nd-gen.png",
+    "match_scope": "model family; offered case/colour/connectivity may vary"
+  },
+  {
+    "slug": "apple-watch-series-10-46mm",
+    "model": "Apple Watch Series 10",
+    "brand": "apple",
+    "source_page": "https://support.apple.com/en-us/121202",
+    "source_page_title": "Apple Watch Series 10 - Tech Specs - Apple Support",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/tech-specs/121202-apple-watch-series-10.png",
+    "match_scope": "model family; offered case/colour/connectivity may vary"
+  },
+  {
+    "slug": "apple-watch-series-11-46mm",
+    "model": "Apple Watch Series 11",
+    "brand": "apple",
+    "source_page": "https://support.apple.com/en-us/125093",
+    "source_page_title": "Apple Watch Series 11 - Tech Specs - Apple Support",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/tech-specs/apple-watch-series-11-hero.png",
+    "match_scope": "model family; offered case/colour/connectivity may vary"
+  },
+  {
+    "slug": "laptop-macbook-pro-16-m5-seller",
+    "model": "MacBook Pro 16 M5 seller-advertised",
+    "brand": "apple",
+    "source_page": "https://support.apple.com/en-us/126319",
+    "source_page_title": "MacBook Pro (16-inch, M5 Pro or M5 Max) - Tech Specs - Apple Support",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/tech-specs/macbook-pro-16-inch-m5-pro-m5-max.png",
+    "match_scope": "16-inch M5 model-family illustration; advertised chip/memory unverified"
+  },
+  {
+    "slug": "laptop-macbook-pro-16-m5-max-seller",
+    "model": "MacBook Pro 16 M5 Max seller-advertised",
+    "brand": "apple",
+    "source_page": "https://support.apple.com/en-us/126319",
+    "source_page_title": "MacBook Pro (16-inch, M5 Pro or M5 Max) - Tech Specs - Apple Support",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/tech-specs/macbook-pro-16-inch-m5-pro-m5-max.png",
+    "match_scope": "16-inch M5 model-family illustration; advertised chip/memory unverified"
+  },
+  {
+    "slug": "laptop-dell-precision-5550",
+    "model": "precision-5550",
+    "brand": "dell",
+    "source_page": "https://www.dell.com/en-us/shop/dell-laptops/precision-5550-workstation/spd/precision-15-5550-laptop",
+    "source_page_title": "Precision 5550 15 Inch AI-optimized Mobile Workstation Laptop | Dell USA",
+    "image_url": "https://i.dell.com/is/image/DellContent//content/dam/ss2/product-images/dell-client-products/workstations/mobile-workstations/precision/15-5550/media-gallery/workstation_precision_15_5550_gallery_3.psd?fmt=png-alpha&pscan=auto&scl=1&hei=402&wid=653&qlt=100,1&resMode=sharp2&size=653,402&chrss=full",
+    "match_scope": "exact model family"
+  },
+  {
+    "slug": "laptop-dell-latitude-5410",
+    "model": "latitude-5410",
+    "brand": "dell",
+    "source_page": "https://www.dell.com/en-us/shop/dell-laptops-and-notebooks/new-latitude-5410-laptop/spd/latitude-14-5410-laptop/max5l541014us",
+    "source_page_title": "Latitude 5410 Laptop | Dell USA",
+    "image_url": "https://i.dell.com/is/image/DellContent//content/dam/ss2/product-images/dell-client-products/notebooks/latitude-notebooks/latitude-5410/media-gallery/laptop_latitude_14_5410_gallery_3.psd?fmt=png-alpha&pscan=auto&scl=1&hei=402&wid=630&qlt=100,1&resMode=sharp2&size=630,402&chrss=full",
+    "match_scope": "exact model family"
+  },
+  {
+    "slug": "laptop-dell-latitude-5420",
+    "model": "latitude-5420-store",
+    "brand": "dell",
+    "source_page": "https://www.dell.com/en-us/shop/dell-computer-laptops/latitude-5420-laptop/spd/latitude-5420-laptop/s028l542014usr_mb",
+    "source_page_title": "Latitude 5420 Laptop | Dell USA",
+    "image_url": "https://i.dell.com/is/image/DellContent//content/dam/ss2/product-images/dell-client-products/notebooks/latitude-notebooks/14-5420/media-gallery/la5420nt_cnb_00000ff090_gy_5000x5000_gettyimages-1254825733.psd?fmt=png-alpha&pscan=auto&scl=1&hei=402&wid=700&qlt=100,1&resMode=sharp2&size=700,402&chrss=full",
+    "match_scope": "exact model family"
+  },
+  {
+    "slug": "laptop-dell-latitude-3120",
+    "model": "latitude-3120",
+    "brand": "dell",
+    "source_page": "https://www.laptoparena.net/dell/laptop-dell-latitude-3120-5fxhv-grey-106272",
+    "source_page_title": "DELL Latitude 3120 - 5FXHV laptop specifications",
+    "image_url": "https://www.laptoparena.net/images/DELL_Latitude_3120_3b831f.jpg",
+    "match_scope": "verified Latitude 3120 model-family reference image; seller convertible configuration unverified"
+  },
+  {
+    "slug": "laptop-hp-elitebook-840-g8",
+    "model": "HP EliteBook 840 G8",
+    "brand": "hp",
+    "source_page": "https://www.hp.com/my-en/solutions/small-business/product-card/hp-elitebook-840-g8-notebook-pc.html",
+    "source_page_title": "HP EliteBook 840 G8 Notebook PC​  | HP® Malaysia",
+    "image_url": "https://www.hp.com/content/dam/sites/worldwide/personal-computers/commercial/solutions/small-business/my/HP_EliteBook_840_G8%20_308x308.jpg",
+    "match_scope": "exact model family"
+  },
+  {
+    "slug": "laptop-hp-omnibook-x-flip-ultra-5",
+    "model": "HP OmniBook X Flip 14",
+    "brand": "hp",
+    "source_page": "https://jp.ext.hp.com/notebooks/personal/envy_x360_14_fc/",
+    "source_page_title": "HP OmniBook X Flip 14-fm 製品詳細 - ノートパソコン | 日本HP",
+    "image_url": "https://jp.ext.hp.com/content/dam/jp-ext-hp-com/jp/ja/ec/notebooks/personal/omnibook_x_flip_14_fm/images/main_product.png",
+    "match_scope": "14-inch model family; exact regional part number unconfirmed"
+  },
+  {
+    "slug": "laptop-hp-probook-x360-11-ee-g7",
+    "model": "HP ProBook x360 11 G7 EE",
+    "brand": "hp",
+    "source_page": "https://www.officedepot.com/a/products/9496184/HP-ProBook-x360-11-G7-EE/",
+    "source_page_title": "HP ProBook x360 11 G7 EE 11.6 Touchscreen Convertible 2 in 1 Notebook HD 1366 x 768 Intel Celeron N5100 Quad core 4 Core   4 GB Total RAM 128 GB SSD Intel Chip Windows 10 Pro Intel UHD Graphics 11.50 Hours Battery Run Time - Office Depot",
+    "image_url": "https://media.officedepot.com/images/f_auto,q_auto,e_sharpen,h_450/products/9496184/9496184_o51_et_7719663/9496184",
+    "match_scope": "exact model family; seller CPU claim remains unverified; retailer stock image"
+  },
+  {
+    "slug": "laptop-lenovo-thinkpad-x250",
+    "model": "ThinkPad X250",
+    "brand": "lenovo",
+    "source_page": "https://www.lenovo.com/in/en/p/laptops/thinkpad/thinkpadx/x250/22tp2tc2500",
+    "source_page_title": "Thinkpad X250 Laptop | Ultrabook for Business | Lenovo India",
+    "image_url": "https://p2-ofp.static.pub/fes/cms/2022/12/14/08ros1j00go2rlaohgd8tl99ckovyu399686.png?width=584&height=584",
+    "match_scope": "exact model family"
+  },
+  {
+    "slug": "laptop-lenovo-thinkpad-x1-yoga-gen-3",
+    "model": "ThinkPad X1 Yoga Gen 3",
+    "brand": "lenovo",
+    "source_page": "https://www.lenovo.com/us/en/p/20LD0017US",
+    "source_page_title": "ThinkPad X1 Yoga (3rd Gen)  | 2-in-1 Business Convertible   | Lenovo US",
+    "image_url": "https://p1-ofp.static.pub/medias/bWFzdGVyfHJvb3R8MTcxOTgyfGltYWdlL3BuZ3xoMGEvaGQyLzEwNTcwNTM1MzcwNzgyLnBuZ3xhZTQ2Zjk4NTdkYWM1NDIxNjFkYzBjOGE3MzVmMGZkMDkzZTY2ZWZhNTJmM2FlYmY2NzE2MzAzYzIzYjNmOTVm/lenovo-thinkpad-x1-yoga-3rd-gen-hero.png?width=584&height=584",
+    "match_scope": "exact model family"
+  },
+  {
+    "slug": "laptop-microsoft-surface-go-2",
+    "model": "microsoft-surface-go-2",
+    "brand": "microsoft",
+    "source_page": "https://www.microsoft.com/en-us/d/product/919KXQWQ375S",
+    "source_page_title": "Introducing the Surface Go 2 – Perfectly Portable – Microsoft Surface",
+    "image_url": "https://cdn-dynmedia-1.microsoft.com/is/image/microsoftcorp/Surface-Go-2_Panel1_ImmersiveHero:VP2-859x540",
+    "match_scope": "exact model family"
+  },
+  {
+    "slug": "laptop-microsoft-surface-laptop-2",
+    "model": "microsoft-surface-laptop-2",
+    "brand": "microsoft",
+    "source_page": "https://www.microsoft.com/en-us/d/surface-laptop-2/8xqjkk3dd91b",
+    "source_page_title": "Explore Surface Laptop 2 – A Touch Above Ordinary – Microsoft Surface",
+    "image_url": "https://img-prod-cms-rt-microsoft-com.akamaized.net/cms/api/am/imageFileData/RE2x0K8?ver=f836&q=90&m=6&h=270&w=270&b=%23FFFFFFFF&f=jpg&o=f&aim=true",
+    "match_scope": "exact model family"
+  }
+]
