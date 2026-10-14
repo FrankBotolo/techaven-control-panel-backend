@@ -2,6 +2,7 @@ import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
 
 const Shop = sequelize.define('Shop', {
+  profile: { type: DataTypes.JSON, allowNull: true },
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,

@@ -1,0 +1,20 @@
+[
+  {
+    "source_page_title": "Identify your iPhone model - Apple Support",
+    "model": "iPhone 12",
+    "brand": "apple",
+    "match_scope": "exact model family",
+    "slug": "iphone-12",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/2021-iphone12-colors.png"
+  },
+  {
+    "source_page_title": "Identify your iPhone model - Apple Support",
+    "model": "iPhone 7 Plus",
+    "brand": "apple",
+    "match_scope": "exact model family",
+    "slug": "iphone-7-plus",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/iphone-7-plus/iphone7plus-colors.jpg"
+  }
+]

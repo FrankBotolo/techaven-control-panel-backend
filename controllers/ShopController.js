@@ -44,6 +44,8 @@ export const index = async (req, res) => {
       id: s.id,
       name: s.name,
       description: s.description || null,
+      profile: s.profile || null,
+      address: s.address || null,
       logo: s.logo || null,
       banner: s.banner || null,
       rating: parseFloat(s.rating) || 0,
@@ -104,6 +106,8 @@ export const show = async (req, res) => {
     }
 
     const shopData = {
+      profile: s.profile || null,
+      address: s.address || null,
       id: s.id,
       name: s.name,
       description: s.description || null,

@@ -52,6 +52,7 @@ export function toDeviceDto(value, { includeOffers = false } = {}) {
         condition: listing.condition,
         currency: listing.currency,
         price: Number(listing.price),
+        details: listing.details || {},
         quantity: listing.quantity,
         warranty_months: listing.warranty_months,
         images: (listing.images || []).map((image) => ({ id: image.id, url: image.url, alt_text: image.alt_text, is_primary: image.is_primary }))

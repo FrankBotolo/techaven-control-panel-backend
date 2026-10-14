@@ -1,4 +1,5 @@
 import db from '../models/index.js';
+import { assertFinalPrice } from '../services/marketplace/final-price.js';
 import { CatalogueError, sendCatalogueError } from '../services/catalogue/errors.js';
 import { getSellerCommissionPercent, computeSellerEscrowSplit } from '../utils/sellerCommission.js';
 import { enqueueDevice } from '../services/catalogue/promotionSync.js';
@@ -20,6 +21,7 @@ export async function checkout(req, res) {
       if (!request.seller_listing_id || !Number.isInteger(request.quantity) || request.quantity < 1) throw new CatalogueError('INVALID_QUANTITY', 'Every item requires a valid listing and quantity');
       const listing = await SellerListing.findByPk(request.seller_listing_id, { include: [{ model: Shop, as: 'shop' }, { model: DeviceVariant, as: 'variant', include: [{ model: Device, as: 'device', include: [{ model: Brand, as: 'brand' }] }] }], transaction, lock: transaction.LOCK.UPDATE });
       if (!listing || listing.status !== 'active' || !listing.variant?.is_active || !listing.variant?.device?.is_active || !listing.variant?.device?.brand?.is_active || listing.shop?.status !== 'active' || listing.shop?.application_status !== 'approved') throw new CatalogueError('LISTING_NOT_FOUND', `Eligible active listing not found: ${request.seller_listing_id}`, 404);
+      assertFinalPrice(listing);
       if (listing.quantity < request.quantity) throw new CatalogueError('INSUFFICIENT_STOCK', `Insufficient stock for listing ${listing.id}`, 409);
       const rows = groups.get(listing.shop_id) || [];
       rows.push({ listing, quantity: request.quantity });

@@ -74,7 +74,7 @@ try {
           if (created) report.created.images++;
         }
         if (offer.loan_available) {
-          const [loans] = await db.Category.findOrCreate({ where: { name: 'Loans', shop_id: null }, defaults: { status: 'approved', description: 'Phones available on loan or installment terms from participating shops.' }, transaction });
+          const [loans] = await db.Category.findOrCreate({ where: { name: 'Pay as you go (PAYGO)', shop_id: null }, defaults: { status: 'approved', description: 'Phones available on loan or installment terms from participating shops.' }, transaction });
           await db.sequelize.query('INSERT IGNORE INTO seller_listing_categories (listing_id, category_id) VALUES (?, ?)', { replacements: [listing.id, loans.id], transaction });
         }
         row.listing_id = listing.id;
@@ -97,5 +97,6 @@ try {
   console.log(JSON.stringify({ applied: apply, offers: report.offers.length, shop: report.shop, created: report.created, protected_records_unchanged: true }, null, 2));
 } catch (error) { report.errors.push(error.message); console.error(error.message); process.exitCode = 1; }
 finally { await writeFile(`/tmp/saeed-enterprise-${apply ? 'result' : 'preview'}.json`, JSON.stringify(report, null, 2)); await db.sequelize.close(); }
+
 
 

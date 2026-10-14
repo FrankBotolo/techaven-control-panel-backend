@@ -1,4 +1,5 @@
 import db from '../models/index.js';
+import { assertFinalPrice } from '../services/marketplace/final-price.js';
 import { CatalogueError, sendCatalogueError } from '../services/catalogue/errors.js';
 
 const { Cart, SellerListing, ListingImage, DeviceVariant, Device, Brand, Shop } = db;
@@ -29,6 +30,7 @@ export async function add(req, res) {
     if (!Number.isInteger(quantity) || quantity < 1) throw new CatalogueError('INVALID_QUANTITY', 'quantity must be at least one');
     const listing = await SellerListing.findByPk(req.body.seller_listing_id, { include: listingInclude.include });
     if (!eligible(listing)) throw new CatalogueError('LISTING_NOT_FOUND', 'Eligible active listing not found', 404);
+    assertFinalPrice(listing);
     if (listing.quantity < quantity) throw new CatalogueError('INSUFFICIENT_STOCK', 'Insufficient listing stock', 409);
     const [item, created] = await Cart.findOrCreate({ where: { user_id: req.user.id, seller_listing_id: listing.id }, defaults: { product_id: null, quantity } });
     if (!created) throw new CatalogueError('DUPLICATE_CART_ITEM', 'Listing is already in the cart', 409);

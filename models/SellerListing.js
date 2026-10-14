@@ -8,6 +8,7 @@ export function listingIdentity(listing) {
 }
 
 const SellerListing = sequelize.define('SellerListing', {
+  details: { type: DataTypes.JSON, allowNull: true },
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   shop_id: { type: DataTypes.INTEGER, allowNull: false },
   device_variant_id: { type: DataTypes.INTEGER, allowNull: false },

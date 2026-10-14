@@ -12,7 +12,7 @@ export const index = async (req, res) => {
 
     const withCount = await Promise.all(categories.map(async (c) => {
       let product_count = await Product.count({ where: { category_id: c.id } });
-      if (c.name === 'Loans') {
+      if (['Loans', 'Pay as you go (PAYGO)'].includes(c.name)) {
         const [rows] = await db.sequelize.query(`SELECT COUNT(DISTINCT v.device_id) AS count
           FROM seller_listing_categories lc JOIN seller_listings l ON l.id = lc.listing_id
           JOIN device_variants v ON v.id = l.device_variant_id JOIN devices d ON d.id = v.device_id
@@ -29,7 +29,7 @@ export const index = async (req, res) => {
         JOIN seller_listings l ON l.device_variant_id = v.id JOIN shops s ON s.id = l.shop_id
         WHERE d.is_active = 1 AND b.is_active = 1 AND v.is_active = 1
         AND l.status = 'active' AND l.quantity > 0 AND s.status = 'active' AND s.application_status = 'approved'
-        AND ${c.name === 'Loans' ? 'EXISTS (SELECT 1 FROM seller_listing_categories lc WHERE lc.listing_id = l.id AND lc.category_id = ?)' : 'd.category_id = ?'}
+        AND ${['Loans', 'Pay as you go (PAYGO)'].includes(c.name) ? 'EXISTS (SELECT 1 FROM seller_listing_categories lc WHERE lc.listing_id = l.id AND lc.category_id = ?)' : 'd.category_id = ?'}
         GROUP BY b.id, b.slug, b.name ORDER BY product_count DESC, b.name ASC`, { replacements: [c.id] });
       return {
         id: c.id,
@@ -114,4 +114,5 @@ export const getProductsByCategory = async (req, res) => {
     });
   }
 };
+
 
