@@ -1,5 +1,7 @@
 # Current State
 
+PAYGO/shop expansion checkpoint — 2026-10-14: 11 shops / 256 offers, four new shops and 68 priced offers plus Tech Central price enquiry. PAYGO ID 5 renamed; /paygo includes Saeed/Innovative and Yellow guide. Edited shop heroes expose contacts/delivery/warranty/VAT facts. Exact offer verification, duplicate-free rerun, three backend tests, 12 frontend tests, build and rendered HTTP checks passed. See docs/SHOP_EXPANSION_PAYGO.md. Browser visual check and public media URL deployment remain outstanding.
+
 Brand navigation checkpoint — 2026-10-14: categories API exposes available brand counts/images. Image-led brand menu and category hero link to URL-driven API filters; all pages fetched. Eight live smartphone brand counts/isolation checked, final eight frontend tests and production build passed. IAB visual check unavailable. See docs/BRAND_NAVIGATION.md.
 
 Latest checkpoint: Apple & All 17 offers; Saeed Enterprise eight offers; seven shops / 188 offers. Loans shares eligible seller offers with Smartphones, verified live with itel Power 80; cash-only sellers excluded. Eight backend tests passed. Stock-first galleries and earlier frontend build/tests verified. See docs/SHOP_SEEDS_AND_LOANS.md. Remaining: public upload base, missing Saeed photos, unavailable IAB visual check, pre-existing migration ledger discrepancy.
