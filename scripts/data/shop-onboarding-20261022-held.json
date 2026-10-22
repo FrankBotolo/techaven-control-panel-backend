@@ -1,0 +1,151 @@
+{
+  "held": [
+    {
+      "shop": "xisal-electronics",
+      "product": "Redmi 17 8/128",
+      "price": 785000,
+      "reason": "Manufacturer lists 4/128 or 6/128; advertised 8 GB physical/extended split unresolved",
+      "status": "held"
+    },
+    {
+      "shop": "xisal-electronics",
+      "product": "Redmi Note 17 8/128",
+      "price": 995000,
+      "reason": "Manufacturer lists 8 GB with 256 GB; advertised 8/128 unresolved",
+      "status": "held"
+    },
+    {
+      "shop": "xisal-electronics",
+      "product": "Redmi Note 17 5G 12/256",
+      "price": 1295000,
+      "reason": "Manufacturer lists 6/256 or 8/256; advertised 12 GB physical/extended split unresolved",
+      "status": "held"
+    },
+    {
+      "shop": "redmi-nyasa",
+      "product": "Infinix GT 30 4/128",
+      "price": 635000,
+      "reason": "Advertised RAM/configuration and display claims conflict",
+      "status": "held"
+    },
+    {
+      "shop": "redmi-nyasa",
+      "product": "Redmi 13R 4/64",
+      "price": 420000,
+      "reason": "Poster processor/battery/camera conflict with named model",
+      "status": "held"
+    },
+    {
+      "shop": "redmi-nyasa",
+      "product": "Redmi Note 8 4/64",
+      "price": 256000,
+      "reason": "Poster processor conflicts with original and 2021 model identities",
+      "status": "held"
+    },
+    {
+      "shop": "pinnacle-electronics-solutions",
+      "product": "AirPods Pro 2",
+      "price": 59500,
+      "reason": "Manufacturer/authentic model not established",
+      "status": "held"
+    },
+    {
+      "shop": "pinnacle-electronics-solutions",
+      "product": "Redmi Note 11E 4/128 4G",
+      "price": 455000,
+      "reason": "Network conflicts with named model",
+      "status": "held"
+    },
+    {
+      "shop": "pinnacle-electronics-solutions",
+      "product": "Infinix Smart 10 8/256",
+      "price": 595000,
+      "reason": "Physical/extended RAM split unspecified",
+      "status": "held"
+    },
+    {
+      "shop": "pinnacle-electronics-solutions",
+      "product": "Dell Latitude 7280 i5 6th generation",
+      "price": 890000,
+      "reason": "Model/CPU generation conflict",
+      "status": "held"
+    },
+    {
+      "shop": "pinnacle-electronics-solutions",
+      "product": "HP Omni xFlip 15th Gen Ultra 256V 16/1TB",
+      "price": 4200000,
+      "reason": "Mixed model/CPU identity",
+      "status": "held"
+    },
+    {
+      "shop": "pinnacle-electronics-solutions",
+      "product": "Jewellery/watch bundle",
+      "price": 55000,
+      "reason": "Mixed bundle has no identifiable individual products",
+      "status": "held"
+    },
+    {
+      "shop": "omega-technologies-hub",
+      "product": "Redmi Note 14 Pro+ 5G 16/256",
+      "price": 1480000,
+      "reason": "Physical/extended RAM split unresolved",
+      "status": "held"
+    },
+    {
+      "shop": "omega-technologies-hub",
+      "product": "Vivo Y51A 4/32",
+      "price": 108000,
+      "reason": "Model year/configuration identity unresolved",
+      "status": "held"
+    },
+    {
+      "shop": "omega-technologies-hub",
+      "product": "Vivo Y11 6/128",
+      "price": 248000,
+      "reason": "Model year/physical RAM identity unresolved",
+      "status": "held"
+    },
+    {
+      "shop": "chi-investment",
+      "product": "AirTab S11 Ultra 24GB/1TB",
+      "price": 565000,
+      "reason": "Manufacturer/model and RAM identity unresolved",
+      "status": "held"
+    },
+    {
+      "shop": "chi-investment",
+      "product": "MacBook Air M1 Core i5 8/256",
+      "price": 1950000,
+      "reason": "Mutually exclusive processors",
+      "status": "held"
+    },
+    {
+      "shop": "audiovisio",
+      "product": "Samsung Galaxy A16 5G",
+      "price": null,
+      "reason": "No price supplied",
+      "status": "held"
+    },
+    {
+      "shop": "audiovisio",
+      "product": "Samsung Galaxy A53 5G",
+      "price": null,
+      "reason": "No price supplied",
+      "status": "held"
+    },
+    {
+      "shop": "sunstone-electronics",
+      "product": "Redmi 13R 4+2/128",
+      "price": 410000,
+      "reason": "Combined advertisement requires distinct model confirmation",
+      "status": "held"
+    }
+  ],
+  "excluded": [
+    {
+      "shop": "pinnacle-electronics-solutions",
+      "product": "Mercedes-Benz car",
+      "reason": "Outside catalogue scope"
+    }
+  ]
+}
