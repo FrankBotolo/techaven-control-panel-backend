@@ -101,3 +101,8 @@ Use this as a task-routing index, not a substitute for reading the relevant impl
 | Public auth contract | `docs/AUTH_API_V2.md`, linked by `API_DOCUMENTATION.md` | Approved v2 auth bodies, cookies, errors, configuration and Google setup. |
 
 Node unit/integration tests are now configured. Auth integration tests require an explicitly named test database and run sequentially to avoid schema setup races. External Google/email calls are stubbed in integration tests; real provider verification remains a separate setup check.
+
+## Supplied shop onboarding (2026-10-22)
+
+- `scripts/data/shop-onboarding-20261022.js`, `services/marketplace/onboarding.js`: reviewed identity, conditions, SIM/extended RAM and highest-price deduplication.
+- `scripts/seed-shop-onboarding.js`, `scripts/clean-seeded-storefronts.js`, `scripts/audit-shop-onboarding.js`: local transactional import, factual cleanup and protected-record/API audits. Source/held/photo evidence lives beside the manifest; public DTOs strip source commentary.

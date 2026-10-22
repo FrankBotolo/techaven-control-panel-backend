@@ -1,5 +1,6 @@
 import db from '../models/index.js';
 import { assertFinalPrice } from '../services/marketplace/final-price.js';
+import { publicListingDetails } from '../services/catalogue/dto.js';
 import { CatalogueError, sendCatalogueError } from '../services/catalogue/errors.js';
 
 const { Cart, SellerListing, ListingImage, DeviceVariant, Device, Brand, Shop } = db;
@@ -13,8 +14,17 @@ const dto = (item) => ({
   unit_price: Number(item.seller_listing.price),
   subtotal: Number(item.seller_listing.price) * item.quantity,
   is_available: eligible(item.seller_listing) && item.seller_listing.quantity >= item.quantity,
-  listing: item.seller_listing
+  listing: publicCartListing(item.seller_listing)
 });
+
+export function publicCartListing(value) {
+  const row=value?.get?value.get({plain:true}):value;
+  const variant=row.variant,device=variant.device;
+  return {id:row.id,price:row.price,quantity:row.quantity,condition:row.condition,currency:row.currency,
+    details:publicListingDetails(row.details),shop:{id:row.shop.id,name:row.shop.name},
+    images:[],variant:{id:variant.id,ram_gb:variant.ram_gb,storage_gb:variant.storage_gb,sim_type:variant.sim_type,
+      device:{id:device.id,name:device.name,slug:device.slug,primary_image_url:device.primary_image_url}}};
+}
 
 export async function getCart(req, res) {
   try {

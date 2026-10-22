@@ -1,7 +1,7 @@
 import { Op } from 'sequelize';
 import db from '../models/index.js';
 import { CatalogueError, sendCatalogueError } from '../services/catalogue/errors.js';
-import { toDeviceDto } from '../services/catalogue/dto.js';
+import { toDeviceDto, publicListingDetails, publicSpecifications } from '../services/catalogue/dto.js';
 import { marketplaceCategoryFilter } from '../services/marketplace/category-filter.js';
 
 const { Brand, Category, Device, DeviceVariant, DeviceVariantColor, Color, DeviceMedia, SellerListing, ListingImage, Shop } = db;
@@ -77,6 +77,6 @@ export async function getListing(req, res) {
   try {
     const listing = await SellerListing.findOne({ where: { id: req.params.id, status: 'active', quantity: { [Op.gt]: 0 } }, include: [{ model: Shop, as: 'shop', required: true, where: { status: 'active', application_status: 'approved' }, attributes: ['id', 'name'] }, { model: ListingImage, as: 'images' }, { model: DeviceVariantColor, as: 'variant_color', include: [{ model: Color, as: 'color' }] }, { model: DeviceVariant, as: 'variant', required: true, where: { is_active: true }, include: [{ model: Device, as: 'device', required: true, where: { is_active: true }, include: [{ model: Brand, as: 'brand', required: true, where: { is_active: true } }, { model: DeviceMedia, as: 'media' }] }] }] });
     if (!listing) throw new CatalogueError('LISTING_NOT_FOUND', 'Listing not found', 404);
-    return res.json({ success: true, message: 'Listing retrieved', data: listing });
+    return res.json({ success: true, message: 'Listing retrieved', data: { ...publicSpecifications(listing.toJSON()), details: publicListingDetails(listing.details) } });
   } catch (error) { return sendCatalogueError(res, error); }
 }

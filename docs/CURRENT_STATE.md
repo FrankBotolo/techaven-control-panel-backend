@@ -1,5 +1,9 @@
 # Current State
 
+Shop onboarding checkpoint — 2026-10-22: eight new shops / 167 offers (19 shops / 423 offers total), 20 held items, separate evidence and unavailable-photo reports. Factual heroes/contact details replace promotional copy across all 19 seeded shops. Raw source fields are filtered from catalogue, individual listing and basket responses. Full rerun created zero records and protected unrelated offers. Eight backend tests, 13 frontend tests, production build and nine HTTP checks pass. Browser visual inspection unavailable; 92 new offers / 74 model families intentionally show unavailable photos. See docs/SHOP_ONBOARDING_20261022.md and docs/SHOP_ONBOARDING_HELD_20261022.md. No push/deployment.
+
+
+
 PAYGO/shop expansion checkpoint — 2026-10-14: 11 shops / 256 offers, four new shops and 68 priced offers plus Tech Central price enquiry. PAYGO ID 5 renamed; /paygo includes Saeed/Innovative and Yellow guide. Edited shop heroes expose contacts/delivery/warranty/VAT facts. Exact offer verification, duplicate-free rerun, three backend tests, 12 frontend tests, build and rendered HTTP checks passed. See docs/SHOP_EXPANSION_PAYGO.md. Browser visual check and public media URL deployment remain outstanding.
 
 Brand navigation checkpoint — 2026-10-14: categories API exposes available brand counts/images. Image-led brand menu and category hero link to URL-driven API filters; all pages fetched. Eight live smartphone brand counts/isolation checked, final eight frontend tests and production build passed. IAB visual check unavailable. See docs/BRAND_NAVIGATION.md.

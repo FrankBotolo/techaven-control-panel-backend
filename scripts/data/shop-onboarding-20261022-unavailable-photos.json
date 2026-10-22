@@ -1,0 +1,450 @@
+{
+  "checked_on": "2026-10-22",
+  "policy": "No verified exact-model image: use unavailable-photo state; never a different model or a price-list cover.",
+  "families": [
+    "redmi-9a",
+    "galaxy-s22-plus",
+    "unbranded-power-bank-20000mah-two-usb",
+    "unbranded-power-bank-10000mah-four-cables",
+    "unbranded-power-bank-10000mah-two-usb",
+    "pixel-4-xl",
+    "oppo-a56-5g",
+    "redmi-7a",
+    "dell-latitude-e7450",
+    "dell-latitude-e7270",
+    "dell-latitude-3310",
+    "dell-latitude-3189",
+    "lenovo-thinkpad-x390",
+    "lenovo-thinkpad-t440",
+    "lenovo-thinkpad-t450",
+    "lenovo-thinkpad-t460",
+    "lenovo-thinkpad-t470",
+    "hp-probook-440-g5",
+    "hp-pavilion-x360-13th-gen",
+    "hp-envy-x360-ultra-7",
+    "hp-envy-x360-core-5",
+    "dell-vostro-15",
+    "redmi-6a",
+    "redmi-6",
+    "redmi-8a",
+    "redmi-8",
+    "redmi-9",
+    "poco-m3",
+    "vivo-y53",
+    "vivo-y55",
+    "vivo-y66",
+    "vivo-y67",
+    "vivo-y17",
+    "vivo-y19",
+    "oppo-a3s",
+    "oppo-f9",
+    "honor-8",
+    "honor-9",
+    "honor-9i",
+    "huawei-mate-10-lite",
+    "honor-7x",
+    "honor-20i",
+    "huawei-mate-20-lite",
+    "huawei-nova-3i",
+    "huawei-p20-lite",
+    "huawei-p30-lite",
+    "huawei-p-smart-plus-2019",
+    "huawei-p-smart-2021",
+    "huawei-y7-pro",
+    "huawei-y9-prime",
+    "galaxy-a07",
+    "galaxy-a17",
+    "galaxy-a26",
+    "galaxy-a36",
+    "galaxy-a56",
+    "galaxy-a03",
+    "galaxy-a11",
+    "galaxy-a04e",
+    "galaxy-s20-fe-5g",
+    "iphone-13",
+    "pixel-11-pro-xl",
+    "dell-latitude-5320",
+    "surface-laptop-4",
+    "surface-laptop-3",
+    "hp-elitebook-840-g7",
+    "hp-elitebook-840-g6",
+    "dell-latitude-5490",
+    "dell-latitude-5480",
+    "lenovo-thinkpad-x1-carbon-gen-7",
+    "lenovo-thinkpad-l13-yoga",
+    "dell-inspiron-15-5000-series-2-in-1",
+    "galaxy-s23-fe",
+    "galaxy-tab-a9",
+    "redmi-12r"
+  ],
+  "offers": [
+    {
+      "shop": "Redmi Nyasa",
+      "slug": "redmi-9a"
+    },
+    {
+      "shop": "Pinnacle Electronics Solutions",
+      "slug": "galaxy-s22-plus"
+    },
+    {
+      "shop": "Pinnacle Electronics Solutions",
+      "slug": "unbranded-power-bank-20000mah-two-usb"
+    },
+    {
+      "shop": "Pinnacle Electronics Solutions",
+      "slug": "unbranded-power-bank-10000mah-four-cables"
+    },
+    {
+      "shop": "Pinnacle Electronics Solutions",
+      "slug": "unbranded-power-bank-10000mah-two-usb"
+    },
+    {
+      "shop": "Pinnacle Electronics Solutions",
+      "slug": "pixel-4-xl"
+    },
+    {
+      "shop": "Pinnacle Electronics Solutions",
+      "slug": "oppo-a56-5g"
+    },
+    {
+      "shop": "Pinnacle Electronics Solutions",
+      "slug": "redmi-7a"
+    },
+    {
+      "shop": "Pinnacle Electronics Solutions",
+      "slug": "dell-latitude-e7450"
+    },
+    {
+      "shop": "Pinnacle Electronics Solutions",
+      "slug": "dell-latitude-e7270"
+    },
+    {
+      "shop": "Pinnacle Electronics Solutions",
+      "slug": "dell-latitude-3310"
+    },
+    {
+      "shop": "Pinnacle Electronics Solutions",
+      "slug": "dell-latitude-3189"
+    },
+    {
+      "shop": "Pinnacle Electronics Solutions",
+      "slug": "lenovo-thinkpad-x390"
+    },
+    {
+      "shop": "Pinnacle Electronics Solutions",
+      "slug": "lenovo-thinkpad-t440"
+    },
+    {
+      "shop": "Pinnacle Electronics Solutions",
+      "slug": "lenovo-thinkpad-t450"
+    },
+    {
+      "shop": "Pinnacle Electronics Solutions",
+      "slug": "lenovo-thinkpad-t460"
+    },
+    {
+      "shop": "Pinnacle Electronics Solutions",
+      "slug": "lenovo-thinkpad-t470"
+    },
+    {
+      "shop": "Pinnacle Electronics Solutions",
+      "slug": "hp-probook-440-g5"
+    },
+    {
+      "shop": "Pinnacle Electronics Solutions",
+      "slug": "hp-pavilion-x360-13th-gen"
+    },
+    {
+      "shop": "Pinnacle Electronics Solutions",
+      "slug": "hp-envy-x360-ultra-7"
+    },
+    {
+      "shop": "Pinnacle Electronics Solutions",
+      "slug": "hp-envy-x360-core-5"
+    },
+    {
+      "shop": "Pinnacle Electronics Solutions",
+      "slug": "dell-vostro-15"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "redmi-6a"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "redmi-6"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "redmi-8a"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "redmi-8a"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "redmi-8"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "redmi-8"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "redmi-9"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "redmi-9"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "redmi-9"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "poco-m3"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "poco-m3"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "vivo-y53"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "vivo-y55"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "vivo-y66"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "vivo-y67"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "vivo-y17"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "vivo-y19"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "oppo-a3s"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "oppo-f9"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "oppo-a56-5g"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "honor-8"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "honor-9"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "honor-9i"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "huawei-mate-10-lite"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "honor-7x"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "honor-7x"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "honor-20i"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "honor-20i"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "honor-20i"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "huawei-mate-20-lite"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "huawei-nova-3i"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "huawei-nova-3i"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "huawei-p20-lite"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "huawei-p30-lite"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "huawei-p30-lite"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "huawei-p-smart-plus-2019"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "huawei-p-smart-2021"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "huawei-y7-pro"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "huawei-y9-prime"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "galaxy-a07"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "galaxy-a07"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "galaxy-a17"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "galaxy-a17"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "galaxy-a26"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "galaxy-a36"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "galaxy-a56"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "galaxy-a03"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "galaxy-a11"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "galaxy-a04e"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "galaxy-s20-fe-5g"
+    },
+    {
+      "shop": "Omega Technologies Hub",
+      "slug": "galaxy-s20-fe-5g"
+    },
+    {
+      "shop": "CHI Investment",
+      "slug": "iphone-13"
+    },
+    {
+      "shop": "CHI Investment",
+      "slug": "pixel-11-pro-xl"
+    },
+    {
+      "shop": "CHI Investment",
+      "slug": "dell-latitude-5320"
+    },
+    {
+      "shop": "CHI Investment",
+      "slug": "surface-laptop-4"
+    },
+    {
+      "shop": "CHI Investment",
+      "slug": "surface-laptop-3"
+    },
+    {
+      "shop": "CHI Investment",
+      "slug": "hp-elitebook-840-g7"
+    },
+    {
+      "shop": "CHI Investment",
+      "slug": "hp-elitebook-840-g7"
+    },
+    {
+      "shop": "CHI Investment",
+      "slug": "hp-elitebook-840-g6"
+    },
+    {
+      "shop": "CHI Investment",
+      "slug": "dell-latitude-5490"
+    },
+    {
+      "shop": "CHI Investment",
+      "slug": "dell-latitude-5480"
+    },
+    {
+      "shop": "CHI Investment",
+      "slug": "dell-latitude-5480"
+    },
+    {
+      "shop": "CHI Investment",
+      "slug": "lenovo-thinkpad-x1-carbon-gen-7"
+    },
+    {
+      "shop": "CHI Investment",
+      "slug": "lenovo-thinkpad-l13-yoga"
+    },
+    {
+      "shop": "CHI Investment",
+      "slug": "dell-inspiron-15-5000-series-2-in-1"
+    },
+    {
+      "shop": "Wuden Electronics",
+      "slug": "galaxy-s23-fe"
+    },
+    {
+      "shop": "Wuden Electronics",
+      "slug": "galaxy-tab-a9"
+    },
+    {
+      "shop": "Wuden Electronics",
+      "slug": "redmi-8a"
+    },
+    {
+      "shop": "Sunstone Electronics",
+      "slug": "redmi-9"
+    },
+    {
+      "shop": "Sunstone Electronics",
+      "slug": "redmi-12r"
+    }
+  ]
+}

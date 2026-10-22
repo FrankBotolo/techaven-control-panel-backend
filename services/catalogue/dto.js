@@ -3,6 +3,21 @@ import { variantAxes } from './normalization.js';
 
 const plain = (value) => value?.get ? value.get({ plain: true }) : value;
 
+// Raw source notes/evidence are retained in storage, not sent as public copy.
+export function publicListingDetails(details = {}) {
+  return Object.fromEntries(['tax_exclusive','extended_ram_gb','advertised_ram_gb',
+    'condition_details','warranty_available','swap_plus_cash'].filter(key=>details?.[key]!=null)
+    .map(key=>[key,details[key]]));
+}
+
+export function publicSpecifications(value) {
+  if(Array.isArray(value))return value.map(publicSpecifications);
+  if(!value||typeof value!=='object')return value;
+  return Object.fromEntries(Object.entries(value)
+    .filter(([key])=>!/^(source($|_)|raw_|metadata$|description$|notes?$|correction$|unresolved$)/.test(key))
+    .map(([key,item])=>[key,publicSpecifications(item)]));
+}
+
 export function toVariantDto(value) {
   const variant = plain(value);
   return {
@@ -13,7 +28,7 @@ export function toVariantDto(value) {
     network_generation: variant.network_generation,
     region: variant.region,
     sim_type: variant.sim_type,
-    attributes: variant.attributes || {},
+    attributes: publicSpecifications(variant.attributes || {}),
     colors: (variant.colors || []).map((item) => ({
       id: item.id, manufacturer_name: item.manufacturer_name, slug: item.slug,
       hex: item.hex_override || item.color?.default_hex || null,
@@ -35,7 +50,7 @@ export function toDeviceDto(value, { includeOffers = false } = {}) {
     soc: device.soc,
     battery_mah: device.battery_mah,
     os_family: device.os_family,
-    specs: device.specs || {},
+    specs: publicSpecifications(device.specs || {}),
     primary_image_url: device.primary_image_url,
     media: rankMedia(device.media || []).map((item) => ({ id: item.id, url: item.url, media_type: item.media_type, is_primary: item.is_primary })),
     variant_axes: variantAxes(variants),
@@ -52,7 +67,7 @@ export function toDeviceDto(value, { includeOffers = false } = {}) {
         condition: listing.condition,
         currency: listing.currency,
         price: Number(listing.price),
-        details: listing.details || {},
+        details: publicListingDetails(listing.details),
         quantity: listing.quantity,
         warranty_months: listing.warranty_months,
         images: (listing.images || []).map((image) => ({ id: image.id, url: image.url, alt_text: image.alt_text, is_primary: image.is_primary }))
