@@ -56,6 +56,7 @@ Use this as a task-routing index, not a substitute for reading the relevant impl
 | Database evolution | `database/migrations/`, `scripts/migrate.js` | Ordered SQL migrations and runner; review both schema and model impacts. |
 | Catalogue migrations | `database/migrations-js/`, `scripts/run-migrations.js` | Ordered reversible v2 migrations tracked in `schema_migrations`. |
 | Database setup/seed | `scripts/create-db.js`, `scripts/migrate-fresh.js`, `scripts/seed.js` | Destructive or environment-dependent operations; inspect before running. |
+| Manufacturer media backfill | `scripts/backfill-device-media.js`, `scripts/data/seeded-device-media.json` | Exact device identity and manufacturer URL checks; preserves existing photos and records provenance. Dry run unless `--apply`; no schema or commerce changes. |
 | Background work | `utils/subscriptionExpiryScheduler.js`, `scripts/auto-confirm-delivery.js` | Subscription expiry starts with the server; delivery confirmation is a separate script. |
 | Environment loading | `utils/loadEnv.js` | Imported before application configuration in `server.js`. Never document loaded secret values. |
 | Container deployment | `Dockerfile`, `docker-compose.yml` | Two-service backend/MySQL stack with named data, upload, and log volumes. |
@@ -101,6 +102,9 @@ Use this as a task-routing index, not a substitute for reading the relevant impl
 | Public auth contract | `docs/AUTH_API_V2.md`, linked by `API_DOCUMENTATION.md` | Approved v2 auth bodies, cookies, errors, configuration and Google setup. |
 
 Node unit/integration tests are now configured. Auth integration tests require an explicitly named test database and run sequentially to avoid schema setup races. External Google/email calls are stubbed in integration tests; real provider verification remains a separate setup check.
+
+
+
 
 ## Supplied shop onboarding (2026-10-22)
 

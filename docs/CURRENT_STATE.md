@@ -3,7 +3,6 @@
 Shop onboarding checkpoint — 2026-10-22: eight new shops / 167 offers (19 shops / 423 offers total), 20 held items, separate evidence and unavailable-photo reports. Factual heroes/contact details replace promotional copy across all 19 seeded shops. Raw source fields are filtered from catalogue, individual listing and basket responses. Full rerun created zero records and protected unrelated offers. Eight backend tests, 13 frontend tests, production build and nine HTTP checks pass. Browser visual inspection unavailable; 92 new offers / 74 model families intentionally show unavailable photos. See docs/SHOP_ONBOARDING_20261022.md and docs/SHOP_ONBOARDING_HELD_20261022.md. No push/deployment.
 
 
-
 PAYGO/shop expansion checkpoint — 2026-10-14: 11 shops / 256 offers, four new shops and 68 priced offers plus Tech Central price enquiry. PAYGO ID 5 renamed; /paygo includes Saeed/Innovative and Yellow guide. Edited shop heroes expose contacts/delivery/warranty/VAT facts. Exact offer verification, duplicate-free rerun, three backend tests, 12 frontend tests, build and rendered HTTP checks passed. See docs/SHOP_EXPANSION_PAYGO.md. Browser visual check and public media URL deployment remain outstanding.
 
 Brand navigation checkpoint — 2026-10-14: categories API exposes available brand counts/images. Image-led brand menu and category hero link to URL-driven API filters; all pages fetched. Eight live smartphone brand counts/isolation checked, final eight frontend tests and production build passed. IAB visual check unavailable. See docs/BRAND_NAVIGATION.md.
@@ -34,7 +33,7 @@ This is a MySQL/Sequelize Express API. Legacy `/api/products`, cart, order, and 
 
 ## Current Objective
 
-Customer authentication API v2 is implemented and running locally. Session/password flows are verified; live Google sign-in and email delivery await provider configuration. See the auth checkpoint below.
+Customer authentication API v2 is implemented and running locally alongside the existing catalogue. Session/password flows are verified; live Google sign-in and email delivery await provider configuration. See the auth checkpoint below.
 
 ## Current Phase / Status
 
@@ -42,7 +41,12 @@ Customer authentication API v2 is implemented and running locally. Session/passw
 - Implemented: multi-stage backend `Dockerfile`, MySQL 8.4 Compose service, health checks, named volumes, non-root runtime, fresh-database bootstrap, and Node-specific environment template.
 - Implemented: token-protected promotions feeds for canonical devices and shops, durable cursor events, idempotent backfill, marketplace ID/slug lookup, and approved-shop eligibility enforcement.
 - Verified locally: module syntax/loading, model associations, route registration, importer dry run, and 17 isolated unit tests.
-- Needs verification: apply the promotions-event migration and run its backfill after Docker/MySQL is available and the TechAPI import has finished.
+- Verified: 92,824 smartphone records from TechAPI revision `db1dea0c38ff07fcf400aa05d8c8e4393348eb25` yielded 132 brands, 36,999 devices, and 78,567 variants in category `Smartphones` (ID 1), with zero import errors.
+- Verified local shop seed: Mnex Electronics (128 active offers), Pixie Electronics (24), and B24 Electronics (logo/shop only). 162 source price rows were consolidated to 152 offers using the highest redundant price per shop/configuration/condition. Stock 1 and unlabelled condition new were explicitly approved by the user. See `../shop-seed/README.md` and `result.json` for source assumptions and mappings.
+- Verified storefront: marketplace exposes 94 distinct devices, all shop logos load, and homepage renders all three shop names. All 152 offers passed price, stock, condition, and uniqueness checks. Promotion events were emitted for these seeded shops and devices; full catalogue backfill remains outstanding.
+- Verified manufacturer media backfill: 90 missing device photos inserted through `DeviceMedia`, with source URLs and model provenance in `Device.source_metadata`; four pre-existing photos preserved. All 94 seeded devices have photos. A second apply skipped all 90 manifest entries with zero errors or duplicates. Full shop/listing record hashes were identical before/after (three shops, 152 offers). Two India CDN URLs were verified from Windows because container fetches failed; their original manufacturer URLs remain recorded.
+- Frontend product/header fixes: offer selection after grouped specifications, saved shop logos, variant-aware price/condition/warranty/basket selection, explicit photo fallbacks (including cached-image hydration), 49 locally bundled Solar icons, live-only header menus and generic search placeholder. Validation: 26 frontend tests, focused backend source-validation test, production build, Galaxy A05 128 GB basket check, Pixel 6 seller switch, desktop/mobile visual and keyboard checks. Standalone frontend TypeScript checking still reports pre-existing strictness errors; production build passes.
+- Needs follow-up: reconcile migration history with startup-bootstrapped tables, then run the promotions-event backfill before enabling CMS reconciliation.
 
 ## Documentation Authority / Approval
 
@@ -78,8 +82,8 @@ Customer authentication API v2 is implemented and running locally. Session/passw
 
 ## Known Issues / Risks / Unresolved Questions
 
-- Migrations have not been executed because no dedicated test database was configured.
-- Docker previously passed backend/database health checks, but the Docker Desktop daemon was unavailable during the promotions rollout checkpoint.
+- Startup bootstrap created the local schema. `migrate:v2` stops at the existing `brands` table; the migration ledger remains unapplied. No schema was dropped and no migrations were marked applied without verification.
+- The local MySQL container publishes port 3307 because host port 3306 is occupied. The backend publishes port 8000.
 - MySQL DDL may implicitly commit; backup and staging validation are required before production migration.
 - The TechAPI dataset contains inconsistent and duplicate source records; importer reports must be reviewed.
 - V2 reviews, favorites, banners, loyalty points, and promotions are intentionally deferred.
@@ -92,8 +96,11 @@ Customer authentication API v2 is implemented and running locally. Session/passw
 - TechAPI two-record fixture dry run: passed with zero errors.
 - `git diff --check`: required at final checkpoint.
 - `docker compose config --quiet`: passed; exactly `backend` and `database` services resolve.
-- Docker image build/start: not run successfully because the installed Docker CLI could not connect to the Docker Desktop daemon.
-- Not run: `npm run test:integration`, migration application/rollback, server startup, or external payment/email/SMS checks because no dedicated MySQL test environment was supplied.
+- Docker image build/start: passed; backend and MySQL healthy, `/health` returns HTTP 200.
+- Full dataset dry run: 92,824 records, zero errors. Batched import reused the existing reader/normalizer and verified-value precedence; 6,218 lower-confidence conflicts were preserved.
+- Seed integrity: zero orphan variants/brands, wrong-category devices, or missing source metadata. Catalogue and brand APIs passed; catalogue pagination reports 36,999 devices.
+- Dataset, source revision, batch seed script, attribution, and reports are in sibling folder `../techapi-smartphone-data`; see `SEED.local.md` there for execution details.
+- Not run: integration tests, migration rollback, promotions backfill, or external payment/email/SMS checks.
 
 ## Chunk Progress / Commit Checkpoints
 
@@ -116,8 +123,8 @@ Customer authentication API v2 is implemented and running locally. Session/passw
 
 ## Next Concrete Actions
 
-1. Start Docker Desktop/Engine and confirm whether `techaven-techapi-import` completed before changing catalogue schema.
-2. Apply `202610100005-create-promotion-catalogue-events.js`, run `npm run catalog:backfill-promotions`, and verify authenticated feed pagination.
+1. Reconcile the migration ledger with the schema created by startup bootstrap without dropping the seeded catalogue.
+2. Verify the promotions-event schema, run `npm run catalog:backfill-promotions`, and verify authenticated feed pagination.
 3. Only then run the CMS one-time v2 reference reset and enable reconciliation; keep both flags false on any failure.
 
 ## Auth v2 implementation checkpoint � 2026-10-12
