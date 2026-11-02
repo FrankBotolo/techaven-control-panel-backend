@@ -1,0 +1,92 @@
+services:
+  techaven-frontend:
+    image: gshaibu/techaven-frontend:20261031
+    restart: unless-stopped
+    init: true
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      HOST: 0.0.0.0
+      TECHAVEN_API_URL: http://techaven-backend:8000
+      PROMOTIONS_API_URL: http://techaven-cms:1337
+    expose: ["3001"]
+    networks: [app, dokploy]
+  techaven-backend:
+    image: gshaibu/techaven-backend:20261031
+    restart: unless-stopped
+    init: true
+    environment:
+      NODE_ENV: production
+      PORT: 8000
+      DB_HOST: ${COMMERCE_DB_HOST:?Set the Dokploy MySQL internal host}
+      DB_PORT: ${COMMERCE_DB_PORT:-3306}
+      DB_NAME: ${COMMERCE_DB_NAME:-techaven}
+      DB_USER: ${COMMERCE_DB_USER:?Set the MySQL user}
+      DB_PASSWORD: ${COMMERCE_DB_PASSWORD:?Set the MySQL password}
+      DB_BOOTSTRAP: "false"
+      DB_CONNECT_RETRIES: 60
+      JWT_SECRET: ${COMMERCE_JWT_SECRET:?Set a random signing secret}
+      AUTH_V2_JWT_SECRET: ${AUTH_V2_JWT_SECRET:?Set a random signing secret of at least 32 characters}
+      AUTH_V2_ALLOWED_ORIGINS: ${FRONTEND_URL:?Set the HTTPS storefront origin}
+      AUTH_V2_ALLOW_HTTP: "false"
+      TRUST_PROXY: "1"
+      CORS_ORIGINS: ${FRONTEND_URL}
+      APP_URL: ${BACKEND_PUBLIC_URL:?Set the HTTPS backend origin}
+      PUBLIC_API_BASE_URL: ${BACKEND_PUBLIC_URL}
+      COMMERCE_SYNC_TOKEN: ${COMMERCE_SYNC_TOKEN:?Set the shared commerce feed token}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL:-}
+    expose: ["8000"]
+    volumes:
+      - backend_uploads:/app/uploads
+      - backend_logs:/app/logs
+    networks: [app, dokploy]
+  techaven-cms:
+    image: gshaibu/techaven-cms:20261031
+    restart: unless-stopped
+    init: true
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 1337
+      PUBLIC_URL: ${CMS_PUBLIC_URL:?Set the HTTPS CMS origin}
+      IS_BEHIND_PROXY: "true"
+      APP_KEYS: ${CMS_APP_KEYS:?Set two comma-separated random keys}
+      API_TOKEN_SALT: ${CMS_API_TOKEN_SALT:?Set a random token salt}
+      ADMIN_JWT_SECRET: ${CMS_ADMIN_JWT_SECRET:?Set a random signing secret}
+      TRANSFER_TOKEN_SALT: ${CMS_TRANSFER_TOKEN_SALT:?Set a random token salt}
+      JWT_SECRET: ${CMS_JWT_SECRET:?Set a random signing secret}
+      ENCRYPTION_KEY: ${CMS_ENCRYPTION_KEY:?Set the CMS encryption key}
+      DATABASE_CLIENT: postgres
+      DATABASE_HOST: ${CMS_DB_HOST:?Set the Dokploy PostgreSQL internal host}
+      DATABASE_PORT: ${CMS_DB_PORT:-5432}
+      DATABASE_NAME: ${CMS_DB_NAME:-techaven_cms}
+      DATABASE_USERNAME: ${CMS_DB_USER:?Set the PostgreSQL user}
+      DATABASE_PASSWORD: ${CMS_DB_PASSWORD:?Set the PostgreSQL password}
+      DATABASE_SSL: ${CMS_DB_SSL:-false}
+      FRONTEND_URL: ${FRONTEND_URL}
+      PREVIEW_FRONTEND_URL: ${FRONTEND_URL}
+      PREVIEW_SECRET: ${CMS_PREVIEW_SECRET:?Set a random preview signing secret}
+      STRAPI_SYNC_TOKEN: ${CMS_STRAPI_SYNC_TOKEN:?Set a random private sync token}
+      TECHAVEN_COMMERCE_API_URL: http://techaven-backend:8000
+      TECHAVEN_COMMERCE_API_TOKEN: ${COMMERCE_SYNC_TOKEN}
+      CATALOG_RECONCILIATION_ENABLED: "false"
+      RESET_LEGACY_CATALOG_ON_BOOT: "false"
+      SEED_DEFAULT_PROMOTIONS: "false"
+    expose: ["1337"]
+    volumes:
+      - cms_uploads:/opt/app/public/uploads
+    networks: [app, dokploy]
+networks:
+  app:
+  dokploy:
+    external: true
+    name: dokploy-network
+volumes:
+  backend_uploads:
+  backend_logs:
+  cms_uploads:

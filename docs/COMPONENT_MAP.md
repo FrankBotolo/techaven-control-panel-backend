@@ -110,3 +110,5 @@ Node unit/integration tests are now configured. Auth integration tests require a
 
 - `scripts/data/shop-onboarding-20261022.js`, `services/marketplace/onboarding.js`: reviewed identity, conditions, SIM/extended RAM and highest-price deduplication.
 - `scripts/seed-shop-onboarding.js`, `scripts/clean-seeded-storefronts.js`, `scripts/audit-shop-onboarding.js`: local transactional import, factual cleanup and protected-record/API audits. Source/held/photo evidence lives beside the manifest; public DTOs strip source commentary.
+
+Dokploy packaging: deploy/dokploy.compose.yml and docs/DOKPLOY_DEPLOYMENT.md own image/runtime configuration. scripts/export-local-data.mjs exports private logical database/media backups; scripts/rewrite-media-origins.js updates restored public commerce media URLs with an explicit apply flag.

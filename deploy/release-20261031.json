@@ -1,0 +1,58 @@
+{
+  "release": "20261031",
+  "checked_on": "2026-11-02",
+  "platform": "linux/amd64",
+  "images": [
+    {
+      "repository": "gshaibu/techaven-frontend",
+      "tags": [
+        "20261031",
+        "latest"
+      ],
+      "digest": "sha256:19535f45d03abd8e8ad05e9dea1d993ed0bf3ddfebe345a26a1c59fc21e92543",
+      "status": "published"
+    },
+    {
+      "repository": "gshaibu/techaven-backend",
+      "tags": [
+        "20261031",
+        "latest"
+      ],
+      "digest": "sha256:50269f6563bbd80fdd38b00b631c52f2b613e0c41b6d574e00f09dc74f976fa9",
+      "status": "published"
+    },
+    {
+      "repository": "gshaibu/techaven-cms",
+      "tags": [
+        "20261031",
+        "latest"
+      ],
+      "status": "upload_retry_pending"
+    }
+  ],
+  "validation": {
+    "frontend_tests": 55,
+    "cms_tests": 19,
+    "media_migration_tests": 2,
+    "compose": "passed",
+    "container_health": {
+      "frontend": "healthy",
+      "backend": "healthy",
+      "cms": "healthy"
+    },
+    "http_checks": [
+      "commerce health 200",
+      "storefront health 200",
+      "storefront commerce proxy 200 with 19 shops",
+      "CMS health and admin 200",
+      "storefront CMS proxy 200",
+      "product catalogue and shop pages 200"
+    ],
+    "private_backup_checksums": "all four files match manifest",
+    "images_exclude_local_env_and_git": true
+  },
+  "migration": {
+    "remote_database_changes": false,
+    "backup_directory": "../migration-backups/2026-10-31-release"
+  }
+}
