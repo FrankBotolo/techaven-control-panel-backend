@@ -27,7 +27,8 @@
         "20261031",
         "latest"
       ],
-      "status": "upload_retry_pending"
+      "status": "published",
+      "digest": "sha256:93927d8dcd6e0397ef88549b218399334e9a3a9fd1a46efa45d14ccda7440402"
     }
   ],
   "validation": {
@@ -54,5 +55,6 @@
   "migration": {
     "remote_database_changes": false,
     "backup_directory": "../migration-backups/2026-10-31-release"
-  }
+  },
+  "registry_tags_verified_on": "2026-11-02"
 }
