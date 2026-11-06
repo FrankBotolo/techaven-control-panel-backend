@@ -112,3 +112,9 @@ Node unit/integration tests are now configured. Auth integration tests require a
 - `scripts/seed-shop-onboarding.js`, `scripts/clean-seeded-storefronts.js`, `scripts/audit-shop-onboarding.js`: local transactional import, factual cleanup and protected-record/API audits. Source/held/photo evidence lives beside the manifest; public DTOs strip source commentary.
 
 Dokploy packaging: deploy/dokploy.compose.yml and docs/DOKPLOY_DEPLOYMENT.md own image/runtime configuration. scripts/export-local-data.mjs exports private logical database/media backups; scripts/rewrite-media-origins.js updates restored public commerce media URLs with an explicit apply flag.
+
+## Mobile commerce additions
+- routes/manual-payments.js owns public configuration, reverse lookup, customer payment contexts/private proof and admin review.
+- models/PaymentSubmission.js and database/migrations-js/202611060001-mobile-commerce.js own review persistence and optional delivery/order fields.
+- services/manual-payment-policy.js validates configuration, receipt signatures, exact money and geographic data. services/manual-payment-settlement.js is shared by manual review and existing payment completion.
+- Frontend sibling: MobileHomeCatalog/browsing-history; AddressLocation/AddressMap; ManualPayment/manual-payments.

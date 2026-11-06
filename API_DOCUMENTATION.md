@@ -1020,3 +1020,8 @@ Import **Techaven_API.postman_collection.json** for the same grouping and exampl
 ## Customer authentication API v2
 
 The storefront now uses `/api/v2/auth` for customer registration, email/password and Google sign-in, verification, recovery, refresh, logout and current-user reads. See [the approved v2 auth contract](docs/AUTH_API_V2.md) for request bodies, cookie/session behavior, error codes, setup and compatibility. V1 routes and other-role flows remain available. V2 refresh tokens are HttpOnly cookies and are never returned in JSON.
+
+
+## Manual payment review and delivery locations (2026-11-06)
+
+The user-approved additive contract is documented in [MOBILE_COMMERCE_20261106.md](docs/MOBILE_COMMERCE_20261106.md). Customer payment completion is no longer self-service: submit private proof and await admin review. The legacy completion route is admin-only and refuses orders attached to manual submissions; payment-status edits must use verified settlement. Address and order location fields are optional and backward-compatible.

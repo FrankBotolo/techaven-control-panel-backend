@@ -10,7 +10,7 @@ ENV NODE_ENV=production
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY --chown=node:node . .
 
-RUN mkdir -p uploads logs && chown -R node:node uploads logs
+RUN mkdir -p uploads logs private/payment-proofs && chown -R node:node uploads logs private
 
 USER node
 EXPOSE 8000

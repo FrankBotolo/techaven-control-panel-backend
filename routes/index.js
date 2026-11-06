@@ -1,3 +1,4 @@
+import manualPaymentRoutes from './manual-payments.js';
 import express from 'express';
 import authRoutes from './auth.js';
 import userRoutes from './user.js';
@@ -33,6 +34,7 @@ import v2Routes from './v2/index.js';
 
 const router = express.Router();
 
+router.use(manualPaymentRoutes);
 router.use('/v2', v2Routes);
 
 router.use('/auth', authRoutes);

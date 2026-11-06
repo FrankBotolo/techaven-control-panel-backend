@@ -7,6 +7,9 @@ const Order = sequelize.define('Order', {
     primaryKey: true,
     autoIncrement: true
   },
+  delivery_location: { type: DataTypes.JSON, allowNull: true },
+  checkout_group_id: { type: DataTypes.UUID, allowNull: true },
+  manual_payment_submission_id: { type: DataTypes.UUID, allowNull: true },
   user_id: {
     type: DataTypes.INTEGER,
     allowNull: false,

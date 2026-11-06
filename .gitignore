@@ -6,3 +6,6 @@ logs/
 .DS_Store
 dist/
 build/
+
+# Customer payment receipts are never source assets.
+private/

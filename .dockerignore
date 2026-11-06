@@ -14,3 +14,5 @@ uploads
 logs
 Techaven_API.postman_collection.json
 *.log
+
+private

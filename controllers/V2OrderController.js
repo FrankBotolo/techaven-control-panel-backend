@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import db from '../models/index.js';
 import { assertFinalPrice } from '../services/marketplace/final-price.js';
 import { CatalogueError, sendCatalogueError } from '../services/catalogue/errors.js';
@@ -29,11 +30,14 @@ export async function checkout(req, res) {
     }
     const commission = await getSellerCommissionPercent();
     const orders = [];
+    const checkoutGroup = randomUUID();
     for (const [shopId, items] of groups) {
       const subtotal = items.reduce((sum, item) => sum + Number(item.listing.price) * item.quantity, 0);
       const split = computeSellerEscrowSplit(subtotal, commission);
       const seller = await User.findOne({ where: { shop_id: shopId, role: 'seller' }, transaction });
       const order = await Order.create({
+        checkout_group_id: checkoutGroup,
+        delivery_location: { latitude: address.latitude, longitude: address.longitude, accuracy: address.location_accuracy, notes: address.delivery_notes },
         user_id: req.user.id, order_number: orderNumber(), shipping_address_id: address.id,
         subtotal, shipping_fee: 0, total_amount: subtotal,
         shipping_address: [address.address, address.city, address.region].filter(Boolean).join(', '),

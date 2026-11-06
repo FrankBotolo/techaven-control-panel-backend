@@ -39,6 +39,10 @@ const ShippingAddress = sequelize.define('ShippingAddress', {
     type: DataTypes.STRING,
     allowNull: true
   },
+  latitude: { type: DataTypes.DECIMAL(10,7), allowNull: true },
+  longitude: { type: DataTypes.DECIMAL(10,7), allowNull: true },
+  location_accuracy: { type: DataTypes.FLOAT, allowNull: true },
+  delivery_notes: { type: DataTypes.TEXT, allowNull: true },
   is_default: {
     type: DataTypes.BOOLEAN,
     defaultValue: false

@@ -23,6 +23,17 @@ services:
       DB_NAME: ${COMMERCE_DB_NAME:-techaven}
       DB_USER: ${COMMERCE_DB_USER:?Set the MySQL user}
       DB_PASSWORD: ${COMMERCE_DB_PASSWORD:?Set the MySQL password}
+      MANUAL_PAYMENTS_ENABLED: ${MANUAL_PAYMENTS_ENABLED:-false}
+      MANUAL_PAYMENT_REVIEW_READY: ${MANUAL_PAYMENT_REVIEW_READY:-false}
+      MANUAL_PAYMENT_PROVIDER: ${MANUAL_PAYMENT_PROVIDER:-}
+      MANUAL_PAYMENT_ACCOUNT_NAME: ${MANUAL_PAYMENT_ACCOUNT_NAME:-}
+      MANUAL_PAYMENT_ACCOUNT_NUMBER: ${MANUAL_PAYMENT_ACCOUNT_NUMBER:-}
+      MANUAL_PAYMENT_WHATSAPP: ${MANUAL_PAYMENT_WHATSAPP:-}
+      PAYMENT_PROOF_DIR: /app/private/payment-proofs
+      GEOAPIFY_BROWSER_KEY: ${GEOAPIFY_BROWSER_KEY:-}
+      GEOAPIFY_SERVER_KEY: ${GEOAPIFY_SERVER_KEY:-}
+      TECHAVEN_PRIVACY_URL: ${TECHAVEN_PRIVACY_URL:-}
+      TECHAVEN_TERMS_URL: ${TECHAVEN_TERMS_URL:-}
       DB_BOOTSTRAP: "false"
       DB_CONNECT_RETRIES: 60
       JWT_SECRET: ${COMMERCE_JWT_SECRET:?Set a random signing secret}
@@ -44,6 +55,7 @@ services:
     volumes:
       - backend_uploads:/app/uploads
       - backend_logs:/app/logs
+      - backend_payment_proofs:/app/private/payment-proofs
     networks: [app, dokploy]
   techaven-cms:
     image: gshaibu/techaven-cms:20261031
@@ -89,4 +101,5 @@ networks:
 volumes:
   backend_uploads:
   backend_logs:
+  backend_payment_proofs:
   cms_uploads:
