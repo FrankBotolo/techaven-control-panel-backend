@@ -37,3 +37,6 @@ Implementation and rollout documentation were completed before tests, as request
 - Global TypeScript still reports 45 existing diagnostics outside the new components and changed account/product routes; this is not a clean global type-check claim.
 
 Production-build preview: http://127.0.0.1:3003/ (public catalogue reads). Real sign-in can be restricted by the live backend's origin configuration; authenticated testing used disposable local data. Publication status and immutable image digests are recorded in deploy/release-20261107.json in the backend repository. Production migration/deployment are separate from registry publication.
+
+## Publication checkpoint
+Source commits are published on GitHub main: frontend 6a702ea, backend 011b1fd. Both linux/amd64 images are built and smoke-tested locally with tag 20261107-customer-setup. Docker Hub rejected both pushes with insufficient_scope; an account with push access to gshaibu repositories must sign in before registry publication can finish. latest remains unchanged. See deploy/release-20261107.json for source commits and local image digests. No production migration/deployment has occurred.
