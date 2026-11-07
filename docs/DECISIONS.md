@@ -69,3 +69,6 @@ Customer storefront authentication supports Google and email/password beneath `/
 - Product-first home replaces the hero only below 768px; history stays device-local for at most 30 days/20 entries and can be cleared.
 - Payment proof is order-linked and private before WhatsApp handoff, and stays pending until admin review. The future admin panel is a separate task; only its APIs are included. Both manual payment gates default false while real receiving details and the review UI are pending.
 - Leaflet/Geoapify is the map provider; location is requested only on explicit action, with editable suggestions and manual fallback. Nullable location fields are captured in order snapshots.
+
+## 2026-11-07 - Customer discovery and setup
+User approved: retain homepage shop carousel; only Shops-page cards stack on mobile. Each shop gets mini product previews. Guest sign-in is dismissible once per tab session. Only new accounts require addresses; payment setup follows separately and is optional. Contact-number reuse requires explicit consent. Saving preferences does not verify or charge a number.

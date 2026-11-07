@@ -598,14 +598,14 @@ All under `/api/shipping-addresses` (or `/api/addresses`). Data: id, label, name
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
 | GET | `/api/payment-methods` | 🔒 | Lists mobile-money options in **`data.available_providers`** (`id`, `name`, `slug`, `psp_id`, `provider`, …) — Airtel Money only. **Customer orders** use **`POST .../orders/:id/pay/airtel`** (direct Airtel push) or Pay Changu checkout + **`POST .../orders/:id/pay/paychangu`** with **`tx_ref`**. **Seller subscriptions** use **`POST .../subscription/pay/paychangu`**. |
-| POST | `/api/payment-methods` | 🔒 | Add payment method (stub). |
-| DELETE | `/api/payment-methods/:id` | 🔒 | Delete payment method (stub). |
+| POST | `/api/payment-methods` | 🔒 | Save an owned mobile-money preference: type=mobile_money, active provider slug, Malawi phone_number, optional boolean is_default/use_for_contact. New enrolled accounts must complete address setup. No charge or number verification. |
+| DELETE | `/api/payment-methods/:id` | 🔒 | Delete an owned saved preference; unknown or another customer ID returns 404. A remaining method becomes default if needed. |
 
 **Response format (GET)**
 
 | Endpoint | `data` shape |
 |----------|----------------|
-| `GET /api/payment-methods` | `{ payment_methods: [], available_providers: [{ id, name, slug, psp_id, provider, icon }, ...] }` |
+| `GET /api/payment-methods` | `{ payment_methods: [{ id, type, provider, phone_number, is_default }], available_providers: [{ id, name, slug, psp_id, provider, icon }, ...] }` |
 
 ```json
 {
@@ -1025,3 +1025,7 @@ The storefront now uses `/api/v2/auth` for customer registration, email/password
 ## Manual payment review and delivery locations (2026-11-06)
 
 The user-approved additive contract is documented in [MOBILE_COMMERCE_20261106.md](docs/MOBILE_COMMERCE_20261106.md). Customer payment completion is no longer self-service: submit private proof and await admin review. The legacy completion route is admin-only and refuses orders attached to manual submissions; payment-status edits must use verified settlement. Address and order location fields are optional and backward-compatible.
+
+
+### Customer account setup (2026-11-07)
+GET /api/user/setup (authenticated) returns { requires_address, offer_payment_setup, payment_setup_status }. POST /api/user/setup/address-complete requires an owned saved address, otherwise 409. POST /api/user/setup/payment-skip persists optional dismissal after address setup and never downgrades completion. Existing accounts are exempt through the additive migration; subsequent accounts enroll automatically. Customer preferences live in customer_payment_methods, separate from payment_methods provider catalogue. Private responses use Cache-Control: no-store.

@@ -1,3 +1,4 @@
+import CustomerPaymentMethod from './CustomerPaymentMethod.js';
 import sequelize from '../config/database.js';
 import User from './User.js';
 import Otp from './Otp.js';
@@ -260,6 +261,7 @@ const db = {
   DeliveryAgent,
   DeliveryJob,
   PaymentMethod,
+  CustomerPaymentMethod,
   PayChanguCallback,
   AirtelTransaction,
   AirtelWebhookLog,

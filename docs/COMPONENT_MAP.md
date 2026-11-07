@@ -1,3 +1,5 @@
+Customer setup: controllers/CustomerSetupController.js and routes/user.js own setup state; models/User.js holds enrollment/completion. controllers/PaymentMethodController.js and models/CustomerPaymentMethod.js persist owner-scoped preferences separately from provider catalogue. Migration 202611070001-customer-setup.js exempts existing users. Frontend CustomerExperience.tsx coordinates dialogs; PaymentMethods.tsx/account.index.tsx own forms; ShopProductPreview.tsx owns lazy seller-specific previews.
+
 # Codebase Navigation Map
 
 PAYGO/shop expansion: scripts/seed-shop-expansion.js + scripts/data/shop-expansion.js own four-shop source seed; migration 202610140002_shop_profiles.js adds shop profile/offer details. ShopController exports profile/address; final-price.js protects tax-exclusive quotations at cart/order boundaries. Frontend ShopHero.tsx and routes/paygo.tsx own edited shop heroes and the Yellow guide. See docs/SHOP_EXPANSION_PAYGO.md.
