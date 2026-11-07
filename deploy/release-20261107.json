@@ -7,16 +7,20 @@
     "local_manifest_digest": "sha256:a840de268c956a7d3176c223fba181dc7a888c8ed0c67ea7d341e4b94c71e434",
     "source_commit": "6a702ea055fc856a8bf0f7cba4d471e6506a1e74",
     "github_source_published": true,
-    "registry_published": false
+    "registry_published": true,
+    "registry_verified": true,
+    "digest": "sha256:a840de268c956a7d3176c223fba181dc7a888c8ed0c67ea7d341e4b94c71e434"
   },
   "backend": {
     "image": "gshaibu/techaven-backend:20261107-customer-setup",
     "local_manifest_digest": "sha256:c4d189a37fdd2a750a878226e17b414f3db7d898f6a821c33b7d5abb1647750b",
     "source_commit": "011b1fdf6e0e9dd1d383872fc692d5ca3a1bb665",
     "github_source_published": true,
-    "registry_published": false
+    "registry_published": true,
+    "registry_verified": true,
+    "digest": "sha256:c4d189a37fdd2a750a878226e17b414f3db7d898f6a821c33b7d5abb1647750b"
   },
-  "registry_blocker": "Docker Hub rejected both pushes with insufficient_scope; sign in with push access to gshaibu repositories.",
+  "registry_blocker": null,
   "latest_updated": false,
   "production_deployed": false,
   "migration": "202611070001-customer-setup.js",
