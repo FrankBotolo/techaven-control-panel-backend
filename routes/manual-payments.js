@@ -1,3 +1,5 @@
+import { orderItemSummary, orderListingMedia } from "../services/catalogue/order-media.js";
+import { manualNotice, proofUrl } from "../services/manual-checkout.js";
 import express from "express";
 import multer from "multer";
 import { randomUUID } from "node:crypto";
@@ -165,10 +167,16 @@ router.get(
                   order: [["id", "ASC"]],
               })
             : [order];
+        const notice = order.payment_method === "bank-transfer" ? await manualNotice(order.checkout_group_id) : null;
+        const deadline = notice ? new Date(Number(notice.deadline_ms)) : null;
+        const expired = Boolean(deadline && deadline.getTime() <= Date.now());
         const selected = orders.filter(
             (o) => o.payment_status === "pending" && o.status !== "cancelled",
         );
         const ids = orders.map((o) => o.id);
+        const items = await db.OrderItem.findAll({
+            where: { order_id: ids }, include: [orderListingMedia], order: [["id", "ASC"]],
+        });
         const [submissionIds] = await db.sequelize.query(
             "SELECT id FROM payment_submissions WHERE user_id=:user AND JSON_OVERLAPS(order_ids, CAST(:ids AS JSON)) ORDER BY createdAt DESC LIMIT 30",
             { replacements: { user: req.user.id, ids: JSON.stringify(ids) } },
@@ -190,7 +198,12 @@ router.get(
                     payment_status: o.payment_status,
                     status: o.status,
                 })),
-                payable_order_ids: selected.map((o) => o.id),
+                payable_order_ids: expired ? [] : selected.map((o) => o.id),
+                deadline: deadline?.toISOString() ?? null,
+                proof_url: notice ? proofUrl(orders[0].order_number) : null,
+                summary: notice?.summary ?? null,
+                items: items.map(orderItemSummary),
+                expired,
                 amount: money(
                     selected.reduce((sum, o) => sum + cents(o.total_amount), 0),
                 ),
@@ -293,6 +306,9 @@ router.post(
                 if (orders.length !== ids.length)
                     throw fail("Orders not found", 404);
                 const group = orders[0].checkout_group_id;
+                const notice = orders.some(order => order.payment_method === "bank-transfer") ? await manualNotice(group, transaction) : null;
+                if (notice && new Date(Number(notice.deadline_ms)).getTime() <= Date.now())
+                    throw fail("The payment proof deadline has passed", 409);
                 if (
                     orders.length > 1 &&
                     (!group ||

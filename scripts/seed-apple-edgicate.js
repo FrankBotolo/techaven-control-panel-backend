@@ -1,5 +1,6 @@
 import '../utils/loadEnv.js';
 import db from '../models/index.js';
+import { listingIdentity } from '../models/SellerListing.js';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
@@ -102,8 +103,10 @@ try {
         }
         const shop = shopModels.get(offer.shop);
         const merchant_sku = `supplied-20261013-${offer.sku}`;
-        const identity = `${shop.id}:${variant.id}:0:${offer.condition}`;
-        const existing = await db.SellerListing.findOne({ where: { active_identity: identity }, transaction });
+        const identity = listingIdentity({ shop_id: shop.id, device_variant_id: variant.id,
+          condition: offer.condition, currency: 'MWK', price: offer.price, status: 'active' });
+        const existing = await db.SellerListing.findOne({ where: { shop_id: shop.id, merchant_sku: merchant_sku }, transaction })
+          ?? await db.SellerListing.findOne({ where: { active_identity: identity }, transaction });
         const values = { shop_id: shop.id, device_variant_id: variant.id, condition: offer.condition,
           currency: 'MWK', price: Math.max(Number(existing?.price) || 0, offer.price), quantity: existing?.quantity ?? 1,
           status: 'active', merchant_sku: existing?.merchant_sku ?? merchant_sku };

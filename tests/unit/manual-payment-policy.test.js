@@ -11,16 +11,15 @@ test("manual payment is gated by complete instructions and a ready reviewer", ()
     const env = {
         MANUAL_PAYMENTS_ENABLED: "true",
         MANUAL_PAYMENT_REVIEW_READY: "true",
-        MANUAL_PAYMENT_PROVIDER: "Fixture Bank",
-        MANUAL_PAYMENT_ACCOUNT_NAME: "Techaven",
-        MANUAL_PAYMENT_ACCOUNT_NUMBER: "12345678",
+        FRONTEND_URL: "https://example.com",
         MANUAL_PAYMENT_WHATSAPP: "265991234567",
     };
     assert.equal(paymentInstructions(env).enabled, true);
+    assert.equal(paymentInstructions(env).destinations.length, 7);
     assert.equal(
         paymentInstructions({
             ...env,
-            MANUAL_PAYMENT_ACCOUNT_NUMBER: "REPLACE_ME",
+            FRONTEND_URL: "",
         }).enabled,
         false,
     );

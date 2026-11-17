@@ -2,9 +2,15 @@ import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
 
 export function listingIdentity(listing) {
-  return listing.status === 'active'
-    ? `${listing.shop_id}:${listing.device_variant_id}:${listing.device_variant_color_id || 0}:${listing.condition}`
-    : null;
+  if (listing.status !== 'active') return null;
+
+  const currency = String(listing.currency || 'MWK').toUpperCase();
+  const price = Number(listing.price).toFixed(2);
+  const key = [listing.shop_id, listing.device_variant_id, listing.device_variant_color_id || 0, listing.condition, currency, price];
+  if (listing.merchant_sku?.startsWith('seed-20261117-') && listing.details?.seed_unit) {
+    key.push(listing.details.seed_unit);
+  }
+  return key.join(':');
 }
 
 const SellerListing = sequelize.define('SellerListing', {

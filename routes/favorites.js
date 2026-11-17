@@ -1,3 +1,4 @@
+import { updateDeviceFavorite } from "../controllers/DeviceFavoriteController.js";
 import express from 'express';
 import { authenticate } from '../middleware/auth.js';
 import * as FavoriteController from '../controllers/FavoriteController.js';
@@ -9,6 +10,8 @@ router.use(authenticate);
 
 router.get('/', FavoriteController.getFavorites);
 router.post('/', FavoriteController.addToFavorites);
+router.post('/devices', updateDeviceFavorite);
+router.delete('/devices/:deviceId', updateDeviceFavorite);
 router.get('/:productId', FavoriteController.checkFavorite);
 router.delete('/:productId', FavoriteController.removeFromFavorites);
 

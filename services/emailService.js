@@ -303,3 +303,11 @@ export const sendAdminNotificationEmail = async (email, notification) => {
     return false;
   }
 };
+export async function sendManualCheckoutEmail(email, { reference, deadline, url, summary }) {
+  return transporter.sendMail({
+    from: `"Techaven" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER}>`,
+    to: email,
+    subject: `Payment instructions for ${reference}`,
+    text: `Your Techaven order ${reference}: ${summary}\n\nPay and submit proof by ${new Date(deadline).toISOString()} (UTC).\n\nOpen payment instructions and upload proof: ${url}`,
+  });
+}

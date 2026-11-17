@@ -12,7 +12,7 @@ fs.mkdirSync(directory,{recursive:true});
 const jobs=[
  ['commerce.sql',['exec','techaven-backend-database-1','sh','-c','export MYSQL_PWD="$MYSQL_PASSWORD"; exec mysqldump --single-transaction --quick --no-tablespaces --set-gtid-purged=OFF --routines --triggers --events -u"$MYSQL_USER" "$MYSQL_DATABASE"']],
  ['cms.dump',['exec','techaven_cms-postgres-1','sh','-c','export PGPASSWORD="$POSTGRES_PASSWORD"; exec pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --format=custom --no-owner --no-acl']],
- ['backend-uploads.tar.gz',['exec','techaven-backend-backend-1','tar','czf','-','-C','/app/uploads','.']],
+ ['backend-uploads.tar.gz',['exec',process.env.TECHAVEN_EXPORT_BACKEND_CONTAINER || 'techaven-backend-backend-1','tar','czf','-','-C','/app/uploads','.']],
  ['cms-uploads.tar.gz',['exec','techaven_cms-strapi-1','tar','czf','-','-C','/opt/app/public/uploads','.']],
 ];
 const receipt={created_at:new Date().toISOString(),database_versions:{mysql:'8.4',postgresql:'17'},files:[]};

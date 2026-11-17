@@ -42,3 +42,11 @@ Implementation and documentation were prepared before tests as requested. Verifi
 5. Add `GEOAPIFY_BROWSER_KEY` restricted to the storefront origin and a separate `GEOAPIFY_SERVER_KEY` for server-side lookup. Set real `TECHAVEN_PRIVACY_URL` / `TECHAVEN_TERMS_URL`; help-centre links remain the fallback until supplied.
 6. Keep `MANUAL_PAYMENTS_ENABLED=false` and `MANUAL_PAYMENT_REVIEW_READY=false`. Only enable both after the future admin review UI is available and real provider/account/WhatsApp details are configured. Confirm private receipt persistence and a fixture review before accepting live transfers.
 7. Verify live mobile home, shop list, footer, saved address and order pages after deployment. CMS image does not change for this release.
+
+## Bank-transfer checkout
+
+Apply `202611170002-manual-checkout-notices.js` before enabling bank-transfer checkout. The migration creates the persistent checkout deadline and SMTP queue. Existing mobile-money orders and older manual payments do not get the new expiry policy.
+
+Set `FRONTEND_URL` to the public storefront origin, `MANUAL_PAYMENT_WHATSAPP` to the support number in international digits, and configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM_EMAIL`, and `SMTP_DEBUG=false` on the backend. Port 587 uses STARTTLS and port 465 uses implicit TLS. The sender must be verified by the SMTP provider. Mount writable private storage at `PAYMENT_PROOF_DIR`, separately from public uploads.
+
+Keep `MANUAL_PAYMENTS_ENABLED` and `MANUAL_PAYMENT_REVIEW_READY` false until the receiving destinations, WhatsApp link, delivery of a test email, and staff receipt approval are checked in the target environment. A manual checkout requires a shop with a seller account for settlement. Deploy the backend and storefront together.

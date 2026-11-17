@@ -1,3 +1,6 @@
+import { listingPhoto } from '../services/catalogue/order-media.js';
+import { paymentInstructions } from '../services/manual-payment-policy.js';
+import { queueManualCheckout } from '../services/manual-checkout.js';
 import { randomUUID } from 'node:crypto';
 import db from '../models/index.js';
 import { assertFinalPrice } from '../services/marketplace/final-price.js';
@@ -5,12 +8,14 @@ import { CatalogueError, sendCatalogueError } from '../services/catalogue/errors
 import { getSellerCommissionPercent, computeSellerEscrowSplit } from '../utils/sellerCommission.js';
 import { enqueueDevice } from '../services/catalogue/promotionSync.js';
 
-const { Cart, SellerListing, DeviceVariant, Device, Brand, Shop, User, Order, OrderItem, ShippingAddress, sequelize } = db;
+const { Cart, SellerListing, ListingImage, DeviceVariant, Device, DeviceMedia, Brand, Shop, User, Order, OrderItem, ShippingAddress, sequelize } = db;
 const orderNumber = () => `ORD${new Date().toISOString().slice(0, 10).replace(/-/g, '')}${Math.floor(Math.random() * 1e8).toString().padStart(8, '0')}`;
 
 export async function checkout(req, res) {
   const transaction = await sequelize.transaction();
   try {
+    const manual = req.body.payment_method === "bank-transfer";
+    if (manual && !paymentInstructions().enabled) throw new CatalogueError("MANUAL_PAYMENT_UNAVAILABLE", "Bank transfer is unavailable", 503);
     const address = await ShippingAddress.findOne({ where: { id: req.body.shipping_address_id, user_id: req.user.id }, transaction });
     if (!address) throw new CatalogueError('SHIPPING_ADDRESS_NOT_FOUND', 'Shipping address not found', 404);
     const requested = Array.isArray(req.body.items) && req.body.items.length
@@ -18,14 +23,18 @@ export async function checkout(req, res) {
       : (await Cart.findAll({ where: { user_id: req.user.id, product_id: null }, transaction })).map((item) => ({ seller_listing_id: item.seller_listing_id, quantity: item.quantity }));
     if (!requested.length) throw new CatalogueError('EMPTY_CART', 'No listing items supplied');
     const groups = new Map();
+    const quantities = new Map();
     for (const request of requested) {
       if (!request.seller_listing_id || !Number.isInteger(request.quantity) || request.quantity < 1) throw new CatalogueError('INVALID_QUANTITY', 'Every item requires a valid listing and quantity');
-      const listing = await SellerListing.findByPk(request.seller_listing_id, { include: [{ model: Shop, as: 'shop' }, { model: DeviceVariant, as: 'variant', include: [{ model: Device, as: 'device', include: [{ model: Brand, as: 'brand' }] }] }], transaction, lock: transaction.LOCK.UPDATE });
-      if (!listing || listing.status !== 'active' || !listing.variant?.is_active || !listing.variant?.device?.is_active || !listing.variant?.device?.brand?.is_active || listing.shop?.status !== 'active' || listing.shop?.application_status !== 'approved') throw new CatalogueError('LISTING_NOT_FOUND', `Eligible active listing not found: ${request.seller_listing_id}`, 404);
+      quantities.set(request.seller_listing_id, (quantities.get(request.seller_listing_id) || 0) + request.quantity);
+    }
+    for (const [listingId, quantity] of [...quantities].sort(([a], [b]) => a - b)) {
+      const listing = await SellerListing.findByPk(listingId, { include: [{ model: Shop, as: 'shop' }, { model: ListingImage, as: 'images' }, { model: DeviceVariant, as: 'variant', include: [{ model: Device, as: 'device', include: [{ model: Brand, as: 'brand' }, { model: DeviceMedia, as: 'media' }] }] }], transaction, lock: transaction.LOCK.UPDATE });
+      if (!listing || listing.status !== 'active' || !listing.variant?.is_active || !listing.variant?.device?.is_active || !listing.variant?.device?.brand?.is_active || listing.shop?.status !== 'active' || listing.shop?.application_status !== 'approved') throw new CatalogueError('LISTING_NOT_FOUND', `Eligible active listing not found: ${listingId}`, 404);
       assertFinalPrice(listing);
-      if (listing.quantity < request.quantity) throw new CatalogueError('INSUFFICIENT_STOCK', `Insufficient stock for listing ${listing.id}`, 409);
+      if (listing.quantity < quantity) throw new CatalogueError('INSUFFICIENT_STOCK', `Insufficient stock for listing ${listing.id}`, 409);
       const rows = groups.get(listing.shop_id) || [];
-      rows.push({ listing, quantity: request.quantity });
+      rows.push({ listing, quantity });
       groups.set(listing.shop_id, rows);
     }
     const commission = await getSellerCommissionPercent();
@@ -35,6 +44,7 @@ export async function checkout(req, res) {
       const subtotal = items.reduce((sum, item) => sum + Number(item.listing.price) * item.quantity, 0);
       const split = computeSellerEscrowSplit(subtotal, commission);
       const seller = await User.findOne({ where: { shop_id: shopId, role: 'seller' }, transaction });
+      if (manual && !seller && !/^http:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?$/i.test(process.env.FRONTEND_URL || "")) throw new CatalogueError("SELLER_PAYMENT_UNAVAILABLE", "Bank transfer is unavailable for a shop in this basket", 409);
       const order = await Order.create({
         checkout_group_id: checkoutGroup,
         delivery_location: { latitude: address.latitude, longitude: address.longitude, accuracy: address.location_accuracy, notes: address.delivery_notes },
@@ -52,7 +62,7 @@ export async function checkout(req, res) {
         const device = variant.device;
         await OrderItem.create({
           order_id: order.id, product_id: null, seller_listing_id: listing.id,
-          product_name: `${device.brand?.name || ''} ${device.name}`.trim(), product_image: device.primary_image_url,
+          product_name: device.name, product_image: listingPhoto(listing),
           quantity, price: listing.price, subtotal: Number(listing.price) * quantity,
           canonical_snapshot: { device_id: device.id, device_name: device.name, brand: device.brand?.name || null, variant_id: variant.id, ram_gb: variant.ram_gb, storage_gb: variant.storage_gb, network_generation: variant.network_generation },
           listing_snapshot: { shop_id: listing.shop_id, merchant_sku: listing.merchant_sku, condition: listing.condition, currency: listing.currency, warranty_months: listing.warranty_months }
@@ -62,6 +72,11 @@ export async function checkout(req, res) {
         await enqueueDevice(device.id, { transaction, reason: `checkout:${order.id}:${listing.id}:${listing.updatedAt.toISOString()}` });
       }
       orders.push(order);
+    }
+    if (manual) {
+      const buyer = await User.findByPk(req.user.id, { transaction, attributes: ['email'] });
+      const summary = [...groups.values()].flat().map(({ listing, quantity }) => `${quantity} × ${listing.variant.device.name}`).join(', ');
+      await queueManualCheckout(orders, buyer?.email, summary, transaction);
     }
     await Cart.destroy({ where: { user_id: req.user.id, product_id: null }, transaction });
     await transaction.commit();

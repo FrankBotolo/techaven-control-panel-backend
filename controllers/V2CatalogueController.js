@@ -1,3 +1,4 @@
+import { resolveDeviceIdentity } from '../services/catalogue/deviceIdentity.js';
 import { Op } from 'sequelize';
 import db from '../models/index.js';
 import { CatalogueError, sendCatalogueError } from '../services/catalogue/errors.js';
@@ -36,7 +37,8 @@ export async function listDevices(req, res) {
 
 export async function getDevice(req, res) {
   try {
-    const device = await Device.findOne({ where: { id: req.params.id, is_active: true }, include: deviceIncludes() });
+    const canonical = await resolveDeviceIdentity(req.params.id);
+    const device = canonical?.is_active && await Device.findOne({ where: { id: canonical.id, is_active: true }, include: deviceIncludes() });
     if (!device) throw new CatalogueError('DEVICE_NOT_FOUND', 'Device not found', 404);
     return res.json({ success: true, message: 'Device retrieved', data: toDeviceDto(device) });
   } catch (error) { return sendCatalogueError(res, error); }
@@ -44,7 +46,8 @@ export async function getDevice(req, res) {
 
 export async function getVariants(req, res) {
   try {
-    const device = await Device.findOne({ where: { id: req.params.id, is_active: true }, include: deviceIncludes() });
+    const canonical = await resolveDeviceIdentity(req.params.id);
+    const device = canonical?.is_active && await Device.findOne({ where: { id: canonical.id, is_active: true }, include: deviceIncludes() });
     if (!device) throw new CatalogueError('DEVICE_NOT_FOUND', 'Device not found', 404);
     const dto = toDeviceDto(device);
     return res.json({ success: true, message: 'Variants retrieved', data: { device: { id: dto.id, name: dto.name }, variant_axes: dto.variant_axes, variants: dto.variants } });

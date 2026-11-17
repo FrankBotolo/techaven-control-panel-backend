@@ -50,6 +50,11 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
       COMMERCE_SYNC_TOKEN: ${COMMERCE_SYNC_TOKEN:-}
       MAX_FILE_SIZE: ${MAX_FILE_SIZE:-5242880}
+      FRONTEND_URL: ${FRONTEND_URL:-}
+      MANUAL_PAYMENTS_ENABLED: ${MANUAL_PAYMENTS_ENABLED:-false}
+      MANUAL_PAYMENT_REVIEW_READY: ${MANUAL_PAYMENT_REVIEW_READY:-false}
+      MANUAL_PAYMENT_WHATSAPP: ${MANUAL_PAYMENT_WHATSAPP:-}
+      PAYMENT_PROOF_DIR: /app/private/payment-proofs
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}
@@ -80,10 +85,12 @@ services:
       - "${BACKEND_PORT:-8000}:8000"
     volumes:
       - uploads_data:/app/uploads
+      - payment_proofs_data:/app/private/payment-proofs
       - logs_data:/app/logs
     init: true
 
 volumes:
   mysql_data:
+  payment_proofs_data:
   uploads_data:
   logs_data:

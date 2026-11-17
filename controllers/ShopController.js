@@ -2,7 +2,7 @@ import { Op } from 'sequelize';
 import db from '../models/index.js';
 import { logAudit, auditContext } from '../utils/audit.js';
 import { toProductDto } from '../utils/productDto.js';
-import { enqueueShop } from '../services/catalogue/promotionSync.js';
+import { enqueueShop, enqueueShopDevices } from '../services/catalogue/promotionSync.js';
 
 const { Shop, Product, Category, User, ShopFollow, sequelize } = db;
 
@@ -312,8 +312,11 @@ export const updateShop = async (req, res) => {
     if (nextLogo != null) shop.logo = nextLogo;
     if (images !== undefined) shop.images = images;
 
+    const nameChanged = shop.changed('name');
     await shop.save();
-    await enqueueShop(shop.id, { reason: `seller-update:${shop.updatedAt.toISOString()}` });
+    const reason = `seller-update:${shop.updatedAt.toISOString()}`;
+    await enqueueShop(shop.id, { reason });
+    if (nameChanged) await enqueueShopDevices(shop.id, { reason });
 
     await logAudit({
       ...auditContext(req),

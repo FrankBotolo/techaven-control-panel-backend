@@ -18,6 +18,18 @@ Brand navigation checkpoint — 2026-10-14: categories API exposes available bra
 
 Latest checkpoint: Apple & All 17 offers; Saeed Enterprise eight offers; seven shops / 188 offers. Loans shares eligible seller offers with Smartphones, verified live with itel Power 80; cash-only sellers excluded. Eight backend tests passed. Stock-first galleries and earlier frontend build/tests verified. See docs/SHOP_SEEDS_AND_LOANS.md. Remaining: public upload base, missing Saeed photos, unavailable IAB visual check, pre-existing migration ledger discrepancy.
 
+## Catalogue and payment review - 2026-11-17
+
+Local backend rebuilt for grouped catalogue pagination and order image snapshots. Existing bank-transfer order details resolve listing photos where available. Local listings 983 and 984 now use Oraimo with their IDs, prices and stock preserved. The storefront adds compact catalogue controls, two-product comparison, an address grid and a consolidated payment card with a delayed WhatsApp handoff. Isolated MySQL verification passed ten tests covering image snapshots, proof review, expiry, cancellation and mail retry. Phone verification still requires a publicly reachable HTTPS storefront for the same local orders.
+
+## Storefront and bank-transfer checkout - 2026-11-17
+
+Implemented compact brand navigation, product image actions, shared Google sign-in styling, the Malawi address drawer, and transaction-level bank-transfer proof and email. Ten isolated MySQL tests, three policy tests, and 20 focused storefront tests passed. Local HTTP checks verified the category carousel, product actions, and sign-in route. The new backend was verified in isolation. Live transfer flags remain off. Next rollout steps are the manual-checkout-notices migration, confirmed support number and storefront origin, SMTP test delivery, and staff review in the target environment.
+
+## Local shop seed — 2026-11-17
+
+The 21 reviewed source shops are active and approved in local MySQL. The transactional seed activated 243 offers at quantity one, including six existing Teez Tech drafts. It created 183 unverified devices and 193 variants, and held 139 review rows for unresolved pricing, identity, configuration, or service classification. The receipt records each held row and its source evidence. Marketplace listing detail returned 19 separate offers in nine same-shop price groups. Price-aware listing identity migration 202611170001 is applied locally. The seed runner takes the reviewed JSON and source folder as inputs. No deployment was performed.
+
 ## Apple Guy / Edgicate seed checkpoint — 2026-10-13
 
 Completed user-supplied offer seed (`9860fe1`): Apple Guy ID 4 with two used iPhone offers; Edgicate Store ID 5 with nine used laptop offers. Created eight missing, unverified laptop devices, nine laptop variants, 11 offers and 22 listing photos, with both supplied logos. Both disputed storage values were confirmed as 128 GB; all conditions and retail prices are recorded in `docs/APPLE_EDGICATE_SEED.md`. Source/receipts: sibling `../shop-seed-apple-edgicate/`. Local totals: five shops, 163 offers.
@@ -48,6 +60,7 @@ Customer authentication API v2 is implemented and running locally alongside the 
 
 - Implemented: ordered migration runner; canonical schema/models; admin catalogue management; TechAPI importer; seller listings and product requests; public catalogue/marketplace reads; v2 cart/checkout; staged legacy mapping; documentation.
 - Implemented: multi-stage backend `Dockerfile`, MySQL 8.4 Compose service, health checks, named volumes, non-root runtime, fresh-database bootstrap, and Node-specific environment template.
+- Homepage promo rails extend the protected v2 feed with current catalog snapshots, shop metadata, and media/rename events. The CMS consumes incremental changes and reconciles a full snapshot every six hours. Backend syntax checks pass. Deploy commerce first, then the CMS, verify a full reconciliation and picker access, then deploy the storefront. Live publishing and checkout still need staging verification.
 - Implemented: token-protected promotions feeds for canonical devices and shops, durable cursor events, idempotent backfill, marketplace ID/slug lookup, and approved-shop eligibility enforcement.
 - Verified locally: module syntax/loading, model associations, route registration, importer dry run, and 17 isolated unit tests.
 - Verified: 92,824 smartphone records from TechAPI revision `db1dea0c38ff07fcf400aa05d8c8e4393348eb25` yielded 132 brands, 36,999 devices, and 78,567 variants in category `Smartphones` (ID 1), with zero import errors.
@@ -148,3 +161,4 @@ Customer auth is implemented under `/api/v2/auth`, with email/password and Googl
 - Local commits are split by session foundation, customer endpoints, transaction hardening, storefront integration and verification/setup docs. No auth changes have been pushed. Earlier unrelated UI/media changes remain outside these commits.
 
 Next concrete auth action: create/configure the Google web client and email provider, restart the backend, then verify real Google sign-in/linking and email delivery. The older catalogue/CMS follow-ups above remain separate.
+Catalog cleanup checkpoint - 2026-11-11: added canonical device alias resolution, marketplace Saved Items, reviewed Redmi identity rules, and a report-gated transactional merge script. The October 31 snapshot review in docs/CATALOG_CLEANUP_DRY_RUN.md found five proposed source devices, three affected listings, and separate AirPods 4 hardware models. Isolated MySQL 8.4 restore verified migration, five applied proposals, zero repeat proposals, unchanged 423 listings and stock units, old URLs, and saved-reference consolidation. Next: deploy storefront support, then generate a fresh read-only production report before a separately backed-up cleanup.

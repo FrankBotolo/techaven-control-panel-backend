@@ -1,4 +1,5 @@
 import db from '../../models/index.js';
+import { listingIdentity } from '../../models/SellerListing.js';
 import { bestLegacyCandidate } from './legacyMatcher.js';
 
 const { Product, DeviceVariant, Device, Brand, LegacyProductCatalogueLink, SellerListing, ListingImage, sequelize } = db;
@@ -6,7 +7,7 @@ const { Product, DeviceVariant, Device, Brand, LegacyProductCatalogueLink, Selle
 export async function createListingFromLegacy(product, variantId, transaction) {
   if (!product.shop_id) throw new Error('Legacy product has no shop');
   const [listing] = await SellerListing.findOrCreate({
-    where: { active_identity: `${product.shop_id}:${variantId}:0:new` },
+    where: { active_identity: listingIdentity({shop_id: product.shop_id, device_variant_id: variantId, condition: 'new', currency: 'MWK', price: product.price, status: 'active'}) },
     defaults: { shop_id: product.shop_id, device_variant_id: variantId, condition: 'new', currency: 'MWK', price: product.price, quantity: Math.max(Number(product.stock) || 0, 0), status: 'active' },
     transaction
   });
