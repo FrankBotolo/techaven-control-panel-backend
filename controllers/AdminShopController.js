@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import db from '../models/index.js';
 import { sendInvitationEmail } from '../services/emailService.js';
 import { logAudit, auditContext } from '../utils/audit.js';
+import { enqueueShop, enqueueShopDevices, enqueueTombstone } from '../services/catalogue/promotionSync.js';
 
 const { Shop, ShopInvitation } = db;
 
@@ -27,6 +28,7 @@ export const createShop = async (req, res) => {
       email: email || null,
       logo: logo_url
     });
+    await enqueueShop(shop.id, { reason: `admin-create:${shop.updatedAt.toISOString()}` });
 
     await logAudit({
       ...auditContext(req),
@@ -88,6 +90,8 @@ export const updateShop = async (req, res) => {
     if (logo_url != null) shop.logo = logo_url;
 
     await shop.save();
+    await enqueueShop(shop.id, { reason: `admin-update:${shop.updatedAt.toISOString()}` });
+    await enqueueShopDevices(shop.id, { reason: `admin-update:${shop.updatedAt.toISOString()}` });
 
     await logAudit({
       ...auditContext(req),
@@ -119,6 +123,8 @@ export const approveShopApplication = async (req, res) => {
     shop.is_verified = true;
 
     await shop.save();
+    await enqueueShop(shop.id, { reason: `admin-approve:${shop.updatedAt.toISOString()}` });
+    await enqueueShopDevices(shop.id, { reason: `admin-approve:${shop.updatedAt.toISOString()}` });
 
     await logAudit({
       ...auditContext(req),
@@ -159,6 +165,8 @@ export const rejectShopApplication = async (req, res) => {
     shop.status = 'inactive';
 
     await shop.save();
+    await enqueueShop(shop.id, { reason: `admin-reject:${shop.updatedAt.toISOString()}` });
+    await enqueueShopDevices(shop.id, { reason: `admin-reject:${shop.updatedAt.toISOString()}` });
 
     await logAudit({
       ...auditContext(req),
@@ -193,6 +201,8 @@ export const deleteShop = async (req, res) => {
     const shopIdForAudit = shop.id;
     const shopName = shop.name;
 
+    await enqueueTombstone('shop', shop.id, { name: shop.name }, { reason: `admin-delete:${shop.updatedAt.toISOString()}` });
+    await enqueueShopDevices(shop.id, { reason: `admin-delete:${shop.updatedAt.toISOString()}` });
     // Hard delete - permanently remove the shop from database
     await shop.destroy({ force: true });
 
@@ -274,5 +284,4 @@ export const inviteOwner = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Failed to send invitation', error: error.message });
   }
 };
-
 

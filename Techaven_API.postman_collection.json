@@ -198,6 +198,69 @@
 							"response": []
 						},
 						{
+							"name": "Google Sign-In",
+							"request": {
+								"auth": { "type": "noauth" },
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"id_token\": \"{{google_id_token}}\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/auth/google",
+									"host": ["{{base_url}}"],
+									"path": ["api", "auth", "google"]
+								},
+								"description": "Sign up or log in with **Google**. No password — the mobile app (or web) obtains a Google **ID token** via Google Sign-In, then sends it here.\n\n**Body:**\n- `id_token` (required) — JWT from Google Sign-In (not the Google *access* token)\n\n**Server:**\n1. Verifies token with `GOOGLE_CLIENT_ID` (`google-auth-library`).\n2. Requires Google email to be verified.\n3. **New user** → creates `customer` account (`password` null, `is_verified` true).\n4. **Existing user** (same `google_id` or email) → logs in; links `google_id` if they previously registered with email/password.\n5. Returns `data.access_token` + `data.user` (same shape as `/api/auth/login`).\n\n**Env (server):** `GOOGLE_CLIENT_ID` must match the OAuth client that issued the token (Android / iOS / Web client ID from Google Cloud Console).\n\n**DB:** run `npm run add-google-oauth` once on production (`users.google_id`, nullable `password`).\n\n**Testing in Postman:**\n1. Sign in with Google in your app or [Google OAuth Playground](https://developers.google.com/oauthplayground) (use your Web client ID).\n2. Paste the **ID token** into collection variable `google_id_token`.\n3. Send this request; copy `data.access_token` → `access_token`.\n\n**Errors:** `400` missing token / unverified email · `401` invalid token (wrong client ID or expired token) · `403` account deactivated · `500` DB not migrated or server misconfigured."
+							},
+							"response": [
+								{
+									"name": "Success (200)",
+									"originalRequest": {
+										"method": "POST",
+										"header": [{ "key": "Content-Type", "value": "application/json" }],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"id_token\": \"eyJhbGciOiJSUzI1NiIs...\"\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/api/auth/google",
+											"host": ["{{base_url}}"],
+											"path": ["api", "auth", "google"]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [{ "key": "Content-Type", "value": "application/json" }],
+									"body": "{\n  \"success\": true,\n  \"message\": \"Google sign-in successful\",\n  \"data\": {\n    \"access_token\": \"eyJhbGciOiJIUzI1NiIs...\",\n    \"token_type\": \"Bearer\",\n    \"user\": {\n      \"id\": 42,\n      \"name\": \"Jane Doe\",\n      \"email\": \"jane@gmail.com\",\n      \"phone_number\": null,\n      \"avatar\": \"https://lh3.googleusercontent.com/...\",\n      \"is_verified\": true,\n      \"role\": \"customer\",\n      \"shop_id\": null,\n      \"points\": 0,\n      \"member_since\": \"August 2026\",\n      \"created_at\": \"2026-08-06T10:00:00.000Z\"\n    }\n  }\n}"
+								},
+								{
+									"name": "Invalid token (401)",
+									"originalRequest": {
+										"method": "POST",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/api/auth/google",
+											"host": ["{{base_url}}"],
+											"path": ["api", "auth", "google"]
+										}
+									},
+									"status": "Unauthorized",
+									"code": 401,
+									"_postman_previewlanguage": "json",
+									"header": [],
+									"body": "{\n  \"success\": false,\n  \"message\": \"Invalid Google token\",\n  \"data\": null\n}"
+								}
+							]
+						},
+						{
 							"name": "Send Login OTP",
 							"request": {
 								"auth": {
@@ -4392,6 +4455,12 @@
 			"key": "shop_subscription_id",
 			"value": "1",
 			"type": "string"
+		},
+		{
+			"key": "google_id_token",
+			"value": "",
+			"type": "string",
+			"description": "Google Sign-In ID token (JWT). Paste from app or OAuth Playground before calling POST /api/auth/google."
 		}
 	]
 }

@@ -1,3 +1,4 @@
+import { addressLocation } from '../services/manual-payment-policy.js';
 import db from '../models/index.js';
 import { logAudit, auditContext } from '../utils/audit.js';
 
@@ -11,6 +12,10 @@ const toAddressDto = (row) => ({
   address: row.address,
   city: row.city,
   region: row.region || null,
+  latitude: row.latitude == null ? null : Number(row.latitude),
+  longitude: row.longitude == null ? null : Number(row.longitude),
+  location_accuracy: row.location_accuracy,
+  delivery_notes: row.delivery_notes,
   is_default: !!row.is_default
 });
 
@@ -29,7 +34,7 @@ export const getAddresses = async (req, res) => {
     });
   } catch (error) {
     console.error('Get addresses error:', error);
-    return res.status(500).json({
+    return res.status(error.status || 500).json({
       success: false,
       message: 'Failed to retrieve addresses',
       data: null,
@@ -41,6 +46,7 @@ export const getAddresses = async (req, res) => {
 export const addAddress = async (req, res) => {
   try {
     const userId = req.user.id;
+    const location = addressLocation(req.body);
     const { label, name, phone, address, city, region, is_default } = req.body;
 
     if (!name || !phone || !address || !city) {
@@ -60,6 +66,7 @@ export const addAddress = async (req, res) => {
 
     const row = await ShippingAddress.create({
       user_id: userId,
+      ...location,
       label: label || null,
       name,
       phone,
@@ -85,7 +92,7 @@ export const addAddress = async (req, res) => {
     });
   } catch (error) {
     console.error('Add address error:', error);
-    return res.status(500).json({
+    return res.status(error.status || 500).json({
       success: false,
       message: 'Failed to add address',
       data: null,
@@ -98,6 +105,7 @@ export const updateAddress = async (req, res) => {
   try {
     const userId = req.user.id;
     const id = req.params.address_id || req.params.id;
+    const location = addressLocation(req.body);
     const { label, name, phone, address, city, region, is_default } = req.body;
 
     const row = await ShippingAddress.findOne({
@@ -112,6 +120,7 @@ export const updateAddress = async (req, res) => {
       });
     }
 
+    Object.assign(row, location);
     if (name !== undefined) row.name = name;
     if (phone !== undefined) row.phone = phone;
     if (address !== undefined) row.address = address;
@@ -145,7 +154,7 @@ export const updateAddress = async (req, res) => {
     });
   } catch (error) {
     console.error('Update address error:', error);
-    return res.status(500).json({
+    return res.status(error.status || 500).json({
       success: false,
       message: 'Failed to update address',
       data: null,
@@ -190,7 +199,7 @@ export const deleteAddress = async (req, res) => {
     });
   } catch (error) {
     console.error('Delete address error:', error);
-    return res.status(500).json({
+    return res.status(error.status || 500).json({
       success: false,
       message: 'Failed to delete address',
       data: null,
@@ -230,7 +239,7 @@ export const setDefaultAddress = async (req, res) => {
     });
   } catch (error) {
     console.error('Set default address error:', error);
-    return res.status(500).json({
+    return res.status(error.status || 500).json({
       success: false,
       message: 'Failed to set default address',
       data: null,

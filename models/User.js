@@ -8,6 +8,9 @@ const User = sequelize.define('User', {
     primaryKey: true,
     autoIncrement: true
   },
+  onboarding_required: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+  address_completed_at: { type: DataTypes.DATE, allowNull: true },
+  payment_setup_status: { type: DataTypes.STRING(20), allowNull: false, defaultValue: 'pending' },
   role: {
     type: DataTypes.ENUM('customer', 'seller', 'admin', 'delivery_agent'),
     allowNull: false,

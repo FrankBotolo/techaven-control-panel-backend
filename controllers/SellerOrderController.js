@@ -2,6 +2,7 @@ import db from '../models/index.js';
 import { Op } from 'sequelize';
 import { logAudit, auditContext } from '../utils/audit.js';
 import { sendNotificationEmail } from '../utils/notificationHelper.js';
+import { restoreOrderItemStock } from '../utils/orderItemStock.js';
 
 const { Order, OrderItem, Product, User, Escrow, Wallet, WalletTransaction, Notification, Shop, DeliveryJob, DeliveryAgent } = db;
 
@@ -206,11 +207,7 @@ export const rejectOrder = async (req, res) => {
     await order.save();
 
     for (const item of order.items) {
-      const product = await Product.findByPk(item.product_id);
-      if (product) {
-        product.stock += item.quantity;
-        await product.save();
-      }
+      await restoreOrderItemStock(item);
     }
 
     if (order.payment_status === 'paid' && (order.escrow_status === 'held' || order.escrow_status === 'pending')) {

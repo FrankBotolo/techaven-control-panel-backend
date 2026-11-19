@@ -17,12 +17,19 @@ const OrderItem = sequelize.define('OrderItem', {
   },
   product_id: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    allowNull: true,
     references: {
       model: 'products',
       key: 'id'
     }
   },
+  seller_listing_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: { model: 'seller_listings', key: 'id' }
+  },
+  canonical_snapshot: { type: DataTypes.JSON, allowNull: true },
+  listing_snapshot: { type: DataTypes.JSON, allowNull: true },
   product_name: {
     type: DataTypes.STRING,
     allowNull: false
@@ -52,7 +59,6 @@ const OrderItem = sequelize.define('OrderItem', {
 });
 
 export default OrderItem;
-
 
 
 

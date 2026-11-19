@@ -59,7 +59,7 @@ export const verifySMTPConnection = async () => {
 /**
  * Send OTP email with beautiful template
  */
-export const sendOtpEmail = async (email, otpCode, type = 'verification') => {
+export const sendOtpEmail = async (email, otpCode, type = 'verification', expiryMinutes) => {
   try {
     const mailOptions = {
       from: `"Techaven" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || 'noreply@techaven.mw'}>`,
@@ -69,8 +69,8 @@ export const sendOtpEmail = async (email, otpCode, type = 'verification') => {
         : type === 'login'
         ? 'Login Verification - Techaven'
         : 'Verify Your Email - Techaven',
-      text: `Your verification code is: ${otpCode}. This code will expire in 12 hours.`,
-      html: getOTPEmailTemplate(otpCode, type)
+      text: `Your verification code is: ${otpCode}. This code will expire in ${expiryMinutes ? `${expiryMinutes} minutes` : '12 hours'}.`,
+      html: getOTPEmailTemplate(otpCode, type, expiryMinutes)
     };
 
     const info = await transporter.sendMail(mailOptions);

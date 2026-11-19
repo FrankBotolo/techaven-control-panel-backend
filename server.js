@@ -14,6 +14,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+// Only trust explicitly configured reverse proxies; never trust arbitrary forwarded IPs.
+if (process.env.TRUST_PROXY) app.set('trust proxy', process.env.TRUST_PROXY.split(',').map(value => value.trim()));
 const PORT = process.env.PORT || 8000;
 
 // Middleware

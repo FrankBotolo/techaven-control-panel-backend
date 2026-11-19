@@ -7,7 +7,7 @@
  * the response itself rather than any one failure path.
  */
 
-const SENSITIVE_KEYS = ['password', 'new_password', 'new_password_confirmation', 'otp', 'access_token', 'refresh_token'];
+const SENSITIVE_KEYS = ['password', 'new_password', 'new_password_confirmation', 'otp', 'access_token', 'refresh_token', 'id_token', 'nonce', 'challenge', 'latitude', 'longitude', 'location_accuracy', 'delivery_notes', 'payment_reference', 'payer_name'];
 
 function redact(obj) {
   if (obj == null || typeof obj !== 'object') return obj;
@@ -27,13 +27,14 @@ function redact(obj) {
 export function requestLogger(req, res, next) {
   const start = Date.now();
   const method = req.method;
-  const path = req.originalUrl || req.url;
+  const rawPath = req.originalUrl || req.url;
+  const path = rawPath.startsWith('/api/location/') ? rawPath.split('?')[0] : rawPath;
   const hasAuth = Boolean(req.headers.authorization);
 
   console.log(`[${new Date().toISOString()}] --> ${method} ${path} ${hasAuth ? '(auth)' : '(no auth)'}`);
 
   if (Object.keys(req.query || {}).length > 0) {
-    console.log('  query:', JSON.stringify(req.query));
+    console.log('  query:', JSON.stringify(path.startsWith('/api/location/') ? { location: '[REDACTED]' } : redact(req.query)));
   }
 
   if (req.body && Object.keys(req.body).length > 0) {

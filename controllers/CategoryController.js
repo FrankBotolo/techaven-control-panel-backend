@@ -11,14 +11,34 @@ export const index = async (req, res) => {
     });
 
     const withCount = await Promise.all(categories.map(async (c) => {
-      const product_count = await Product.count({ where: { category_id: c.id } });
+      let product_count = await Product.count({ where: { category_id: c.id } });
+      if (['Loans', 'Pay as you go (PAYGO)'].includes(c.name)) {
+        const [rows] = await db.sequelize.query(`SELECT COUNT(DISTINCT v.device_id) AS count
+          FROM seller_listing_categories lc JOIN seller_listings l ON l.id = lc.listing_id
+          JOIN device_variants v ON v.id = l.device_variant_id JOIN devices d ON d.id = v.device_id
+          JOIN shops s ON s.id = l.shop_id JOIN brands b ON b.id = d.brand_id
+          WHERE lc.category_id = ? AND l.status = 'active' AND l.quantity > 0
+          AND v.is_active = 1 AND d.is_active = 1 AND b.is_active = 1
+          AND s.status = 'active' AND s.application_status = 'approved'`, { replacements: [c.id] });
+        product_count = Number(rows[0].count);
+      }
+      const [brands] = await db.sequelize.query(`SELECT b.slug, b.name, COUNT(DISTINCT d.id) AS product_count,
+        MAX(COALESCE((SELECT dm.url FROM device_media dm WHERE dm.device_id = d.id AND dm.media_type = 'image'
+          ORDER BY dm.is_primary DESC, dm.sort_order ASC, dm.id ASC LIMIT 1), NULLIF(d.primary_image_url, ''))) AS image
+        FROM devices d JOIN brands b ON b.id = d.brand_id JOIN device_variants v ON v.device_id = d.id
+        JOIN seller_listings l ON l.device_variant_id = v.id JOIN shops s ON s.id = l.shop_id
+        WHERE d.is_active = 1 AND b.is_active = 1 AND v.is_active = 1
+        AND l.status = 'active' AND l.quantity > 0 AND s.status = 'active' AND s.application_status = 'approved'
+        AND ${['Loans', 'Pay as you go (PAYGO)'].includes(c.name) ? 'EXISTS (SELECT 1 FROM seller_listing_categories lc WHERE lc.listing_id = l.id AND lc.category_id = ?)' : 'd.category_id = ?'}
+        GROUP BY b.id, b.slug, b.name ORDER BY product_count DESC, b.name ASC`, { replacements: [c.id] });
       return {
         id: c.id,
         name: c.name,
         icon: c.icon || null,
         color: c.color || null,
         image: c.image || null,
-        product_count
+        product_count,
+        brands: brands.map((brand) => ({ ...brand, product_count: Number(brand.product_count) }))
       };
     }));
     return res.json({
@@ -94,4 +114,5 @@ export const getProductsByCategory = async (req, res) => {
     });
   }
 };
+
 

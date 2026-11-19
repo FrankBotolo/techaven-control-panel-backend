@@ -5,6 +5,7 @@ import * as PaymentMethodController from '../controllers/PaymentMethodController
 const router = express.Router();
 
 router.use(authenticate);
+router.use((req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
 
 router.get('/', PaymentMethodController.getPaymentMethods);
 router.post('/', PaymentMethodController.addPaymentMethod);

@@ -113,6 +113,16 @@ export function toProductDto(p) {
     shop_name: plain.shop?.name || null,
     vendor_name: plain.vendor || plain.shop?.name || null,
     variants: normalizeVariants(plain.variants),
+    specifications: normalizeSpecifications(plain.specifications),
     created_at: createdAt
   };
+}
+
+/** Seller-entered {label: value} specs; tolerates legacy stringified JSON. */
+function normalizeSpecifications(value) {
+  let v = value;
+  if (typeof v === "string") {
+    try { v = JSON.parse(v); } catch { return null; }
+  }
+  return v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).length ? v : null;
 }

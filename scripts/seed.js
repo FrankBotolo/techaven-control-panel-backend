@@ -12,6 +12,7 @@
 
 import db from '../models/index.js';
 import dotenv from 'dotenv';
+import { seedPromotions } from './seeders/promotions.js';
 
 dotenv.config();
 
@@ -653,6 +654,14 @@ const seedDatabase = async () => {
       defaults: { user_id: adminUser.id, balance: 0, currency: 'MWK' }
     });
     console.log('       ✅ Admin wallet ready for escrow.\n');
+
+    // ═══════════════════════════════════════════════════════════════════
+    // 11. PROMOTIONS — Storefront merchandising (heroes, banners, rails)
+    // ═══════════════════════════════════════════════════════════════════
+
+    console.log('─── 11. Promotions (merchandising) ───\n');
+    await seedPromotions();
+    console.log('');
 
     // ═══════════════════════════════════════════════════════════════════
     // SUMMARY

@@ -11,8 +11,15 @@ import { subscriptionPayChanguChargeId, parseSubscriptionMerchantRef } from '../
 import { getPayChanguBackendCallbackUrl, getPayChanguWebhookUrl } from '../utils/paychanguUrls.js';
 import { getPayChanguPaymentOptions } from '../utils/paychanguProviders.js';
 import { finalizePendingShopSubscriptionPayment } from '../utils/subscriptionPaymentActivate.js';
+import {
+  getAirtelCredentials,
+  normalizeAirtelMsisdn,
+  normalizeAirtelReference,
+  postAirtelCollect
+} from '../utils/airtelCollect.js';
+import { getAirtelTransactionSummary } from '../utils/airtelTransactions.js';
 
-const { ShopSubscription, SubscriptionPackage, Shop } = db;
+const { ShopSubscription, SubscriptionPackage, Shop, AirtelTransaction } = db;
 
 async function assertShop(shopId, user) {
   const sid = parseInt(shopId, 10);
@@ -549,5 +556,189 @@ export const payWithPayChangu = async (req, res) => {
       message: 'Payment failed',
       error: error.message
     });
+  }
+};
+
+
+/* ───────────────────────── Airtel Money (direct Collection API) ───────────────────────── */
+
+const subscriptionInclude = [{ model: SubscriptionPackage, as: 'package' }];
+
+/** Airtel Malawi subscriber numbers are 9 digits starting with 9 (099x / 098x …) once 0/265 is stripped. */
+function airtelMsisdnOrNull(value) {
+  const local = normalizeAirtelMsisdn(String(value ?? '').replace(/[\s-]/g, ''));
+  return /^9\d{8}$/.test(local) ? local : null;
+}
+
+/** Airtel enquiry: data.transaction.status is TS (success), TF (failed), TA/TIP (in progress). */
+function airtelEnquiryState(payload) {
+  const code = String(
+    payload?.data?.transaction?.status ?? payload?.transaction?.status ?? payload?.data?.status ?? ''
+  ).toUpperCase();
+  if (code === 'TS' || code === 'SUCCESS') return { state: 'paid', code };
+  if (code === 'TF' || code === 'FAILED' || code === 'TE') return { state: 'failed', code };
+  return { state: 'pending', code: code || null };
+}
+
+async function findSellerSubscription(req, res, subscriptionId) {
+  const check = await assertShop(req.params.shopId, req.user);
+  if (check.error) {
+    res.status(check.error.status).json({ success: false, message: check.error.message });
+    return null;
+  }
+  const sid = parseInt(subscriptionId, 10);
+  if (!sid || Number.isNaN(sid)) {
+    res.status(400).json({ success: false, message: 'subscription_id is required' });
+    return null;
+  }
+  const sub = await ShopSubscription.findOne({ where: { id: sid, shop_id: check.shop.id }, include: subscriptionInclude });
+  if (!sub) {
+    res.status(404).json({ success: false, message: 'Subscription not found' });
+    return null;
+  }
+  return { shop: check.shop, sub };
+}
+
+/**
+ * POST /api/sellers/:shopId/subscription/pay/airtel
+ * Body: { subscription_id, msisdn } — sends an Airtel Money USSD prompt for the package price.
+ * transaction.id = SUB{id}{suffix} (alphanumeric); the stored reference SUB-{id}-{suffix} lets the
+ * Airtel webhook (POST /api/webhooks/airtel) resolve and activate the subscription. Sellers can also
+ * poll GET …/pay/airtel/status, which activates on Airtel's TS status.
+ */
+export const payWithAirtel = async (req, res) => {
+  try {
+    const found = await findSellerSubscription(req, res, req.body?.subscription_id);
+    if (!found) return;
+    const { shop, sub } = found;
+
+    if (sub.status === 'active' && sub.payment_status === 'paid') {
+      return res.json({ success: true, message: 'Subscription is already active and paid', data: { state: 'paid', subscription: toShopSubscriptionDto(sub) } });
+    }
+    if (sub.status !== 'pending_payment') {
+      return res.status(400).json({ success: false, message: 'This subscription is not awaiting payment' });
+    }
+
+    const msisdn = airtelMsisdnOrNull(req.body?.msisdn);
+    if (!msisdn) {
+      return res.status(400).json({ success: false, message: 'Enter a valid Airtel Money number, e.g. 0991 234 567' });
+    }
+
+    const { clientId, clientSecret } = getAirtelCredentials();
+    if (!clientId || !clientSecret) {
+      return res.status(503).json({ success: false, message: 'Airtel Money is not configured on the server (AIRTEL_CLIENT_ID / AIRTEL_CLIENT_SECRET)' });
+    }
+
+    const amount = Math.round(parseFloat(sub.package?.price_mwk) || 0);
+    if (amount <= 0) {
+      return res.status(400).json({ success: false, message: 'Package price must be greater than zero for payment' });
+    }
+
+    const reference = subscriptionPayChanguChargeId(sub.id); // SUB-{id}-{unique suffix}; unique per attempt
+    const transactionId = normalizeAirtelReference(reference);
+    const { response, data, success, message } = await postAirtelCollect({ transactionId, msisdn, amount });
+
+    if (!success) {
+      console.error('Subscription Airtel collect error:', response?.status, data);
+      const status = response?.status >= 400 && response?.status < 500 ? response.status : 502;
+      return res.status(status).json({ success: false, message: message || 'Airtel Money request failed', data: null });
+    }
+
+    await AirtelTransaction.create({
+      transaction_id: transactionId,
+      reference,
+      shop_subscription_id: sub.id,
+      msisdn,
+      amount,
+      currency: 'MWK',
+      status: data?.data?.transaction?.status || null,
+      status_code: data?.status?.response_code || data?.status?.result_code || null,
+      message,
+      processing_state: 'push_initiated',
+      raw_payload: data
+    });
+
+    sub.payment_status = 'pending';
+    sub.metadata = { ...(sub.metadata && typeof sub.metadata === 'object' ? sub.metadata : {}), airtel_pending: { transaction_id: transactionId, reference, msisdn, amount, initiated_at: new Date().toISOString() } };
+    await sub.save();
+
+    await logAudit({
+      ...auditContext(req),
+      action: 'seller.subscription.pay_airtel_initiate',
+      actor_user_id: req.user.id,
+      target_type: 'shop_subscription',
+      target_id: sub.id,
+      metadata: { shop_id: shop.id, amount_mwk: amount, transaction_id: transactionId },
+      ip_address: req.ip
+    });
+
+    return res.json({
+      success: true,
+      message: 'Payment prompt sent. Approve it on your phone with your Airtel Money PIN.',
+      data: { state: 'pending', provider: 'airtel', transaction_id: transactionId, amount_mwk: amount, msisdn, subscription: toShopSubscriptionDto(sub) }
+    });
+  } catch (error) {
+    console.error('Subscription pay with Airtel error:', error);
+    return res.status(500).json({ success: false, message: 'Payment initiation failed', error: error.message });
+  }
+};
+
+/**
+ * GET /api/sellers/:shopId/subscription/pay/airtel/status?subscription_id=
+ * Enquires Airtel for the latest push on this subscription and activates it on success (TS),
+ * so payment completes even where Airtel's webhook cannot reach the server.
+ */
+export const getAirtelPaymentStatus = async (req, res) => {
+  try {
+    const found = await findSellerSubscription(req, res, req.query?.subscription_id);
+    if (!found) return;
+    const { sub } = found;
+
+    if (sub.status === 'active' && sub.payment_status === 'paid') {
+      return res.json({ success: true, message: 'Subscription is active', data: { state: 'paid', subscription: toShopSubscriptionDto(sub) } });
+    }
+
+    const txRow = await AirtelTransaction.findOne({ where: { shop_subscription_id: sub.id }, order: [['id', 'DESC']] });
+    if (!txRow?.transaction_id) {
+      return res.json({ success: true, message: 'No Airtel payment started yet', data: { state: 'not_started', subscription: toShopSubscriptionDto(sub) } });
+    }
+
+    const summary = await getAirtelTransactionSummary({ transactionId: txRow.transaction_id });
+    if (!summary.configured) {
+      return res.status(503).json({ success: false, message: summary.message });
+    }
+    const { state, code } = airtelEnquiryState(summary.data);
+
+    if (state === 'paid') {
+      const result = await finalizePendingShopSubscriptionPayment(
+        sub,
+        { amount: txRow.amount, transaction_id: summary.data?.data?.transaction?.airtel_money_id || txRow.transaction_id, status: code },
+        { source: 'airtel_status_enquiry', ip_address: req.ip, actor_user_id: req.user.id }
+      );
+      txRow.status_code = code;
+      txRow.processing_state = result.ok ? 'subscription_activated' : (result.reason || 'subscription_not_finalized');
+      await txRow.save();
+      const fresh = await ShopSubscription.findByPk(sub.id, { include: subscriptionInclude });
+      return res.json({
+        success: result.ok,
+        message: result.ok ? 'Payment received. Your subscription is active.' : 'Payment received but the subscription could not be activated',
+        data: { state: result.ok ? 'paid' : 'error', reason: result.reason || null, subscription: toShopSubscriptionDto(fresh) }
+      });
+    }
+
+    if (state === 'failed' && txRow.processing_state === 'push_initiated') {
+      txRow.status_code = code;
+      txRow.processing_state = 'non_success';
+      await txRow.save();
+    }
+
+    return res.json({
+      success: true,
+      message: state === 'failed' ? 'The Airtel Money payment was declined or cancelled' : 'Waiting for approval on the phone',
+      data: { state, airtel_status: code, transaction_id: txRow.transaction_id, subscription: toShopSubscriptionDto(sub) }
+    });
+  } catch (error) {
+    console.error('Subscription Airtel status error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to check Airtel payment status', error: error.message });
   }
 };

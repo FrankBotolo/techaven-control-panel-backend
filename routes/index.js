@@ -1,3 +1,4 @@
+import manualPaymentRoutes from './manual-payments.js';
 import express from 'express';
 import authRoutes from './auth.js';
 import userRoutes from './user.js';
@@ -29,8 +30,15 @@ import onboardingRoutes from './onboarding.js';
 import subscriptionPackageRoutes from './subscription-packages.js';
 import subscriptionAccessRoutes from './subscription-access.js';
 import platformSettingsRoutes from './platform-settings.js';
+import v2Routes from './v2/index.js';
+import promotionRoutes from './promotions.js';
+import healthRoutes from './health.js';
+import uploadRoutes from './uploads.js';
 
 const router = express.Router();
+
+router.use(manualPaymentRoutes);
+router.use('/v2', v2Routes);
 
 router.use('/auth', authRoutes);
 router.use('/user', userRoutes);
@@ -38,6 +46,9 @@ router.use('/products', productRoutes);
 router.use('/categories', categoryRoutes);
 router.use('/shops', shopRoutes);
 router.use('/banners', bannerRoutes);
+router.use('/promotions', promotionRoutes);
+router.use('/health', healthRoutes);
+router.use('/uploads', uploadRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/admin', adminRoutes);
 router.use('/sellers', sellerRoutes);
@@ -64,4 +75,3 @@ router.use('/subscription-packages', subscriptionPackageRoutes);
 router.use('/', subscriptionAccessRoutes);
 
 export default router;
-

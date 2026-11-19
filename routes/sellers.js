@@ -39,6 +39,8 @@ router.get('/withdrawals', SellerEarningsController.getWithdrawals);
 router.get('/:shopId/subscription', shopOwner, SellerSubscriptionController.getCurrent);
 router.post('/:shopId/subscription/subscribe', shopOwner, SellerSubscriptionController.subscribe);
 router.post('/:shopId/subscription/pay/paychangu', shopOwner, SellerSubscriptionController.payWithPayChangu);
+router.post('/:shopId/subscription/pay/airtel', shopOwner, SellerSubscriptionController.payWithAirtel);
+router.get('/:shopId/subscription/pay/airtel/status', shopOwner, SellerSubscriptionController.getAirtelPaymentStatus);
 router.post('/:shopId/subscription/cancel', shopOwner, SellerSubscriptionController.cancel);
 router.post('/:shopId/subscription/resume', shopOwner, SellerSubscriptionController.resume);
 

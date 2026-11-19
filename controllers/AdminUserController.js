@@ -18,6 +18,72 @@ const toSafeUser = (user) => {
   return rest;
 };
 
+const ROLES = ['customer', 'seller', 'admin', 'delivery_agent'];
+
+/**
+ * POST /api/admin/users
+ * Create a user of any role (admin portal). Body: name, email and/or phone_number, password (>= 8),
+ * role, optional shop_id (sellers), is_verified (default true — admin-created accounts skip OTP), is_active.
+ */
+export const createUser = async (req, res) => {
+  try {
+    const name = String(req.body.name || '').trim();
+    const email = req.body.email ? String(req.body.email).trim().toLowerCase() : null;
+    const phone = req.body.phone_number ? String(req.body.phone_number).trim() : null;
+    const role = req.body.role || 'customer';
+    const password = String(req.body.password || '');
+    const errors = {};
+    if (!name) errors.name = 'Name is required';
+    if (!email && !phone) errors.email = 'Email or phone number is required';
+    if (!ROLES.includes(role)) errors.role = 'Unknown role';
+    if (password.length < 8) errors.password = 'Password must be at least 8 characters';
+    let shopId = null;
+    if (req.body.shop_id) {
+      shopId = parseInt(req.body.shop_id, 10);
+      if (!(await Shop.findByPk(shopId))) errors.shop_id = 'Shop not found';
+    }
+    if (role === 'seller' && !shopId) errors.shop_id = 'Sellers must be assigned to a shop';
+    if (Object.keys(errors).length) {
+      return res.status(400).json({ success: false, message: Object.values(errors)[0], errors });
+    }
+    const clash = await User.findOne({
+      where: { [Op.or]: [email ? { email } : null, phone ? { phone_number: phone } : null].filter(Boolean) }
+    });
+    if (clash) return res.status(409).json({ success: false, message: 'A user with that email or phone already exists' });
+
+    const isVerified = req.body.is_verified !== false;
+    const user = await User.create({
+      name,
+      email,
+      phone_number: phone,
+      password,
+      role,
+      shop_id: shopId,
+      is_verified: isVerified,
+      is_active: req.body.is_active !== false,
+      email_verified_at: isVerified && email ? new Date() : null,
+      // Staff/seller accounts created here don't go through the customer onboarding flow.
+      onboarding_required: role === 'customer' && req.body.onboarding_required === true
+    });
+    await logAudit({
+      action: 'admin.user.create',
+      actor_user_id: req.user.id,
+      target_type: 'user',
+      target_id: user.id,
+      metadata: { role, shop_id: shopId },
+      ip_address: req.ip
+    });
+    const fresh = await User.findByPk(user.id, { attributes: userAttributes });
+    return res.status(201).json({ success: true, message: 'User created', data: toSafeUser(fresh) });
+  } catch (error) {
+    console.error('Admin create user error:', error);
+    if (error.name === 'SequelizeValidationError') {
+      return res.status(400).json({ success: false, message: error.errors?.[0]?.message || 'Invalid user details' });
+    }
+    return res.status(500).json({ success: false, message: 'Failed to create user', error: error.message });
+  }
+};
+
 /**
  * GET /api/admin/users
  * List all users with pagination and filters. Admin only.

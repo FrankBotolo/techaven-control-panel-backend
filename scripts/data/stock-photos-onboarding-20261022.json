@@ -1,0 +1,1262 @@
+[
+  {
+    "slug": "iphone-11",
+    "brand": "apple",
+    "model": "iPhone 11",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/identify-iphone-11-colors.jpg",
+    "source_page_title": "iPhone 11",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "iphone-11-pro",
+    "brand": "apple",
+    "model": "iPhone 11 Pro",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/identify-iphone-11pro.jpg",
+    "source_page_title": "iPhone 11 Pro",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "iphone-11-pro-max",
+    "brand": "apple",
+    "model": "iPhone 11 Pro Max",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/identify-iphone-11pro-max.jpg",
+    "source_page_title": "iPhone 11 Pro Max",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "iphone-12",
+    "brand": "apple",
+    "model": "iPhone 12",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/2021-iphone12-colors.png",
+    "source_page_title": "iPhone 12",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "apple-iphone-12-5g-a2403-global-dual-sim-td-lte-128gb-apple-iphone-132",
+    "brand": "apple",
+    "model": "Apple iPhone 12 5G A2403 Global Dual SIM TD-LTE 128GB (Apple iPhone 13,2)",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/2021-iphone12-colors.png",
+    "source_page_title": "iPhone 12",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "pixel-6",
+    "brand": "google",
+    "model": "Pixel 6",
+    "source_page": "https://store.google.com/us/magazine/compare_pixel?hl=en-US&toggler0=Pixel%206&toggler1=Pixel%206%20Pro&toggler2=Pixel%206a",
+    "image_url": "https://lh3.googleusercontent.com/PsvLsTQAtbPpa6w7-HEWLv1gn2J5uaoyDgiiPnTEp-l1oupeqX0Vg6_8-OHPvEmIYC833M_moY3qNN0Of4uxyj8WSHjdD-iNeMwa=s3000-w3000-e365-rw-v0-nu",
+    "source_page_title": "Pixel 6",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "pixel-6-pro",
+    "brand": "google",
+    "model": "Pixel 6 Pro",
+    "source_page": "https://store.google.com/us/magazine/compare_pixel?hl=en-US&toggler0=Pixel%206&toggler1=Pixel%206%20Pro&toggler2=Pixel%206a",
+    "image_url": "https://lh3.googleusercontent.com/gWaIgnnEnUK7gnWGshJE87dMlPZcWb7rV5Z3Y1JDnOk_itFaaMJSgZORURLUHoH44jkOgohhN3vyhsSJr96LGM3HvP8Te6stEVo=s3000-w3000-e365-rw-v0-nu",
+    "source_page_title": "Pixel 6 Pro",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "google-pixel-7-5g-global-td-lte-128gb-gvu6c-google-panther",
+    "brand": "google",
+    "model": "Google Pixel 7 5G Global TD-LTE 128GB GVU6C (Google Panther)",
+    "source_page": "https://store.google.com/us/magazine/compare_pixel?hl=en-US&toggler0=Pixel%207&toggler1=Pixel%207%20Pro&toggler2=Pixel%207a",
+    "image_url": "https://lh3.googleusercontent.com/RZo2sRlPwmczjQDbwKgYTKa90UzoMKUw2qneAUBbNCqVqN3aScGgsxW8G_csuNnecBV80EzdO8ZrPG4HHTaiK3zwfLxYh9RbT6w=s3000-w3000-e365-rw-v0-nu",
+    "source_page_title": "Pixel 7",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "pixel-7-pro",
+    "brand": "google",
+    "model": "Pixel 7 Pro",
+    "source_page": "https://store.google.com/us/magazine/compare_pixel?hl=en-US&toggler0=Pixel%207&toggler1=Pixel%207%20Pro&toggler2=Pixel%207a",
+    "image_url": "https://lh3.googleusercontent.com/oJPozDOTKzyRGttTgvHZuDYASAi3-lF3r6CO22BcgcrRHeA1xPQyJhYTv362UXzFpdtlctUnxL-zypZv2mw-3TWXlgAMW4r8wA=s3000-w3000-e365-rw-v0-nu",
+    "source_page_title": "Pixel 7 Pro",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "pixel-8-pro",
+    "brand": "google",
+    "model": "Pixel 8 Pro",
+    "source_page": "https://store.google.com/us/magazine/compare_pixel?hl=en-US&toggler0=Pixel%208&toggler1=Pixel%208%20Pro&toggler2=Pixel%208a",
+    "image_url": "https://lh3.googleusercontent.com/nqsUxoT3lOuekMugkIoPhEA2c0e7h1VAHs7pvsuCUFXe-PFPDwSdmA0fXWWdzWSHORc4sHD9RSdTyt2f71Zr58iKoXzDqOLU_dKB=s3000-w3000-e365-rw-v0-nu",
+    "source_page_title": "Pixel 8 Pro",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "samsung-sm-g980f-galaxy-s20-global-td-lte-128gb-samsung-hubble-0",
+    "brand": "samsung",
+    "model": "Samsung SM-G980F Galaxy S20 Global TD-LTE 128GB (Samsung Hubble 0)",
+    "source_page": "https://www.samsung.com/br/support/model/SM-G980FLBJZTO/",
+    "image_url": "https://images.samsung.com/is/image/samsung/br/galaxy-s20/gallery/br-galaxy-s20-sm-g980-sm-g980flbjzto-frontcloudblue-208947373?$56_56_PNG$",
+    "source_page_title": "Galaxy S20",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "samsung-sm-g988b-ds-galaxy-s20-ultra-5g-global-dual-sim-td-lte-128gb-samsung-hubble-2-5g",
+    "brand": "samsung",
+    "model": "Samsung SM-G988B/DS Galaxy S20 Ultra 5G Global Dual SIM TD-LTE 128GB (Samsung Hubble 2 5G)",
+    "source_page": "https://www.samsung.com/se/business/smartphones/galaxy-s/galaxy-s20-ultra-g988-sm-g988bzkdeud/",
+    "image_url": "https://images.samsung.com/is/image/samsung/se/galaxy-s20/gallery/se-galaxy-s20-ultra-g988-sm-g988bzkdeud-frontcosmicblack-thumb-209736008",
+    "source_page_title": "Galaxy S20 Ultra",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "sm-g991b-ds-galaxy-s21-5g-global-dual-sim-td-lte",
+    "brand": "samsung",
+    "model": "SM-G991B/DS Galaxy S21 5G Global Dual SIM TD-LTE 256GB",
+    "source_page": "https://www.samsung.com/sg/business/smartphones/galaxy-s/galaxy-s21-5g-g991-sm-g991bzvgxsp/buy/",
+    "image_url": "https://images.samsung.com/is/image/samsung/p6pim/sg/galaxy-s21/gallery/sg-galaxy-s21-5g-g991-sm-g991bzvgxsp-thumb-368335863?$720_576_JPG$",
+    "source_page_title": "Galaxy S21 5G",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "galaxy-s21-ultra",
+    "brand": "samsung",
+    "model": "Galaxy S21 Ultra",
+    "source_page": "https://www.samsung.com/fr/smartphones/galaxy-s/galaxy-s21-ultra-5g-phantom-black-128gb-sm-g998bzkdeuh/buy/",
+    "image_url": "https://images.samsung.com/is/image/samsung/p6pim/fr/sm-g998bzkdeuh/gallery/fr-galaxy-s21-ultra-5g-g988-371662-sm-g998bzkdeuh-481789994?$624_468_PNG$",
+    "source_page_title": "Galaxy S21 Ultra",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "iphone-x",
+    "brand": "apple",
+    "model": "iPhone X",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/iphone-x-colors.jpg",
+    "source_page_title": "iPhone X",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "iphone-12-pro-max",
+    "brand": "apple",
+    "model": "iPhone 12 Pro Max",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/iphone-12-pro-max/iphone12-pro-max-colors.jpg",
+    "source_page_title": "iPhone 12 Pro Max",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "iphone-14-pro",
+    "brand": "apple",
+    "model": "iPhone 14 Pro",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/iphone-14-pro-colors.png",
+    "source_page_title": "iPhone 14 Pro",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "apple-iphone-15-pro-max-5g-a3106-global-dual-sim-td-lte-256gb-apple-iphone-162",
+    "brand": "apple",
+    "model": "Apple iPhone 15 Pro Max 5G A3106 Global Dual SIM TD-LTE 256GB (Apple iPhone 16,2)",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/fall-2023-iphone-colors-iphone-15-pro-max.png",
+    "source_page_title": "iPhone 15 Pro Max",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "redmi-a3",
+    "brand": "xiaomi",
+    "model": "Xiaomi Redmi A3",
+    "source_page": "https://www.mi.com/global/product/redmi-a3/",
+    "image_url": "https://i02.appmifile.com/686_operatorx_operatorx_opx/23/02/2024/a13c444dfc0b5db4ecae1e9d0ba10326.png",
+    "source_page_title": "Redmi A3",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "xiaomi-redmi-a4-5g-standard-edition-dual-sim-td-lte-in-64gb-24116rnc1i-xiaomi-warm",
+    "brand": "xiaomi",
+    "model": "Xiaomi Redmi A4 5G Standard Edition Dual SIM TD-LTE IN 64GB 24116RNC1I (Xiaomi Warm)",
+    "source_page": "https://www.mi.com/in/product/redmi-a4-5g/",
+    "image_url": "https://i03.appmifile.com/671_item_in/19/11/2024/00f00d1b293840252e50d461fea78ae0.png",
+    "source_page_title": "Redmi A4 5G",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "xiaomi-redmi-12-5g-standard-edition-global-dual-sim-td-lte-128gb-23076rn8dy-xiaomi-sky",
+    "brand": "xiaomi",
+    "model": "Xiaomi Redmi 12 5G Standard Edition Global Dual SIM TD-LTE 128GB 23076RN8DY (Xiaomi Sky)",
+    "source_page": "https://www.mi.com/in/product/redmi-12-5g/",
+    "image_url": "https://i03.appmifile.com/186_item_in/04/07/2024/62a60d06c6fe454dd183282828961ab1.png",
+    "source_page_title": "Redmi 12 5G",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "redmi-13c",
+    "brand": "xiaomi",
+    "model": "Redmi 13C",
+    "source_page": "https://www.mi.com/global/product/redmi-13c/",
+    "image_url": "https://i02.appmifile.com/477_operatorx_operatorx_opx/08/11/2023/a69b2ced4a4e2403fbfd446994c26a06.png",
+    "source_page_title": "Redmi 13C",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "redmi-14c",
+    "brand": "xiaomi",
+    "model": "Xiaomi Redmi 14C",
+    "source_page": "https://www.mi.com/uk/product/redmi-14-c/specs/",
+    "image_url": "https://i05.appmifile.com/209_item_uk/16/10/2024/35ce561b6752b73502978b911f4e9ccb.png",
+    "source_page_title": "Redmi 14C",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "xiaomi-redmi-note-12-pro-4g-premium-edition-global-dual-sim-td-lte-256gb-2209116ag-xiaomi-sweetpro-b",
+    "brand": "xiaomi",
+    "model": "Xiaomi Redmi Note 12 Pro 4G Premium Edition Global Dual SIM TD-LTE 256GB 2209116AG (Xiaomi SweetPro B)",
+    "source_page": "https://www.mi.com/global/product/redmi-note-12-pro/",
+    "image_url": "https://i01.appmifile.com/v1/MI_18455B3E4DA706226CF7535A58E875F0267/pms_1681299637.34121266.png",
+    "source_page_title": "Redmi Note 12 Pro",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "redmi-note-13-4g",
+    "brand": "xiaomi",
+    "model": "Xiaomi Redmi Note 13 4G",
+    "source_page": "https://www.mi.com/global/product/redmi-note-13/",
+    "image_url": "https://i02.appmifile.com/994_operatorx_operatorx_opx/11/01/2024/72a71b312950178179eeb71425ef8def.png",
+    "source_page_title": "Redmi Note 13",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "redmi-note-13-5g",
+    "brand": "xiaomi",
+    "model": "Xiaomi Redmi Note 13 5G",
+    "source_page": "https://www.mi.com/global/product/redmi-note-13-5g/",
+    "image_url": "https://i02.appmifile.com/463_operatorx_operatorx_opx/11/01/2024/e02e51cd6efb5f2282e6921128b2618a.png",
+    "source_page_title": "Redmi Note 13 5G",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "redmi-note-13-pro-4g",
+    "brand": "xiaomi",
+    "model": "Xiaomi Redmi Note 13 Pro 4G",
+    "source_page": "https://www.mi.com/global/product/redmi-note-13-pro/",
+    "image_url": "https://i02.appmifile.com/13_operatorx_operatorx_opx/11/01/2024/25da829b5997ff8aea28af388df3b8df.png",
+    "source_page_title": "Redmi Note 13 Pro",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "redmi-note-13-pro-5g",
+    "brand": "xiaomi",
+    "model": "Xiaomi Redmi Note 13 Pro 5G",
+    "source_page": "https://www.mi.com/global/product/redmi-note-13-pro-5g/",
+    "image_url": "https://i02.appmifile.com/855_operatorx_operatorx_opx/11/01/2024/4fad3c8039e37a4fa97f8be0462e88e5.png",
+    "source_page_title": "Redmi Note 13 Pro 5G",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "redmi-note-13-pro-plus-5g",
+    "brand": "xiaomi",
+    "model": "Xiaomi Redmi Note 13 Pro Plus 5G",
+    "source_page": "https://www.mi.com/global/product/redmi-note-13-pro-plus-5g/",
+    "image_url": "https://i02.appmifile.com/861_operatorx_operatorx_opx/06/09/2024/81bc431668bddec2805ee43d10624180.png",
+    "source_page_title": "Redmi Note 13 Pro+ 5G",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "xiaomi-redmi-note-14-5g-standard-edition-global-dual-sim-td-lte-256gb-24094rad4g-xiaomi-beryl",
+    "brand": "xiaomi",
+    "model": "Xiaomi Redmi Note 14 5G Standard Edition Global Dual SIM TD-LTE 256GB 24094RAD4G (Xiaomi Beryl)",
+    "source_page": "https://www.mi.com/global/product/redmi-note-14-5g/",
+    "image_url": "https://i02.appmifile.com/613_operatorx_operatorx_opx/10/01/2025/7657db17736d4f4480de86d11341aabe.png",
+    "source_page_title": "Redmi Note 14 5G",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "xiaomi-redmi-note-14-pro-4g-premium-edition-global-dual-sim-td-lte-256gb-24116raccg-xiaomi-obsidian",
+    "brand": "xiaomi",
+    "model": "Xiaomi Redmi Note 14 Pro 4G Premium Edition Global Dual SIM TD-LTE 256GB 24116RACCG (Xiaomi Obsidian)",
+    "source_page": "https://www.mi.com/global/product/redmi-note-14-pro/",
+    "image_url": "https://i02.appmifile.com/145_operatorx_operatorx_opx/10/01/2025/b381ab467340baace69840496f8cdfd3.png",
+    "source_page_title": "Redmi Note 14 Pro",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "xiaomi-redmi-note-14-pro-4g-premium-edition-global-dual-sim-td-lte-512gb-24116raccg-xiaomi-obsidian",
+    "brand": "xiaomi",
+    "model": "Xiaomi Redmi Note 14 Pro 4G Premium Edition Global Dual SIM TD-LTE 512GB 24116RACCG (Xiaomi Obsidian)",
+    "source_page": "https://www.mi.com/global/product/redmi-note-14-pro/",
+    "image_url": "https://i02.appmifile.com/145_operatorx_operatorx_opx/10/01/2025/b381ab467340baace69840496f8cdfd3.png",
+    "source_page_title": "Redmi Note 14 Pro",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "xiaomi-redmi-note-14-pro-5g-standard-edition-global-dual-sim-td-lte-256gb-24115ra8eg-xiaomi-amethyst",
+    "brand": "xiaomi",
+    "model": "Xiaomi Redmi Note 14 Pro+ 5G Standard Edition Global Dual SIM TD-LTE 256GB 24115RA8EG (Xiaomi Amethyst)",
+    "source_page": "https://www.mi.com/global/product/redmi-note-14-pro-plus-5g/",
+    "image_url": "https://i02.appmifile.com/638_operatorx_operatorx_opx/10/01/2025/c31d9ca06f0c27a541bcb2754acf770b.png",
+    "source_page_title": "Redmi Note 14 Pro+ 5G",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "galaxy-a05",
+    "brand": "samsung",
+    "model": "Galaxy A05",
+    "source_page": "https://www.samsung.com/africa_en/smartphones/galaxy-a/galaxy-a05-black-128gb-sm-a055fzkgafc/",
+    "image_url": "https://images.samsung.com/is/image/samsung/p6pim/africa_en/sm-a055fzkgafc/gallery/africa-en-galaxy-a05-sm-a055-sm-a055fzkgafc-539122320?$624_468_PNG$",
+    "source_page_title": "Galaxy A05",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "samsung-sm-a057f-galaxy-a05s-2023-standard-edition-global-td-lte-128gb-samsung-a057",
+    "brand": "samsung",
+    "model": "Samsung SM-A057F Galaxy A05s 2023 Standard Edition Global TD-LTE 128GB (Samsung A057)",
+    "source_page": "https://www.samsung.com/ru/smartphones/galaxy-a/galaxy-a05s-silver-128gb-sm-a057fzsvser/",
+    "image_url": "https://images.samsung.com/is/image/samsung/p6pim/ru/sm-a057fzsvser/gallery/ru-galaxy-a05s-sm-a057-sm-a057fzsvser-thumb-538686860",
+    "source_page_title": "Galaxy A05s",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "galaxy-a06",
+    "brand": "samsung",
+    "model": "Galaxy A06",
+    "source_page": "https://www.samsung.com/za/smartphones/galaxy-a/galaxy-a06-black-64gb-sm-a065fzkdafa/",
+    "image_url": "https://images.samsung.com/is/image/samsung/p6pim/za/sm-a065fzkdafa/gallery/za-galaxy-a06-sm-a065-sm-a065fzkdafa-543392145?$624_468_PNG$",
+    "source_page_title": "Galaxy A06",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "samsung-sm-a155f-n-galaxy-a15-4g-2024-standard-edition-global-td-lte-128gb-samsung-a155",
+    "brand": "samsung",
+    "model": "Samsung SM-A155F/N Galaxy A15 4G 2024 Standard Edition Global TD-LTE 128GB (Samsung A155)",
+    "source_page": "https://www.samsung.com/ro/smartphones/galaxy-a/galaxy-a15-blue-black-256gb-sm-a155fzkieue/",
+    "image_url": "https://images.samsung.com/is/image/samsung/p6pim/ro/sm-a155fzkieue/gallery/ro-galaxy-a15-sm-a155-493657-sm-a155fzkieue-thumb-542321095",
+    "source_page_title": "Galaxy A15",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "galaxy-a15-5g",
+    "brand": "samsung",
+    "model": "Samsung Galaxy A15 5G",
+    "source_page": "https://www.samsung.com/in/smartphones/galaxy-a/galaxy-a15-5g-blue-black-128gb-sm-a156ezkpins/",
+    "image_url": "https://images.samsung.com/is/image/samsung/p6pim/in/sm-a156ezkpins/gallery/in-galaxy-a15-5g-sm-a156-490596-sm-a156ezkpins-thumb-539413422",
+    "source_page_title": "Galaxy A15 5G",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "galaxy-a16-4g",
+    "brand": "samsung",
+    "model": "Samsung Galaxy A16 4G",
+    "source_page": "https://www.samsung.com/br/smartphones/galaxy-a/galaxy-a16-black-128gb-sm-a165mzkdzto/",
+    "image_url": "https://images.samsung.com/is/image/samsung/p6pim/br/sm-a165mzkdzto/gallery/br-galaxy-a16-sm-a165-sm-a165mzkdzto-544286907?$624_468_PNG$",
+    "source_page_title": "Galaxy A16 4G",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "samsung-sm-a256e-dsn-galaxy-a25-5g-2024-standard-edition-global-dual-sim-td-lte-128gb-samsung-a256",
+    "brand": "samsung",
+    "model": "Samsung SM-A256E/DSN Galaxy A25 5G 2024 Standard Edition Global Dual SIM TD-LTE 128GB (Samsung A256)",
+    "source_page": "https://www.samsung.com/es/smartphones/galaxy-a/galaxy-a25-5g-blue-256gb-sm-a256bzbheub/",
+    "image_url": "https://images.samsung.com/is/image/samsung/p6pim/es/sm-a256bzbheub/gallery/es-galaxy-a25-5g-sm-a256-sm-a256bzbheub-thumb-539481542",
+    "source_page_title": "Galaxy A25 5G",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "samsung-sm-a356e-ds-galaxy-a35-5g-2024-premium-edition-global-dual-sim-td-lte-128gb-samsung-a356",
+    "brand": "samsung",
+    "model": "Samsung SM-A356E/DS Galaxy A35 5G 2024 Premium Edition Global Dual SIM TD-LTE 128GB (Samsung A356)",
+    "source_page": "https://www.samsung.com/latin/smartphones/galaxy-a/galaxy-a35-5g-awesome-navy-128gb-sm-a356ezkdgto/buy/",
+    "image_url": "https://images.samsung.com/is/image/samsung/p6pim/latin/sm-a356ezkdgto/gallery/latin-galaxy-a35-5g-sm-a356-sm-a356ezkdgto-540449297?$624_468_PNG$",
+    "source_page_title": "Galaxy A35 5G",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "galaxy-a53",
+    "brand": "samsung",
+    "model": "Galaxy A53",
+    "source_page": "https://www.samsung.com/ae/smartphones/galaxy-a/galaxy-a53-5g-awesome-black-128gb-sm-a536ezkdmea/",
+    "image_url": "https://images.samsung.com/is/image/samsung/p6pim/ae/2202/gallery/ae-galaxy-a53-5g-a536-sm-a536ezkdmea-thumb-531467105",
+    "source_page_title": "Galaxy A53",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "samsung-sm-a546e-galaxy-a54-5g-2023-premium-edition-global-td-lte-128gb-samsung-a546",
+    "brand": "samsung",
+    "model": "Samsung SM-A546E Galaxy A54 5G 2023 Premium Edition Global TD-LTE 128GB (Samsung A546)",
+    "source_page": "https://www.samsung.com/es/smartphones/galaxy-a/galaxy-a54-5g-awesome-black-128gb-sm-a546bzkceub/",
+    "image_url": "https://images.samsung.com/is/image/samsung/p6pim/es/sm-a546bzkceub/gallery/es-galaxy-a54-5g-sm-a546-sm-a546bzkceub-thumb-535688504",
+    "source_page_title": "Galaxy A54 5G",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "galaxy-a73",
+    "brand": "samsung",
+    "model": "Galaxy A73",
+    "source_page": "https://www.samsung.com/ae/smartphones/galaxy-a/galaxy-a73-5g-awesome-mint-128gb-sm-a736blggmea/",
+    "image_url": "https://images.samsung.com/is/image/samsung/p6pim/ae/sm-a736blggmea/gallery/ae-galaxy-a73-5g-a736-sm-a736blggmea-thumb-531868765",
+    "source_page_title": "Galaxy A73",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "samsung-sm-m055f-ds-galaxy-m05-2024-standard-edition-global-dual-sim-td-lte-64gb-samsung-a055",
+    "brand": "samsung",
+    "model": "Samsung SM-M055F/DS Galaxy M05 2024 Standard Edition Global Dual SIM TD-LTE 64GB (Samsung A055)",
+    "source_page": "https://www.samsung.com/in/smartphones/galaxy-m/galaxy-m05-light-blue-64gb-sm-m055flgdins/buy/",
+    "image_url": "https://images.samsung.com/is/image/samsung/p6pim/in/sm-m055flgdins/gallery/in-galaxy-m05-4-gb-memory-sm-m055flgdins-543451592?$624_468_PNG$",
+    "source_page_title": "Galaxy M05",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "samsung-sm-g985f-galaxy-s20-global-td-lte-128gb-samsung-hubble-1",
+    "brand": "samsung",
+    "model": "Samsung SM-G985F Galaxy S20+ Global TD-LTE 128GB (Samsung Hubble 1)",
+    "source_page": "https://www.samsung.com/sa_en/business/smartphones/galaxy-s/galaxy-s20-plus-sm-g985-sm-g985fzadksa/buy/",
+    "image_url": "https://images.samsung.com/is/image/samsung/sa-en-galaxy-s20-plus-sm-g985-sm-g985fzadksa-frontcosmicgray-thumb-224532718?$720_576_JPG$",
+    "source_page_title": "Galaxy S20+",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "sm-g996b-ds-galaxy-s21-5g-global-dual-sim-td-lte",
+    "brand": "samsung",
+    "model": "SM-G996B/DS Galaxy S21+ 5G Global Dual SIM TD-LTE 256GB",
+    "source_page": "https://www.samsung.com/at/business/smartphones/galaxy-s/galaxy-s21-plus-5g-sm-g996bzvgeue/",
+    "image_url": "https://images.samsung.com/is/image/samsung/p6pim/at/sm-g996bzvgeue/gallery/at-galaxy-s21-5g-g996-sm-g996bzvgeue-thumb-458070309",
+    "source_page_title": "Galaxy S21+ 5G",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "samsung-sm-s901e-galaxy-s22-5g-global-dual-sim-td-lte-128gb-samsung-rainbow-r",
+    "brand": "samsung",
+    "model": "Samsung SM-S901E Galaxy S22 5G Global Dual SIM TD-LTE 128GB (Samsung Rainbow R)",
+    "source_page": "https://www.samsung.com/es/smartphones/galaxy-s/galaxy-s22-phantom-black-128gb-sm-s901bzkdeub/buy/",
+    "image_url": "https://images.samsung.com/is/image/samsung/p6pim/es/2202/gallery/es-galaxy-s22-s901-sm-s901bzkdeub-530861557?$624_468_PNG$",
+    "source_page_title": "Galaxy S22",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "galaxy-s22-ultra",
+    "brand": "samsung",
+    "model": "Galaxy S22 Ultra",
+    "source_page": "https://www.samsung.com/ru/smartphones/galaxy-s/galaxy-s22-ultra-phantom-black-256gb-sm-s908bzkgser/",
+    "image_url": "https://images.samsung.com/is/image/samsung/p6pim/ru/2202/gallery/ru-galaxy-s22-ultra-s908-sm-s908bzkgser-thumb-530892950",
+    "source_page_title": "Galaxy S22 Ultra",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "galaxy-s23",
+    "brand": "samsung",
+    "model": "Galaxy S23",
+    "source_page": "https://www.samsung.com/mx/smartphones/galaxy-s/galaxy-s23-green-128gb-sm-s911bzglltm/buy/",
+    "image_url": "https://images.samsung.com/is/image/samsung/p6pim/mx/sm-s911bzglltm/gallery/mx-galaxy-s23-s911-446666-sm-s911bzglltm-539855079?$624_468_PNG$",
+    "source_page_title": "Galaxy S23",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "galaxy-s23-ultra",
+    "brand": "samsung",
+    "model": "Galaxy S23 Ultra",
+    "source_page": "https://www.samsung.com/ru/smartphones/galaxy-s/galaxy-s23-ultra-cream-512gb-sm-s918bzehser/buy/",
+    "image_url": "https://images.samsung.com/is/image/samsung/p6pim/ru/2302/gallery/ru-galaxy-s23-s918-sm-s918bzehser-534906167?$624_468_PNG$",
+    "source_page_title": "Galaxy S23 Ultra",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "samsung-sm-s921b-ds-galaxy-s24-5g-global-dual-sim-td-lte-128gb-samsung-muse-1",
+    "brand": "samsung",
+    "model": "Samsung SM-S921B/DS Galaxy S24 5G Global Dual SIM TD-LTE 128GB (Samsung Muse 1)",
+    "source_page": "https://www.samsung.com/latin/business/smartphones/galaxy-s/galaxy-s24-onyx-black-128gb-sm-s921bzkjl15/",
+    "image_url": "https://images.samsung.com/is/image/samsung/p6pim/latin/sm-s921bzkjl15/gallery/latin-galaxy-s24-sm-s921bzkjl15-thumb-547613679?$720_576_JPG$",
+    "source_page_title": "Galaxy S24",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "samsung-sm-s926b-galaxy-s24-5g-global-td-lte-256gb-samsung-muse-2",
+    "brand": "samsung",
+    "model": "Samsung SM-S926B Galaxy S24+ 5G Global TD-LTE 256GB (Samsung Muse 2)",
+    "source_page": "https://www.samsung.com/in/business/smartphones/galaxy-s/galaxy-s24-plus-sm-s926bzabins/",
+    "image_url": "https://images.samsung.com/is/image/samsung/p6pim/in/sm-s926bzabins/gallery/in-galaxy-s24-plus-495133-sm-s926bzabins-thumb-539856366?$720_576_JPG$",
+    "source_page_title": "Galaxy S24+",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "samsung-sm-s931b-galaxy-s25-5g-global-td-lte-256gb-samsung-paradigm-1",
+    "brand": "samsung",
+    "model": "Samsung SM-S931B Galaxy S25 5G Global TD-LTE 256GB (Samsung Paradigm 1)",
+    "source_page": "https://www.samsung.com/us/smartphones/galaxy-s25/buy/galaxy-s25-256gb-unlocked-sm-s931uzkexaa/",
+    "image_url": "https://images.samsung.com/is/image/samsung/p6pim/us/2501/gallery/us-galaxy-s25-s931-536522-sm-s931uzkexaa-544904966",
+    "source_page_title": "Galaxy S25",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "samsung-sm-s936b-galaxy-s25-5g-global-td-lte-256gb-samsung-paradigm-2",
+    "brand": "samsung",
+    "model": "Samsung SM-S936B Galaxy S25+ 5G Global TD-LTE 256GB (Samsung Paradigm 2)",
+    "source_page": "https://www.samsung.com/hu/smartphones/galaxy-s25/buy/?modelCode=SM-S936BZKDEUE",
+    "image_url": "https://images.samsung.com/is/image/samsung/p6pim/hu/2501/gallery/hu-galaxy-s25-s936-sm-s936bdbdeue-544723231",
+    "source_page_title": "Galaxy S25+",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "samsung-sm-n976q-galaxy-note-10-5g-global-td-lte-256gb-samsung-davinci-4",
+    "brand": "samsung",
+    "model": "Samsung SM-N976Q Galaxy Note 10+ 5G Global TD-LTE 256GB (Samsung DaVinci 4)",
+    "source_page": "https://www.samsung.com/de/business/smartphones/galaxy-note/galaxy-note10-plus-5g-n976b-sm-n976bzkadtm/buy/",
+    "image_url": "https://images.samsung.com/is/image/samsung/de/galaxy-note10/gallery/de-galaxy-note10-plus-5g-n976b-sm-n976bzkadtm-frontaurablack-176639284?$Q90_684_547_JPG$",
+    "source_page_title": "Galaxy Note10+ 5G",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "galaxy-note-20-ultra",
+    "brand": "samsung",
+    "model": "Galaxy Note 20 Ultra",
+    "source_page": "https://www.samsung.com/eg/smartphones/galaxy-note/galaxy-note20-ultra-mystic-white-256gb-sm-n985fzwgegy/",
+    "image_url": "https://images.samsung.com/is/image/samsung/eg-galaxy-note20-ultra-n985-hs-sm-n985fzwgegy-frontmysticwhite-thumb-307831536",
+    "source_page_title": "Galaxy Note20 Ultra",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "iphone-xr",
+    "brand": "apple",
+    "model": "iPhone XR",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/iphone-xr/identify-iphone-xr-colors.jpg",
+    "source_page_title": "iPhone XR",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "iphone-12-pro",
+    "brand": "apple",
+    "model": "iPhone 12 Pro",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/iphone-12-pro/iphone12-pro-colors.jpg",
+    "source_page_title": "iPhone 12 Pro",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "iphone-13-pro",
+    "brand": "apple",
+    "model": "iPhone 13 Pro",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/2022-spring-iphone13-pro-colors.png",
+    "source_page_title": "iPhone 13 Pro",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "iphone-13-pro-max",
+    "brand": "apple",
+    "model": "iPhone 13 Pro Max",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/2022-spring-iphone13-pro-max-colors.png",
+    "source_page_title": "iPhone 13 Pro Max",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "iphone-14",
+    "brand": "apple",
+    "model": "iPhone 14",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/iphone-14-colors-spring-2023.png",
+    "source_page_title": "iPhone 14",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "iphone-14-pro-max",
+    "brand": "apple",
+    "model": "iPhone 14 Pro Max",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/iphone-14-pro-max-colors.png",
+    "source_page_title": "iPhone 14 Pro Max",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "apple-iphone-15-5g-a3090-global-dual-sim-td-lte-128gb-apple-iphone-154",
+    "brand": "apple",
+    "model": "Apple iPhone 15 5G A3090 Global Dual SIM TD-LTE 128GB (Apple iPhone 15,4)",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/fall-2023-iphone-colors-iphone-15.png",
+    "source_page_title": "iPhone 15",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "iphone-15-plus",
+    "brand": "apple",
+    "model": "iPhone 15 Plus",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/fall-2023-iphone-colors-iphone-15-plus.png",
+    "source_page_title": "iPhone 15 Plus",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "apple-iphone-15-pro-5g-a3102-global-dual-sim-td-lte-256gb-apple-iphone-161",
+    "brand": "apple",
+    "model": "Apple iPhone 15 Pro 5G A3102 Global Dual SIM TD-LTE 256GB (Apple iPhone 16,1)",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/fall-2023-iphone-colors-iphone-15-pro.png",
+    "source_page_title": "iPhone 15 Pro",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "apple-iphone-16-5g-a3287-global-dual-sim-td-lte-128gb-apple-iphone-173",
+    "brand": "apple",
+    "model": "Apple iPhone 16 5G A3287 Global Dual SIM TD-LTE 128GB (Apple iPhone 17,3)",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/iphone-16-colors.png",
+    "source_page_title": "iPhone 16",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "iphone-16-pro",
+    "brand": "apple",
+    "model": "iPhone 16 Pro",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/iphone-16-pro-colors.png",
+    "source_page_title": "iPhone 16 Pro",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "apple-iphone-16-pro-max-5g-a3296-global-dual-sim-td-lte-256gb-apple-iphone-172",
+    "brand": "apple",
+    "model": "Apple iPhone 16 Pro Max 5G A3296 Global Dual SIM TD-LTE 256GB (Apple iPhone 17,2)",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/iphone-16-pro-max-colors.png",
+    "source_page_title": "iPhone 16 Pro Max",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "google-pixel-6a-5g-global-td-lte-128gb-g1azg-google-bluejay",
+    "brand": "google",
+    "model": "Google Pixel 6a 5G Global TD-LTE 128GB G1AZG (Google Bluejay)",
+    "source_page": "https://store.google.com/us/magazine/compare_pixel?hl=en-US&toggler0=Pixel%206&toggler1=Pixel%206%20Pro&toggler2=Pixel%206a",
+    "image_url": "https://lh3.googleusercontent.com/3CGO-VJb7W7vXbOfseMoeWwcwEXXvhWZ5FQx_PU09ToruB-qdZZfwJRGBuSBo4y7Gbb3jYWXnhlgv5puHTih0qfpaiImNeuBuVwQ=s3000-w3000-e365-rw-v0-nu",
+    "source_page_title": "Pixel 6a",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "google-pixel-7a-5g-global-td-lte-128gb-ghl1x-google-lynx",
+    "brand": "google",
+    "model": "Google Pixel 7a 5G Global TD-LTE 128GB GHL1X (Google Lynx)",
+    "source_page": "https://store.google.com/us/magazine/compare_pixel?hl=en-US&toggler0=Pixel%207&toggler1=Pixel%207%20Pro&toggler2=Pixel%207a",
+    "image_url": "https://lh3.googleusercontent.com/JZFO-a291hyiRLiZfd7tqChODHftb6oM1X0GUvL_CSy8ZcDQtdul9NzYtto6jevbhdFRwMJZYNH3tgM_nfjfc4HnGFWXj8GS0dA=s3000-w3000-e365-rw-v0-nu",
+    "source_page_title": "Pixel 7a",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "google-pixel-8-5g-global-td-lte-128gb-gpj41-google-shiba",
+    "brand": "google",
+    "model": "Google Pixel 8 5G Global TD-LTE 128GB GPJ41 (Google Shiba)",
+    "source_page": "https://store.google.com/us/magazine/compare_pixel?hl=en-US&toggler0=Pixel%208&toggler1=Pixel%208%20Pro&toggler2=Pixel%208a",
+    "image_url": "https://lh3.googleusercontent.com/0Pf1Iaxi0Lu55vJ8j7aqJo5UOD_MXyywXO0PZk3Wvzv-xrU82XpzOotNe7nzQg5ESRhwDU5g1I8hYZpVy073LTxYWqLfA0IJwI4l=s3000-w3000-e365-rw-v0-nu",
+    "source_page_title": "Pixel 8",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "google-pixel-8a-5g-global-td-lte-128gb-g6gpr-google-akita",
+    "brand": "google",
+    "model": "Google Pixel 8a 5G Global TD-LTE 128GB G6GPR (Google Akita)",
+    "source_page": "https://store.google.com/us/magazine/compare_pixel?hl=en-US&toggler0=Pixel%208&toggler1=Pixel%208%20Pro&toggler2=Pixel%208a",
+    "image_url": "https://lh3.googleusercontent.com/UQse72iPdx6m0GqKhExopl58yewjg3KUs-plOSwt9pocfiBuGFUtn76hkpF-e9diL7SwWACuslCDSYqcn6YF6XHKJPwjPK8f26s=s3000-w3000-e365-rw-v0-nu",
+    "source_page_title": "Pixel 8a",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "google-pixel-9-5g-global-td-lte-129gb-gur25-google-tokay",
+    "brand": "google",
+    "model": "Google Pixel 9 5G Global TD-LTE 129GB GUR25 (Google Tokay)",
+    "source_page": "https://store.google.com/us/magazine/compare_pixel?hl=en-US&toggler0=Pixel%209&toggler1=Pixel%209a&toggler2=Pixel%209%20Pro",
+    "image_url": "https://lh3.googleusercontent.com/RxfMvRL60vSfgXLMjSkOJjedv5gOfC1uUG4_y7GmbrHPHZEQEkXSDvuOHlOzdvnAY0r9-1LNtJAWsdV5XEk3cqjateq69ejL7Q=s3000-w3000-e365-rw-v0-nu",
+    "source_page_title": "Pixel 9",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "google-pixel-9a-5g-global-td-lte-128gb-gtf7p-google-tegu",
+    "brand": "google",
+    "model": "Google Pixel 9a 5G Global TD-LTE 128GB GTF7P (Google Tegu)",
+    "source_page": "https://store.google.com/us/magazine/compare_pixel?hl=en-US&toggler0=Pixel%209&toggler1=Pixel%209a&toggler2=Pixel%209%20Pro",
+    "image_url": "https://lh3.googleusercontent.com/0z10UlwmT3yeGP4mFghBZRvMASE3inNsFGY8UZqPIjZyYk2XV6nK4s1WDKSUaugZy0kP5DRaDYRT9PeJzq5aitFk26prX8Hf-fQ=s3000-w3000-e365-rw-v0-nu",
+    "source_page_title": "Pixel 9a",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "google-pixel-9-pro-5g-global-td-lte-256gb-gec77-google-caiman",
+    "brand": "google",
+    "model": "Google Pixel 9 Pro 5G Global TD-LTE 256GB GEC77 (Google Caiman)",
+    "source_page": "https://store.google.com/us/magazine/compare_pixel?hl=en-US&toggler0=Pixel%209&toggler1=Pixel%209a&toggler2=Pixel%209%20Pro",
+    "image_url": "https://lh3.googleusercontent.com/D2Y5DMSAIRsC0rksZUdaihwT_W34DuMskigaasUqSN79nu5EAYC8ggd172E_zXYt_qbP3vh_XBv67Ggbk-E8oe5KUNOpPq4kdzo=s3000-w3000-e365-rw-v0-nu",
+    "source_page_title": "Pixel 9 Pro",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "google-pixel-9-pro-xl-5g-global-td-lte-256gb-gzc4k-google-komodo",
+    "brand": "google",
+    "model": "Google Pixel 9 Pro XL 5G Global TD-LTE 256GB GZC4K (Google Komodo)",
+    "source_page": "https://store.google.com/us/magazine/compare_pixel?hl=en-US&toggler0=Pixel%209%20Pro%20XL&toggler1=Pixel%2010&toggler2=Pixel%2010%20Pro",
+    "image_url": "https://lh3.googleusercontent.com/kaQmbidH19M88M_9Qg1KP6DWggEPPjD7u5IuPkj-PR4OJlvpetzdQ-VGLZgYJrAIW1Vdv5et-2WkPZPLM5w8PbNsynHbrlofrA=s3000-w3000-e365-rw-v0-nu",
+    "source_page_title": "Pixel 9 Pro XL",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "google-pixel-10-5g-global-td-lte-128gb-gk2mp-google-frankel",
+    "brand": "google",
+    "model": "Google Pixel 10 5G Global TD-LTE 128GB GK2MP (Google Frankel)",
+    "source_page": "https://store.google.com/us/magazine/compare_pixel?hl=en-US&toggler0=Pixel%209%20Pro%20XL&toggler1=Pixel%2010&toggler2=Pixel%2010%20Pro",
+    "image_url": "https://lh3.googleusercontent.com/TIOSLaoTTVw3VDk8EQQ0fDydGlFP2CYlTeGuYmcBum7CjQfrGepIr1sclzJ2bmd6TMgHQoFVMTH4bgS22vlghQki5hoNjw5xXv0=s3000-w3000-e365-rw-v0-nu",
+    "source_page_title": "Pixel 10",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "google-pixel-10-pro-5g-global-td-lte-256gb-gehn3-google-blazer",
+    "brand": "google",
+    "model": "Google Pixel 10 Pro 5G Global TD-LTE 256GB GEHN3 (Google Blazer)",
+    "source_page": "https://store.google.com/us/magazine/compare_pixel?hl=en-US&toggler0=Pixel%209%20Pro%20XL&toggler1=Pixel%2010&toggler2=Pixel%2010%20Pro",
+    "image_url": "https://lh3.googleusercontent.com/yIW7KF0rp417360pfFLgW0UD8qnVfOoVz6fGkYAllidaqCFoa8BcS8lKy_JM02W38bIzZix-VVedndCxga5ZPTqP6lX6cSSld98t=s3000-w3000-e365-rw-v0-nu",
+    "source_page_title": "Pixel 10 Pro",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "google-pixel-10-pro-xl-5g-global-td-lte-256gb-g45ry-google-mustang",
+    "brand": "google",
+    "model": "Google Pixel 10 Pro XL 5G Global TD-LTE 256GB G45RY (Google Mustang)",
+    "source_page": "https://store.google.com/us/magazine/compare_pixel?hl=en-US&toggler0=Pixel%2010%20Pro%20XL",
+    "image_url": "https://lh3.googleusercontent.com/2f0G2y35W80Fk9iYo_Uo9uJXtU1LCjfiwhGxxB9ZJSLEu2-VL3IKmlT6f7NvLE8TiT8dzPiahSroqhE0MfhlMU8yNeye9oXMISw=s3000-w3000-e365-rw-v0-nu",
+    "source_page_title": "Pixel 10 Pro XL",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "samsung-sm-f711b-galaxy-z-flip-3-5g-global-td-lte-256gb-samsung-bloom-2",
+    "brand": "samsung",
+    "model": "Samsung SM-F711B Galaxy Z Flip 3 5G Global TD-LTE 256GB (Samsung Bloom 2)",
+    "source_page": "https://www.samsung.com/ae/smartphones/galaxy-z/galaxy-z-flip3-5g-lavender-256gb-sm-f711blvemea/buy/",
+    "image_url": "https://images.samsung.com/is/image/samsung/p6pim/ae/2108/gallery/ae-galaxy-z-flip3-f711-5g-sm-f711blvemea-477355510?$624_468_PNG$",
+    "source_page_title": "Galaxy Z Flip3",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "samsung-sm-f721b-galaxy-z-flip-4-5g-global-td-lte-256gb-samsung-b4",
+    "brand": "samsung",
+    "model": "Samsung SM-F721B Galaxy Z Flip 4 5G Global TD-LTE 256GB (Samsung B4)",
+    "source_page": "https://www.samsung.com/ph/smartphones/galaxy-z/galaxy-z-flip4-graphite-128gb-sm-f721bzaaphl/buy/",
+    "image_url": "https://images.samsung.com/is/image/samsung/p6pim/ph/sm-f721bzaaphl/gallery/ph-galaxy-z-flip4-f721-sm-f721bzaaphl-534228005?$624_468_PNG$",
+    "source_page_title": "Galaxy Z Flip4",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "samsung-sm-f731b-galaxy-z-flip-5-5g-global-td-lte-256gb-samsung-b5",
+    "brand": "samsung",
+    "model": "Samsung SM-F731B Galaxy Z Flip 5 5G Global TD-LTE 256GB (Samsung B5)",
+    "source_page": "https://www.samsung.com/africa_pt/business/smartphones/galaxy-z/galaxy-z-flip5-for-business-sm-f731bzaeafb/",
+    "image_url": "https://images.samsung.com/is/image/samsung/p6pim/africa_pt/sm-f731bzaeafb/gallery/africa-pt-galaxy-z-flip5-f731-471480-sm-f731bzaeafb-thumb-538353556?$720_576_JPG$",
+    "source_page_title": "Galaxy Z Flip5",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "samsung-sm-f741b-galaxy-z-flip6-5g-global-td-lte-256gb-samsung-b6",
+    "brand": "samsung",
+    "model": "Samsung SM-F741B Galaxy Z Flip6 5G Global TD-LTE 256GB (Samsung B6)",
+    "source_page": "https://www.samsung.com/se/smartphones/galaxy-z/galaxy-z-flip6-blue-256gb-sm-f741blbgeub/",
+    "image_url": "https://images.samsung.com/is/image/samsung/p6pim/se/sm-f741blbgeub/gallery/se-galaxy-zflip6-f741-sm-f741blbgeub-thumb-542837942",
+    "source_page_title": "Galaxy Z Flip6",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "samsung-sm-f766b-galaxy-z-flip7-5g-global-dual-sim-td-lte-256gb-samsung-b7",
+    "brand": "samsung",
+    "model": "Samsung SM-F766B Galaxy Z Flip7 5G Global Dual SIM TD-LTE 256GB (Samsung B7)",
+    "source_page": "https://www.samsung.com/br/business/smartphones/galaxy-z/galaxy-z-flip7-sm-f766bdbwzto/",
+    "image_url": "https://images.samsung.com/is/image/samsung/p6pim/br/f2507/gallery/br-galaxy-zflip7-f766-sm-f766bdbwzto-thumb-547541273?$720_576_JPG$",
+    "source_page_title": "Galaxy Z Flip7",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "samsung-sm-f926b-galaxy-z-fold3-5g-global-td-lte-256gb-samsung-q2",
+    "brand": "samsung",
+    "model": "Samsung SM-F926B Galaxy Z Fold3 5G Global TD-LTE 256GB (Samsung Q2)",
+    "source_page": "https://www.samsung.com/al/smartphones/galaxy-z/galaxy-z-fold3-5g-phantom-black-256gb-sm-f926bzkdeuc/",
+    "image_url": "https://images.samsung.com/is/image/samsung/p6pim/al/2108/gallery/al-galaxy-z-fold3-f926-5g-sm-f926bzkdeuc-475700281?$624_468_PNG$",
+    "source_page_title": "Galaxy Z Fold3",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "samsung-sm-f936b-ds-galaxy-z-fold4-5g-global-dual-sim-td-lte-256gb-samsung-q4",
+    "brand": "samsung",
+    "model": "Samsung SM-F936B/DS Galaxy Z Fold4 5G Global Dual SIM TD-LTE 256GB (Samsung Q4)",
+    "source_page": "https://www.samsung.com/ru/smartphones/galaxy-z/galaxy-z-fold4-graygreen-256gb-sm-f936bzabser/",
+    "image_url": "https://images.samsung.com/is/image/samsung/p6pim/ru/sm-f936bzabser/gallery/ru-galaxy-z-fold4-f936-sm-f936bzabser-thumb-533568330",
+    "source_page_title": "Galaxy Z Fold4",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "samsung-sm-f946b-ds-galaxy-z-fold5-5g-global-dual-sim-td-lte-256gb-samsung-q5",
+    "brand": "samsung",
+    "model": "Samsung SM-F946B/DS Galaxy Z Fold5 5G Global Dual SIM TD-LTE 256GB (Samsung Q5)",
+    "source_page": "https://www.samsung.com/latin_en/business/smartphones/galaxy-z/galaxy-z-fold5-for-business-sm-f946bzkkgto/",
+    "image_url": "https://images.samsung.com/is/image/samsung/p6pim/latin_en/2307/gallery/latin-en-galaxy-z-fold5-f946-sm-f946bzkkgto-thumb-537225435?$720_576_JPG$",
+    "source_page_title": "Galaxy Z Fold5",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "samsung-sm-f956b-ds-galaxy-z-fold6-5g-global-dual-sim-td-lte-256gb-samsung-q6",
+    "brand": "samsung",
+    "model": "Samsung SM-F956B/DS Galaxy Z Fold6 5G Global Dual SIM TD-LTE 256GB (Samsung Q6)",
+    "source_page": "https://www.samsung.com/jp/business/smartphones/galaxy-z/galaxy-z-fold6-navy-256gb-sm-f956qdbasjp/",
+    "image_url": "https://images.samsung.com/is/image/samsung/p6pim/jp/sm-f956qdbasjp/gallery/jp-galaxy-z-fold6-f956-514116-sm-f956qdbasjp-thumb-542864943?$720_576_JPG$",
+    "source_page_title": "Galaxy Z Fold6",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "samsung-sm-f966b-ds-galaxy-z-fold7-5g-global-dual-sim-td-lte-256gb-samsung-q7",
+    "brand": "samsung",
+    "model": "Samsung SM-F966B/DS Galaxy Z Fold7 5G Global Dual SIM TD-LTE 256GB (Samsung Q7)",
+    "source_page": "https://www.samsung.com/us/smartphones/galaxy-z/galaxy-z-fold7-silver-shadow-256gb-sm-f966uzsaxaa/",
+    "image_url": "https://images.samsung.com/is/image/samsung/p6pim/us/f2507/gallery/us-galaxy-z-fold7-f966-sm-f966uzsaxaa-547866938?$240_240_PNG$",
+    "source_page_title": "Galaxy Z Fold7",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "iphone-16-pro-max",
+    "brand": "apple",
+    "model": "iPhone 16 Pro Max",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/iphone-16-pro-max-colors.png",
+    "source_page_title": "Identify your iPhone model - Apple Support",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "laptop-dell-precision-5550",
+    "brand": "dell",
+    "model": "Dell Precision 5550",
+    "source_page": "https://www.dell.com/en-us/shop/dell-laptops/precision-5550-workstation/spd/precision-15-5550-laptop",
+    "image_url": "https://i.dell.com/is/image/DellContent//content/dam/ss2/product-images/dell-client-products/workstations/mobile-workstations/precision/15-5550/media-gallery/workstation_precision_15_5550_gallery_3.psd?fmt=png-alpha&pscan=auto&scl=1&hei=402&wid=653&qlt=100,1&resMode=sharp2&size=653,402&chrss=full",
+    "source_page_title": "Precision 5550 15 Inch AI-optimized Mobile Workstation Laptop | Dell USA",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "laptop-hp-probook-x360-11-ee-g7",
+    "brand": "hp",
+    "model": "HP ProBook x360 11 EE G7",
+    "source_page": "https://www.officedepot.com/a/products/9496184/HP-ProBook-x360-11-G7-EE/",
+    "image_url": "https://media.officedepot.com/images/f_auto,q_auto,e_sharpen,h_450/products/9496184/9496184_o51_et_7719663/9496184",
+    "source_page_title": "HP ProBook x360 11 G7 EE 11.6 Touchscreen Convertible 2 in 1 Notebook HD 1366 x 768 Intel Celeron N5100 Quad core 4 Core   4 GB Total RAM 128 GB SSD Intel Chip Windows 10 Pro Intel UHD Graphics 11.50 Hours Battery Run Time - Office Depot",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "laptop-hp-elitebook-840-g8",
+    "brand": "hp",
+    "model": "HP EliteBook 840 G8",
+    "source_page": "https://www.hp.com/my-en/solutions/small-business/product-card/hp-elitebook-840-g8-notebook-pc.html",
+    "image_url": "https://www.hp.com/content/dam/sites/worldwide/personal-computers/commercial/solutions/small-business/my/HP_EliteBook_840_G8%20_308x308.jpg",
+    "source_page_title": "HP EliteBook 840 G8 Notebook PC​  | HP® Malaysia",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "laptop-dell-latitude-5420",
+    "brand": "dell",
+    "model": "Dell Latitude 5420",
+    "source_page": "https://www.dell.com/en-us/shop/dell-computer-laptops/latitude-5420-laptop/spd/latitude-5420-laptop/s028l542014usr_mb",
+    "image_url": "https://i.dell.com/is/image/DellContent//content/dam/ss2/product-images/dell-client-products/notebooks/latitude-notebooks/14-5420/media-gallery/la5420nt_cnb_00000ff090_gy_5000x5000_gettyimages-1254825733.psd?fmt=png-alpha&pscan=auto&scl=1&hei=402&wid=700&qlt=100,1&resMode=sharp2&size=700,402&chrss=full",
+    "source_page_title": "Latitude 5420 Laptop | Dell USA",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "laptop-dell-latitude-5410",
+    "brand": "dell",
+    "model": "Dell Latitude 5410",
+    "source_page": "https://www.dell.com/en-us/shop/dell-laptops-and-notebooks/new-latitude-5410-laptop/spd/latitude-14-5410-laptop/max5l541014us",
+    "image_url": "https://i.dell.com/is/image/DellContent//content/dam/ss2/product-images/dell-client-products/notebooks/latitude-notebooks/latitude-5410/media-gallery/laptop_latitude_14_5410_gallery_3.psd?fmt=png-alpha&pscan=auto&scl=1&hei=402&wid=630&qlt=100,1&resMode=sharp2&size=630,402&chrss=full",
+    "source_page_title": "Latitude 5410 Laptop | Dell USA",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "laptop-microsoft-surface-go-2",
+    "brand": "microsoft",
+    "model": "Microsoft Surface Go 2",
+    "source_page": "https://www.microsoft.com/en-us/d/product/919KXQWQ375S",
+    "image_url": "https://cdn-dynmedia-1.microsoft.com/is/image/microsoftcorp/Surface-Go-2_Panel1_ImmersiveHero:VP2-859x540",
+    "source_page_title": "Introducing the Surface Go 2 – Perfectly Portable – Microsoft Surface",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "laptop-microsoft-surface-laptop-2",
+    "brand": "microsoft",
+    "model": "Microsoft Surface Laptop 2",
+    "source_page": "https://www.microsoft.com/en-us/d/surface-laptop-2/8xqjkk3dd91b",
+    "image_url": "https://img-prod-cms-rt-microsoft-com.akamaized.net/cms/api/am/imageFileData/RE2x0K8?ver=f836&q=90&m=6&h=270&w=270&b=%23FFFFFFFF&f=jpg&o=f&aim=true",
+    "source_page_title": "Explore Surface Laptop 2 – A Touch Above Ordinary – Microsoft Surface",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "laptop-dell-latitude-3120",
+    "brand": "dell",
+    "model": "Dell Latitude 3120",
+    "source_page": "https://www.laptoparena.net/dell/laptop-dell-latitude-3120-5fxhv-grey-106272",
+    "image_url": "https://www.laptoparena.net/images/DELL_Latitude_3120_3b831f.jpg",
+    "source_page_title": "DELL Latitude 3120 - 5FXHV laptop specifications",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "laptop-lenovo-thinkpad-x1-yoga-gen-3",
+    "brand": "lenovo",
+    "model": "Lenovo ThinkPad X1 Yoga Gen 3",
+    "source_page": "https://www.lenovo.com/us/en/p/20LD0017US",
+    "image_url": "https://p1-ofp.static.pub/medias/bWFzdGVyfHJvb3R8MTcxOTgyfGltYWdlL3BuZ3xoMGEvaGQyLzEwNTcwNTM1MzcwNzgyLnBuZ3xhZTQ2Zjk4NTdkYWM1NDIxNjFkYzBjOGE3MzVmMGZkMDkzZTY2ZWZhNTJmM2FlYmY2NzE2MzAzYzIzYjNmOTVm/lenovo-thinkpad-x1-yoga-3rd-gen-hero.png?width=584&height=584",
+    "source_page_title": "ThinkPad X1 Yoga (3rd Gen)  | 2-in-1 Business Convertible   | Lenovo US",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "laptop-hp-omnibook-x-flip-ultra-5",
+    "brand": "hp",
+    "model": "HP OmniBook X Flip (Core Ultra 5)",
+    "source_page": "https://jp.ext.hp.com/notebooks/personal/envy_x360_14_fc/",
+    "image_url": "https://jp.ext.hp.com/content/dam/jp-ext-hp-com/jp/ja/ec/notebooks/personal/omnibook_x_flip_14_fm/images/main_product.png",
+    "source_page_title": "HP OmniBook X Flip 14-fm 製品詳細 - ノートパソコン | 日本HP",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "laptop-macbook-pro-16-m5-seller",
+    "brand": "apple",
+    "model": "MacBook Pro 16-inch (M5, seller-advertised)",
+    "source_page": "https://support.apple.com/en-us/126319",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/tech-specs/macbook-pro-16-inch-m5-pro-m5-max.png",
+    "source_page_title": "MacBook Pro (16-inch, M5 Pro or M5 Max) - Tech Specs - Apple Support",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "laptop-macbook-pro-16-m5-max-seller",
+    "brand": "apple",
+    "model": "MacBook Pro 16-inch (M5 Max, seller-advertised)",
+    "source_page": "https://support.apple.com/en-us/126319",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/tech-specs/macbook-pro-16-inch-m5-pro-m5-max.png",
+    "source_page_title": "MacBook Pro (16-inch, M5 Pro or M5 Max) - Tech Specs - Apple Support",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "laptop-lenovo-thinkpad-x250",
+    "brand": "lenovo",
+    "model": "Lenovo ThinkPad X250",
+    "source_page": "https://www.lenovo.com/in/en/p/laptops/thinkpad/thinkpadx/x250/22tp2tc2500",
+    "image_url": "https://p2-ofp.static.pub/fes/cms/2022/12/14/08ros1j00go2rlaohgd8tl99ckovyu399686.png?width=584&height=584",
+    "source_page_title": "Thinkpad X250 Laptop | Ultrabook for Business | Lenovo India",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "iphone-15",
+    "brand": "apple",
+    "model": "iPhone 15",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/fall-2023-iphone-colors-iphone-15.png",
+    "source_page_title": "Identify your iPhone model - Apple Support",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "iphone-15-pro-max",
+    "brand": "apple",
+    "model": "iPhone 15 Pro Max",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/fall-2023-iphone-colors-iphone-15-pro-max.png",
+    "source_page_title": "Identify your iPhone model - Apple Support",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "iphone-17",
+    "brand": "apple",
+    "model": "iPhone 17",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/iphone-17-colors.png",
+    "source_page_title": "Identify your iPhone model - Apple Support",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "iphone-17-pro",
+    "brand": "apple",
+    "model": "iPhone 17 Pro",
+    "source_page": "https://support.apple.com/en-us/108044",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/iphone/iphone-17-pro-colors.png",
+    "source_page_title": "Identify your iPhone model - Apple Support",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "apple-watch-se-2",
+    "brand": "apple",
+    "model": "Apple Watch SE (2nd generation)",
+    "source_page": "https://support.apple.com/en-us/111853",
+    "image_url": "https://cdsassets.apple.com/live/SZLF0YNV/images/sp/111853_apple-watch-se-2nd-gen.png",
+    "source_page_title": "Apple Watch SE (2nd generation) - Tech Specs - Apple Support",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "apple-watch-series-10-46mm",
+    "brand": "apple",
+    "model": "Apple Watch Series 10 (46 mm)",
+    "source_page": "https://support.apple.com/en-us/121202",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/tech-specs/121202-apple-watch-series-10.png",
+    "source_page_title": "Apple Watch Series 10 - Tech Specs - Apple Support",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "apple-watch-series-11-46mm",
+    "brand": "apple",
+    "model": "Apple Watch Series 11 (46 mm)",
+    "source_page": "https://support.apple.com/en-us/125093",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/tech-specs/apple-watch-series-11-hero.png",
+    "source_page_title": "Apple Watch Series 11 - Tech Specs - Apple Support",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "airpods-4",
+    "brand": "apple",
+    "model": "AirPods 4",
+    "source_page": "https://support.apple.com/en-us/121203",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/tech-specs/121203-airpods-4.png",
+    "source_page_title": "AirPods 4 - Tech Specs - Apple Support",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "airpods-4-anc",
+    "brand": "apple",
+    "model": "AirPods 4 with Active Noise Cancellation",
+    "source_page": "https://support.apple.com/en-us/121203",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/tech-specs/121203-airpods-4.png",
+    "source_page_title": "AirPods 4 - Tech Specs - Apple Support",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "airpods-pro-3",
+    "brand": "apple",
+    "model": "AirPods Pro 3",
+    "source_page": "https://support.apple.com/en-us/125135",
+    "image_url": "https://cdsassets.apple.com/live/7WUAS350/images/tech-specs/airpods-pro-3-hero.png",
+    "source_page_title": "AirPods Pro 3 - Tech Specs - Apple Support",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "redmi-15c",
+    "brand": "xiaomi",
+    "model": "Redmi 15c",
+    "source_page": "https://www.mi.com/global/product/redmi-15c/specs/",
+    "image_url": "https://i02.appmifile.com/46_operator_sg/13/08/2025/b5592353b1231d9dfdb9229ad23cad81.png",
+    "source_page_title": "REDMI 15C Specs - Xiaomi Global",
+    "match_scope": "Exact manufacturer model page; product image"
+  },
+  {
+    "slug": "redmi-13",
+    "brand": "xiaomi",
+    "model": "Xiaomi Redmi 13",
+    "source_page": "https://www.mi.com/global/product/redmi-13/specs/",
+    "image_url": "https://i02.appmifile.com/2_operator_sg/10/05/2024/a8b16bba895dd3ec1b333d4613ceccd0.png",
+    "source_page_title": "Redmi 13 Specs",
+    "match_scope": "Exact manufacturer model page; product image"
+  },
+  {
+    "slug": "redmi-a7-pro",
+    "brand": "xiaomi",
+    "model": "Redmi A7 Pro",
+    "source_page": "https://www.mi.com/global/product/redmi-a7-pro/specs/",
+    "image_url": "https://i02.appmifile.com/921_operator_sg/19/03/2026/77d128348edb05c1f5579036a442f610.png",
+    "source_page_title": "All Specs, Features of REDMI A7 Pro | Xiaomi Global",
+    "match_scope": "Exact manufacturer model page; product image"
+  },
+  {
+    "slug": "redmi-a7",
+    "brand": "xiaomi",
+    "model": "Redmi A7",
+    "source_page": "https://www.mi.com/global/product/redmi-a7/specs/",
+    "image_url": "https://i02.appmifile.com/715_operator_sg/07/04/2026/b5262a68d912c51668daccd8410b21d5.png",
+    "source_page_title": "REDMI A7 Specs",
+    "match_scope": "Exact manufacturer model page; product image"
+  },
+  {
+    "slug": "redmi-17",
+    "brand": "xiaomi",
+    "model": "Redmi 17",
+    "source_page": "https://www.mi.com/global/product/redmi-17/specs/",
+    "image_url": "https://i02.appmifile.com/396_operator_sg/22/07/2026/2215d12b7d0dc2ad986d9643c570ad36.png",
+    "source_page_title": "REDMI 17 Specs",
+    "match_scope": "Exact manufacturer model page; product image"
+  },
+  {
+    "slug": "redmi-a5",
+    "brand": "xiaomi",
+    "model": "Xiaomi Redmi A5",
+    "source_page": "https://www.mi.com/global/product/redmi-a5/specs/",
+    "image_url": "https://i02.appmifile.com/621_operator_sg/19/03/2025/15eaf2e6effbd8f52fb4cd7739ed8a0b.png",
+    "source_page_title": "REDMI A5 Specs - Xiaomi Global",
+    "match_scope": "Exact manufacturer model page; product image"
+  },
+  {
+    "slug": "redmi-note-14-5g",
+    "brand": "xiaomi",
+    "model": "Xiaomi Redmi Note 14 5G",
+    "source_page": "https://www.mi.com/global/product/redmi-note-14-5g/specs/",
+    "image_url": "https://i02.appmifile.com/98_operator_sg/31/12/2024/ad40037176bc694a2b4dc321a2bf3e00.png",
+    "source_page_title": "REDMI Note 14 5G  Specs",
+    "match_scope": "Exact manufacturer model page; product image"
+  },
+  {
+    "slug": "redmi-note-14-4g",
+    "brand": "xiaomi",
+    "model": "Xiaomi Redmi Note 14 4G",
+    "source_page": "https://www.mi.com/global/product/redmi-note-14/specs/",
+    "image_url": "https://i02.appmifile.com/307_operator_sg/06/05/2025/ce9090dc91f9f42c3e9465bdefde3540.png",
+    "source_page_title": "REDMI Note 14  Specs",
+    "match_scope": "Exact manufacturer model page; product image"
+  },
+  {
+    "slug": "redmi-note-15-5g",
+    "brand": "xiaomi",
+    "model": "Redmi Note 15 5G",
+    "source_page": "https://www.mi.com/global/product/redmi-note-15-5g/specs/",
+    "image_url": "https://i02.appmifile.com/44_operator_sg/17/12/2025/22b1834a956a8ead431b7ea6a5dde37d.png",
+    "source_page_title": "All Specs, Features of REDMI Note 15 5G | Xiaomi Global",
+    "match_scope": "Exact manufacturer model page; product image"
+  },
+  {
+    "slug": "redmi-note-15-pro-5g",
+    "brand": "xiaomi",
+    "model": "Redmi Note 15 Pro 5G",
+    "source_page": "https://www.mi.com/global/product/redmi-note-15-pro-5g/specs/",
+    "image_url": "https://i02.appmifile.com/119_operator_sg/19/12/2025/f8f0bfcf12f78974ff0fbb65d37b4401.png",
+    "source_page_title": "All Specs, Features of REDMI Note 15 Pro 5G | Xiaomi Global",
+    "match_scope": "Exact manufacturer model page; product image"
+  },
+  {
+    "slug": "redmi-note-15-4g",
+    "brand": "xiaomi",
+    "model": "Redmi Note 15 4G",
+    "source_page": "https://www.mi.com/global/product/redmi-note-15/specs/",
+    "image_url": "https://i02.appmifile.com/150_operator_sg/17/12/2025/d000ba27b1503fbf4ce97f4ecfda314a.png",
+    "source_page_title": "All Specs, Features of REDMI Note 15 | Xiaomi Global",
+    "match_scope": "Exact manufacturer model page; product image"
+  },
+  {
+    "slug": "redmi-note-14-pro-5g",
+    "brand": "xiaomi",
+    "model": "Xiaomi Redmi Note 14 Pro 5G",
+    "source_page": "https://www.mi.com/global/product/redmi-note-14-pro-5g/specs/",
+    "image_url": "https://i02.appmifile.com/877_operator_sg/06/05/2025/1c75c963cd6fdccb1080767037d80e98.png",
+    "source_page_title": "Redmi Note 14 Pro 5G Specs - Xiaomi Global",
+    "match_scope": "Exact manufacturer model page; product image"
+  },
+  {
+    "slug": "galaxy-s21-plus",
+    "brand": "samsung",
+    "model": "Galaxy S21+",
+    "source_page": "https://www.samsung.com/at/business/smartphones/galaxy-s/galaxy-s21-plus-5g-sm-g996bzvgeue/",
+    "image_url": "https://images.samsung.com/is/image/samsung/p6pim/at/sm-g996bzvgeue/gallery/at-galaxy-s21-5g-g996-sm-g996bzvgeue-thumb-458070309",
+    "source_page_title": "Galaxy S21+ 5G",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "pixel-8",
+    "brand": "google",
+    "model": "Pixel 8",
+    "source_page": "https://store.google.com/us/magazine/compare_pixel?hl=en-US&toggler0=Pixel%208&toggler1=Pixel%208%20Pro&toggler2=Pixel%208a",
+    "image_url": "https://lh3.googleusercontent.com/0Pf1Iaxi0Lu55vJ8j7aqJo5UOD_MXyywXO0PZk3Wvzv-xrU82XpzOotNe7nzQg5ESRhwDU5g1I8hYZpVy073LTxYWqLfA0IJwI4l=s3000-w3000-e365-rw-v0-nu",
+    "source_page_title": "Pixel 8",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "pixel-7",
+    "brand": "google",
+    "model": "Pixel 7",
+    "source_page": "https://store.google.com/us/magazine/compare_pixel?hl=en-US&toggler0=Pixel%207&toggler1=Pixel%207%20Pro&toggler2=Pixel%207a",
+    "image_url": "https://lh3.googleusercontent.com/RZo2sRlPwmczjQDbwKgYTKa90UzoMKUw2qneAUBbNCqVqN3aScGgsxW8G_csuNnecBV80EzdO8ZrPG4HHTaiK3zwfLxYh9RbT6w=s3000-w3000-e365-rw-v0-nu",
+    "source_page_title": "Pixel 7",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "redmi-a3x",
+    "brand": "xiaomi",
+    "model": "Xiaomi Redmi A3x",
+    "source_page": "https://www.mi.com/global/product/redmi-a3x/specs/",
+    "image_url": "https://i02.appmifile.com/804_operator_sg/19/05/2024/3ce682709c0e6a56bb25013e4e35f98d.png",
+    "source_page_title": "REDMI A3x Specs",
+    "match_scope": "Exact manufacturer model page; product image"
+  },
+  {
+    "slug": "redmi-13x",
+    "brand": "xiaomi",
+    "model": "Xiaomi Redmi 13x",
+    "source_page": "https://www.mi.com/global/product/redmi-13x/specs/",
+    "image_url": "https://i02.appmifile.com/834_operator_sg/17/03/2025/ca95b2cbef85e142fa0756eb9758fb7e.png",
+    "source_page_title": "REDMI 13x Specs - Xiaomi Global",
+    "match_scope": "Exact manufacturer model page; product image"
+  },
+  {
+    "slug": "redmi-15",
+    "brand": "xiaomi",
+    "model": "Redmi 15",
+    "source_page": "https://www.mi.com/global/product/redmi-15/specs/",
+    "image_url": "https://i02.appmifile.com/440_operator_sg/22/07/2025/662e7f81b9317e2beae9e2d35e729a69.png",
+    "source_page_title": "REDMI 15 Specs - Xiaomi Global",
+    "match_scope": "Exact manufacturer model page; product image"
+  },
+  {
+    "slug": "redmi-note-15-pro",
+    "brand": "xiaomi",
+    "model": "Redmi Note 15 Pro",
+    "source_page": "https://www.mi.com/global/product/redmi-note-15-pro/specs/",
+    "image_url": "https://i02.appmifile.com/47_operator_sg/19/12/2025/5e434dcb9f897ee5791cc019ceb831bc.png",
+    "source_page_title": "All Specs, Features of REDMI Note 15 Pro | Xiaomi Global",
+    "match_scope": "Exact manufacturer model page; product image"
+  },
+  {
+    "slug": "hp-elitebook-840-g8",
+    "brand": "hp",
+    "model": "HP Elitebook 840 G8",
+    "source_page": "https://www.hp.com/my-en/solutions/small-business/product-card/hp-elitebook-840-g8-notebook-pc.html",
+    "image_url": "https://www.hp.com/content/dam/sites/worldwide/personal-computers/commercial/solutions/small-business/my/HP_EliteBook_840_G8%20_308x308.jpg",
+    "source_page_title": "HP EliteBook 840 G8 Notebook PC​  | HP® Malaysia",
+    "match_scope": "Exact model; existing reviewed catalogue stock source"
+  },
+  {
+    "slug": "redmi-9t",
+    "brand": "xiaomi",
+    "model": "Xiaomi Redmi 9T",
+    "source_page": "https://www.mi.com/global/product/redmi-9t/specs/",
+    "image_url": "https://i01.appmifile.com/webfile/globalimg/products/pc/redmi-9t/specs_01.png",
+    "source_page_title": "Redmi 9T Specs",
+    "match_scope": "Exact manufacturer model page; product image"
+  },
+  {
+    "slug": "infinix-smart-10",
+    "brand": "infinix",
+    "model": "infinix smart 10",
+    "source_page": "https://infinixmobiles.in/products/smart-10",
+    "image_url": "https://infinixmobiles.in/cdn/shop/files/smart_1.png?v=1753765297&width=2000",
+    "source_page_title": "Smart 10 &ndash; Infinix Mobiles",
+    "match_scope": "Exact manufacturer model page; model-labelled product gallery image"
+  },
+  {
+    "slug": "itel-a90",
+    "brand": "itel",
+    "model": "itel a90",
+    "source_page": "https://www.itel-life.com/products/phone/a-series/a90",
+    "image_url": "https://www.itel-life.com/fileadmin/assets/v/a90/spec/a90-blue.png",
+    "source_page_title": "A90 - itel",
+    "match_scope": "Exact manufacturer model page; model-labelled product gallery image"
+  },
+  {
+    "slug": "itel-p65",
+    "brand": "itel",
+    "model": "itel p65",
+    "source_page": "https://www.itel-life.com/products/phone/p-series/power-65",
+    "image_url": "https://www.itel-life.com/fileadmin/assets/v/P65/P65-bai.png",
+    "source_page_title": "POWER 65 - itel",
+    "match_scope": "Exact manufacturer model page; model-labelled product gallery image"
+  },
+  {
+    "slug": "galaxy-s21-fe",
+    "brand": "samsung",
+    "model": "galaxy s21 fe",
+    "source_page": "https://www.samsung.com/al/smartphones/galaxy-s/galaxy-s21-fe-5g-graphite-128gb-sm-g990bzadeuc/",
+    "image_url": "https://images.samsung.com/is/image/samsung/p6pim/al/sm-g990bzadeuc/gallery/al-galaxy-s21-fe-g990-sm-g990bzadeuc-530581959?$1164_776_PNG$",
+    "source_page_title": "Galaxy S21 FE 5G grafit 128 GB | Samsung Albania",
+    "match_scope": "Exact manufacturer model page; model-labelled product gallery image"
+  },
+  {
+    "slug": "redmi-note-17",
+    "brand": "xiaomi",
+    "model": "redmi note 17",
+    "source_page": "https://www.mi.com/global/redmi-note-17/specs/",
+    "image_url": "https://i02.appmifile.com/725_operator_sg/04/08/2026/22b68d5116f540f737ad724252118f5b.png",
+    "source_page_title": "Redmi Note 17 Specs",
+    "match_scope": "Exact manufacturer model page; model-labelled product gallery image"
+  }
+]

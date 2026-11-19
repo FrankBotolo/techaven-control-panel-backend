@@ -2,6 +2,7 @@ import { Op } from 'sequelize';
 import db from '../models/index.js';
 import { logAudit, auditContext } from '../utils/audit.js';
 import { toProductDto } from '../utils/productDto.js';
+import { enqueueShop } from '../services/catalogue/promotionSync.js';
 
 const { Shop, Product, Category, User, ShopFollow, sequelize } = db;
 
@@ -43,6 +44,8 @@ export const index = async (req, res) => {
       id: s.id,
       name: s.name,
       description: s.description || null,
+      profile: s.profile || null,
+      address: s.address || null,
       logo: s.logo || null,
       banner: s.banner || null,
       rating: parseFloat(s.rating) || 0,
@@ -103,6 +106,8 @@ export const show = async (req, res) => {
     }
 
     const shopData = {
+      profile: s.profile || null,
+      address: s.address || null,
       id: s.id,
       name: s.name,
       description: s.description || null,
@@ -308,6 +313,7 @@ export const updateShop = async (req, res) => {
     if (images !== undefined) shop.images = images;
 
     await shop.save();
+    await enqueueShop(shop.id, { reason: `seller-update:${shop.updatedAt.toISOString()}` });
 
     await logAudit({
       ...auditContext(req),
@@ -333,4 +339,3 @@ export const updateShop = async (req, res) => {
     });
   }
 };
-

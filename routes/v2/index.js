@@ -1,0 +1,25 @@
+import express from 'express';
+import adminCatalogueRoutes from './admin-catalogue.js';
+import sellerListingRoutes from './seller-listings.js';
+import productRequestRoutes from './product-requests.js';
+import catalogueRoutes from './catalogue.js';
+import marketplaceRoutes from './marketplace.js';
+import cartRoutes from './cart.js';
+import orderRoutes from './orders.js';
+import adminMigrationRoutes from './admin-migration.js';
+import promotionSyncRoutes from './promotion-sync.js';
+import authRoutes from './auth.js';
+
+const router = express.Router();
+router.use('/auth', authRoutes);
+router.use('/admin/catalog', adminCatalogueRoutes);
+router.use('/sellers', sellerListingRoutes);
+router.use('/catalog/product-requests', productRequestRoutes);
+router.use('/catalog', catalogueRoutes);
+router.use('/marketplace', marketplaceRoutes);
+router.use('/cart', cartRoutes);
+router.use('/orders', orderRoutes);
+router.use('/admin/catalog', adminMigrationRoutes);
+router.use('/integrations/promotions', promotionSyncRoutes);
+
+export default router;

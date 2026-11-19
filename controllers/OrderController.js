@@ -1,3 +1,4 @@
+import { settleManualOrder } from '../services/manual-payment-settlement.js';
 import db from '../models/index.js';
 import { Op } from 'sequelize';
 import { logAudit, auditContext } from '../utils/audit.js';
@@ -7,6 +8,7 @@ import { getAirtelTransactionSummary } from '../utils/airtelTransactions.js';
 import { getSellerCommissionPercent, computeSellerEscrowSplit } from '../utils/sellerCommission.js';
 import { verifyPayChanguTxRef, paychanguVerifyDataIndicatesPaid } from '../utils/paychanguVerify.js';
 import { completeOrderPaidWithEscrow } from '../utils/orderEscrowFinalize.js';
+import { restoreOrderItemStock } from '../utils/orderItemStock.js';
 
 const { Order, OrderItem, Cart, Product, User, Notification, Shop, Escrow, Wallet, WalletTransaction, ShippingAddress, CourierService, UserShopPoints } = db;
 
@@ -69,6 +71,8 @@ const formatOrderForApi = (order) => {
     shipping_fee: order.shipping_fee != null ? parseFloat(order.shipping_fee) : 0,
     total: parseFloat(order.total_amount) || 0,
     shipping_address_id: order.shipping_address_id || null,
+    delivery_location: order.delivery_location || null,
+    checkout_group_id: order.checkout_group_id || null,
     items,
     created_at: order.createdAt || order.created_at,
     paid_at: order.paid_at || null,
@@ -207,6 +211,7 @@ export const createOrder = async (req, res) => {
         shipping_fee: shippingFee,
         total_amount: total,
         shipping_address_id: addr.id,
+        delivery_location: { latitude: addr.latitude, longitude: addr.longitude, accuracy: addr.location_accuracy, notes: addr.delivery_notes },
         shipping_address: [addr.address, addr.city, addr.region].filter(Boolean).join(', '),
         shipping_city: addr.city,
         courier_service: courierName,
@@ -290,7 +295,7 @@ export const createOrder = async (req, res) => {
 
     // Get cart items with products and shops
     const cartItems = await Cart.findAll({
-      where: { user_id: userId },
+      where: { user_id: userId, product_id: { [Op.ne]: null } },
       include: [{ 
         model: Product, 
         as: 'product',
@@ -388,6 +393,7 @@ export const createOrder = async (req, res) => {
       shipping_fee: shipping,
       total_amount: finalTotal,
       shipping_address_id: addr ? addr.id : null,
+      delivery_location: addr ? { latitude: addr.latitude, longitude: addr.longitude, accuracy: addr.location_accuracy, notes: addr.delivery_notes } : null,
       shipping_address: shippingAddress.address_line || '',
       shipping_city: shippingAddress.city || '',
       shipping_phone: shippingAddress.phone || '',
@@ -424,7 +430,7 @@ export const createOrder = async (req, res) => {
 
     // Clear cart
     await Cart.destroy({
-      where: { user_id: userId }
+      where: { user_id: userId, product_id: { [Op.ne]: null } }
     });
 
     // Create pending wallet transaction for seller (shows in seller's transaction list)
@@ -754,6 +760,9 @@ export const updateOrderStatus = async (req, res) => {
       order.delivery_method = delivery_method;
     }
 
+    if (payment_status && payment_status !== order.payment_status) {
+      return res.status(409).json({ success: false, message: 'Use the verified payment or manual review workflow to change payment status' });
+    }
     if (payment_status) {
       const validPaymentStatuses = ['pending', 'paid', 'failed', 'refunded'];
       if (!validPaymentStatuses.includes(payment_status)) {
@@ -941,166 +950,18 @@ export const updateOrderStatus = async (req, res) => {
 
 // Payment completion endpoint - holds funds in escrow
 export const completePayment = async (req, res) => {
+  if (req.user?.role !== 'admin') return res.status(403).json({ success: false, message: 'Submit payment proof for review instead' });
   try {
-    const { order_id } = req.params;
-    const { payment_reference, payment_proof } = req.body;
-    const id = order_id.replace('ord_', '');
-
-    const order = await Order.findByPk(id, {
-      include: [
-        { model: OrderItem, as: 'items' },
-        { model: User, as: 'seller', attributes: ['id', 'name', 'email'] }
-      ]
+    const id = Number(String(req.params.order_id).replace('ord_', ''));
+    const result = await db.sequelize.transaction(async transaction => {
+      const order = await Order.findByPk(id, { transaction, lock: transaction.LOCK.UPDATE });
+      if (!order) throw Object.assign(new Error('Order not found'), { status: 404 });
+      if (order.manual_payment_submission_id) throw Object.assign(new Error('Use the payment submission review endpoint'), { status: 409 });
+      await settleManualOrder(order, String(req.body.payment_reference || `admin_${id}`), transaction);
+      return { order_id: `ord_${id}`, payment_status: 'paid', escrow_status: 'held' };
     });
-
-    if (!order) {
-      return res.status(404).json({
-        success: false,
-        message: 'Order not found'
-      });
-    }
-
-    if (order.payment_status === 'paid') {
-      return res.status(400).json({
-        success: false,
-        message: 'Order is already paid'
-      });
-    }
-
-    // Update payment status
-    order.payment_status = 'paid';
-    order.escrow_status = 'held';
-    await order.save();
-
-    // Create escrow record
-    const escrow = await Escrow.create({
-      order_id: order.id,
-      seller_id: order.seller_id,
-      amount: order.escrow_amount,
-      currency: 'MWK',
-      status: 'held',
-      held_at: new Date()
-    });
-
-    // Get or create admin wallet (for holding escrow funds)
-    // In a real system, you might have a dedicated escrow account
-    const adminUsersForWallet = await User.findAll({ where: { role: 'admin' }, limit: 1 });
-    if (adminUsersForWallet.length > 0) {
-      let adminWallet = await Wallet.findOne({ where: { user_id: adminUsersForWallet[0].id } });
-      if (!adminWallet) {
-        adminWallet = await Wallet.create({
-          user_id: adminUsersForWallet[0].id,
-          balance: 0.00,
-          currency: 'MWK'
-        });
-      }
-
-      // Add funds to admin wallet (escrow account)
-      const newBalance = parseFloat(adminWallet.balance) + parseFloat(order.escrow_amount);
-      adminWallet.balance = newBalance;
-      await adminWallet.save();
-
-      // Create transaction record
-      await WalletTransaction.create({
-        wallet_id: adminWallet.id,
-        user_id: adminUsersForWallet[0].id,
-        type: 'credit',
-        amount: order.escrow_amount,
-        currency: 'MWK',
-        description: `Escrow hold for order ${order.order_number}`,
-        reference: payment_reference || `escrow_${order.id}`,
-        status: 'completed',
-        balance_after: newBalance
-      });
-    }
-
-    // Update seller's pending transaction to "processing" (payment received, held in escrow)
-    const pendingTransaction = await WalletTransaction.findOne({
-      where: {
-        user_id: order.seller_id,
-        reference: `order_${order.id}`,
-        status: 'pending'
-      }
-    });
-
-    if (pendingTransaction) {
-      pendingTransaction.status = 'processing'; // Changed from pending to processing (held in escrow)
-      pendingTransaction.description = `Order ${order.order_number} - Payment received, held in escrow`;
-      await pendingTransaction.save();
-    }
-
-    // Notify customer
-    const customerPaymentNotification = await Notification.create({
-      user_id: order.user_id,
-      title: 'Payment Received',
-      message: `Payment for order ${order.order_number} has been received. Funds are held in escrow until delivery confirmation.`,
-      type: 'payment',
-      order_id: order.id,
-      read: false
-    });
-    sendNotificationEmail(customerPaymentNotification, order);
-
-    // Notify admin
-    const adminUsers = await User.findAll({ where: { role: 'admin' } });
-    for (const admin of adminUsers) {
-      const adminPaymentNotification = await Notification.create({
-        user_id: admin.id,
-        title: 'Payment Received for Order',
-        message: `Payment of MWK ${order.total_amount} received for order ${order.order_number}. Funds held in escrow.`,
-        type: 'payment',
-        order_id: order.id,
-        read: false
-      });
-      sendNotificationEmail(adminPaymentNotification, order);
-    }
-
-    // Notify seller
-    if (order.seller) {
-      const sellerPaymentNotification = await Notification.create({
-        user_id: order.seller_id,
-        title: 'Order Payment Received',
-        message: `Payment of MWK ${order.escrow_amount} received for order ${order.order_number}. Funds are held in escrow and will be released after delivery confirmation.`,
-        type: 'payment',
-        order_id: order.id,
-        read: false
-      });
-      sendNotificationEmail(sellerPaymentNotification, order);
-    }
-
-    await logAudit({
-      action: 'order.payment.complete',
-      actor_user_id: req.user?.id || null,
-      target_type: 'order',
-      target_id: order.id,
-      metadata: { 
-        order_number: order.order_number, 
-        amount: order.total_amount,
-        escrow_amount: order.escrow_amount,
-        payment_reference
-      },
-      ip_address: req.ip
-    });
-
-    return res.json({
-      success: true,
-      message: 'Payment completed successfully. Funds held in escrow.',
-      data: {
-        order_id: `ord_${order.id}`,
-        order_number: order.order_number,
-        payment_status: 'paid',
-        escrow_status: 'held',
-        escrow_amount: order.escrow_amount,
-        escrow_id: escrow.id
-      }
-    });
-  } catch (error) {
-    console.error('Complete payment error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to complete payment',
-      error: error.message
-    });
-  }
+    res.json({ success: true, data: result });
+  } catch (error) { res.status(error.status || 500).json({ success: false, message: error.status ? error.message : 'Payment could not be completed' }); }
 };
 
 // Delivery confirmation endpoint - releases escrow funds to seller
@@ -1400,11 +1261,7 @@ export const cancelOrder = async (req, res) => {
 
     // Restore product stock
     for (const item of order.items) {
-      const product = await Product.findByPk(item.product_id);
-      if (product) {
-        product.stock += item.quantity;
-        await product.save();
-      }
+      await restoreOrderItemStock(item);
     }
 
     order.status = 'cancelled';
@@ -1931,4 +1788,3 @@ export const payWithPayChangu = async (req, res) => {
     });
   }
 };
-

@@ -1,3 +1,4 @@
+import CustomerPaymentMethod from './CustomerPaymentMethod.js';
 import sequelize from '../config/database.js';
 import User from './User.js';
 import Otp from './Otp.js';
@@ -34,12 +35,58 @@ import UserSubscription from './UserSubscription.js';
 import PlatformSetting from './PlatformSetting.js';
 import ShopFollow from './ShopFollow.js';
 import UserShopPoints from './UserShopPoints.js';
+import Brand from './Brand.js';
+import Device from './Device.js';
+import DeviceVariant from './DeviceVariant.js';
+import Color from './Color.js';
+import DeviceVariantColor from './DeviceVariantColor.js';
+import DeviceMedia from './DeviceMedia.js';
+import SellerListing from './SellerListing.js';
+import ListingImage from './ListingImage.js';
+import CatalogueProductRequest from './CatalogueProductRequest.js';
+import LegacyProductCatalogueLink from './LegacyProductCatalogueLink.js';
+import PromotionCatalogueEvent from './PromotionCatalogueEvent.js';
+import Promotion from './Promotion.js';
+import PromotionDevice from './PromotionDevice.js';
+import PromotionShop from './PromotionShop.js';
 
 // Define associations
 Product.belongsTo(Category, { foreignKey: 'category_id', as: 'category' });
 Product.belongsTo(Shop, { foreignKey: 'shop_id', as: 'shop' });
 Category.hasMany(Product, { foreignKey: 'category_id', as: 'products' });
 Shop.hasMany(Product, { foreignKey: 'shop_id', as: 'products' });
+Brand.hasMany(Device, { foreignKey: 'brand_id', as: 'devices' });
+Device.belongsTo(Brand, { foreignKey: 'brand_id', as: 'brand' });
+Category.hasMany(Device, { foreignKey: 'category_id', as: 'devices' });
+Device.belongsTo(Category, { foreignKey: 'category_id', as: 'category' });
+Device.hasMany(DeviceVariant, { foreignKey: 'device_id', as: 'variants' });
+DeviceVariant.belongsTo(Device, { foreignKey: 'device_id', as: 'device' });
+DeviceVariant.hasMany(DeviceVariantColor, { foreignKey: 'device_variant_id', as: 'colors' });
+DeviceVariantColor.belongsTo(DeviceVariant, { foreignKey: 'device_variant_id', as: 'variant' });
+Color.hasMany(DeviceVariantColor, { foreignKey: 'color_id', as: 'variant_colors' });
+DeviceVariantColor.belongsTo(Color, { foreignKey: 'color_id', as: 'color' });
+Device.hasMany(DeviceMedia, { foreignKey: 'device_id', as: 'media' });
+DeviceMedia.belongsTo(Device, { foreignKey: 'device_id', as: 'device' });
+DeviceVariant.hasMany(DeviceMedia, { foreignKey: 'device_variant_id', as: 'media' });
+DeviceMedia.belongsTo(DeviceVariant, { foreignKey: 'device_variant_id', as: 'variant' });
+DeviceVariantColor.hasMany(DeviceMedia, { foreignKey: 'device_variant_color_id', as: 'media' });
+DeviceMedia.belongsTo(DeviceVariantColor, { foreignKey: 'device_variant_color_id', as: 'variant_color' });
+Shop.hasMany(SellerListing, { foreignKey: 'shop_id', as: 'seller_listings' });
+SellerListing.belongsTo(Shop, { foreignKey: 'shop_id', as: 'shop' });
+DeviceVariant.hasMany(SellerListing, { foreignKey: 'device_variant_id', as: 'seller_listings' });
+SellerListing.belongsTo(DeviceVariant, { foreignKey: 'device_variant_id', as: 'variant' });
+DeviceVariantColor.hasMany(SellerListing, { foreignKey: 'device_variant_color_id', as: 'seller_listings' });
+SellerListing.belongsTo(DeviceVariantColor, { foreignKey: 'device_variant_color_id', as: 'variant_color' });
+SellerListing.hasMany(ListingImage, { foreignKey: 'listing_id', as: 'images' });
+ListingImage.belongsTo(SellerListing, { foreignKey: 'listing_id', as: 'listing' });
+Shop.hasMany(CatalogueProductRequest, { foreignKey: 'shop_id', as: 'catalogue_product_requests' });
+CatalogueProductRequest.belongsTo(Shop, { foreignKey: 'shop_id', as: 'shop' });
+Product.hasOne(LegacyProductCatalogueLink, { foreignKey: 'product_id', as: 'catalogue_link' });
+LegacyProductCatalogueLink.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
+DeviceVariant.hasMany(LegacyProductCatalogueLink, { foreignKey: 'candidate_variant_id', as: 'legacy_candidates' });
+LegacyProductCatalogueLink.belongsTo(DeviceVariant, { foreignKey: 'candidate_variant_id', as: 'candidate_variant' });
+SellerListing.hasOne(LegacyProductCatalogueLink, { foreignKey: 'seller_listing_id', as: 'legacy_link' });
+LegacyProductCatalogueLink.belongsTo(SellerListing, { foreignKey: 'seller_listing_id', as: 'seller_listing' });
 Banner.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
 Notification.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 Notification.belongsTo(Order, { foreignKey: 'order_id', as: 'order' });
@@ -104,6 +151,8 @@ Cart.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 Cart.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
 User.hasMany(Cart, { foreignKey: 'user_id', as: 'cart' });
 Product.hasMany(Cart, { foreignKey: 'product_id', as: 'carts' });
+SellerListing.hasMany(Cart, { foreignKey: 'seller_listing_id', as: 'carts' });
+Cart.belongsTo(SellerListing, { foreignKey: 'seller_listing_id', as: 'seller_listing' });
 
 // Order associations
 Order.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
@@ -115,6 +164,8 @@ User.hasMany(Order, { foreignKey: 'user_id', as: 'orders' });
 OrderItem.belongsTo(Order, { foreignKey: 'order_id', as: 'order' });
 OrderItem.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
 Product.hasMany(OrderItem, { foreignKey: 'product_id', as: 'order_items' });
+SellerListing.hasMany(OrderItem, { foreignKey: 'seller_listing_id', as: 'order_items' });
+OrderItem.belongsTo(SellerListing, { foreignKey: 'seller_listing_id', as: 'seller_listing' });
 
 // Favorite associations
 Favorite.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
@@ -186,6 +237,17 @@ PayChanguCallback.belongsTo(ShopSubscription, {
   as: 'shop_subscription'
 });
 
+// Promotions (merchandising CMS) — reference v2 catalogue devices & shops
+Promotion.hasMany(PromotionDevice, { foreignKey: 'promotionId', as: 'deviceLinks', onDelete: 'CASCADE' });
+PromotionDevice.belongsTo(Promotion, { foreignKey: 'promotionId', as: 'promotion' });
+PromotionDevice.belongsTo(Device, { foreignKey: 'deviceId', as: 'device' });
+Device.hasMany(PromotionDevice, { foreignKey: 'deviceId', as: 'promotion_links' });
+Promotion.hasMany(PromotionShop, { foreignKey: 'promotionId', as: 'shopLinks', onDelete: 'CASCADE' });
+PromotionShop.belongsTo(Promotion, { foreignKey: 'promotionId', as: 'promotion' });
+PromotionShop.belongsTo(Shop, { foreignKey: 'shopId', as: 'shop' });
+Shop.hasMany(PromotionShop, { foreignKey: 'shopId', as: 'promotion_links' });
+Promotion.belongsTo(Device, { foreignKey: 'anchorDeviceId', as: 'anchorDevice' });
+
 const db = {
   sequelize,
   Sequelize: sequelize.Sequelize,
@@ -213,6 +275,7 @@ const db = {
   DeliveryAgent,
   DeliveryJob,
   PaymentMethod,
+  CustomerPaymentMethod,
   PayChanguCallback,
   AirtelTransaction,
   AirtelWebhookLog,
@@ -223,8 +286,21 @@ const db = {
   UserSubscription,
   PlatformSetting,
   ShopFollow,
-  UserShopPoints
+  UserShopPoints,
+  Brand,
+  Device,
+  DeviceVariant,
+  Color,
+  DeviceVariantColor,
+  DeviceMedia,
+  SellerListing,
+  ListingImage,
+  CatalogueProductRequest,
+  LegacyProductCatalogueLink,
+  PromotionCatalogueEvent,
+  Promotion,
+  PromotionDevice,
+  PromotionShop
 };
 
 export default db;
-
