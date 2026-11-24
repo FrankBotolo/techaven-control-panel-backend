@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import db from '../models/index.js';
 import { sendInvitationEmail } from '../services/emailService.js';
+import { sendInvitationSms } from '../services/smsService.js';
 import { logAudit, auditContext } from '../utils/audit.js';
 import { enqueueShop, enqueueShopDevices, enqueueTombstone } from '../services/catalogue/promotionSync.js';
 
@@ -254,15 +255,17 @@ export const inviteOwner = async (req, res) => {
     const baseUrl = process.env.FRONTEND_URL || process.env.APP_URL || 'http://localhost:8000';
     const registrationLink = `${baseUrl.replace(/\/$/, '')}/register?invite_token=${token}`;
 
+    let emailed = false;
+    let texted = false;
     if (owner_email) {
-      await sendInvitationEmail(owner_email, {
+      emailed = await sendInvitationEmail(owner_email, {
         owner_name,
         shop_name: shop.name,
         registration_link: registrationLink
       });
-    } else {
-      // SMS integration can be added later
-      console.log(`SMS Mock: Invite link for ${owner_phone}: ${registrationLink}`);
+    }
+    if (owner_phone) {
+      texted = (await sendInvitationSms(owner_phone, shop.name, registrationLink)).success;
     }
 
     await logAudit({
@@ -276,8 +279,8 @@ export const inviteOwner = async (req, res) => {
 
     return res.json({
       success: true,
-      message: 'Invitation sent successfully',
-      data: { invite_id: `invite_${String(invite.id).padStart(3, '0')}`, status: invite.status }
+      message: emailed || texted ? 'Invitation sent successfully' : 'Invitation created, but it could not be delivered by email or SMS',
+      data: { sent_by_email: Boolean(emailed), sent_by_sms: texted, invite_id: `invite_${String(invite.id).padStart(3, '0')}`, status: invite.status }
     });
   } catch (error) {
     console.error('Admin invite owner error:', error);

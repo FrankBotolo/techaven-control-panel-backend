@@ -42,7 +42,7 @@ export async function registerCustomer(body) {
   }
   // Never replace credentials on an existing account through registration.
   if (user.role === 'customer' && user.is_active && !user.email_verified_at) await sendCode(user, 'signup');
-  return { message: 'If these details are eligible, a verification email has been sent' };
+  return { message: 'If these details are eligible, a verification code has been sent by email and SMS' };
 }
 export async function verifySignup(body) {
   signingSecret();
@@ -64,10 +64,10 @@ export async function requestCode(body, type) {
     catch (error) {
       // Recovery responses must not disclose whether the account exists, even on delivery failure.
       if (!['DELIVERY_UNAVAILABLE', 'RATE_LIMITED'].includes(error.code)) throw error;
-      console.warn('Auth v2 verification email not sent:', error.code);
+      console.warn('Auth v2 verification code not sent:', error.code);
     }
   }
-  return { message: 'If this account is eligible, a verification email has been sent' };
+  return { message: 'If this account is eligible, a verification code has been sent by email and SMS' };
 }
 export async function resetCustomerPassword(body) {
   const email = emailValue(body.email);
