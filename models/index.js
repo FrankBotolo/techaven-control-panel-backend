@@ -46,6 +46,9 @@ import ListingImage from './ListingImage.js';
 import CatalogueProductRequest from './CatalogueProductRequest.js';
 import LegacyProductCatalogueLink from './LegacyProductCatalogueLink.js';
 import PromotionCatalogueEvent from './PromotionCatalogueEvent.js';
+import Promotion from './Promotion.js';
+import PromotionDevice from './PromotionDevice.js';
+import PromotionShop from './PromotionShop.js';
 
 // Define associations
 Product.belongsTo(Category, { foreignKey: 'category_id', as: 'category' });
@@ -234,6 +237,17 @@ PayChanguCallback.belongsTo(ShopSubscription, {
   as: 'shop_subscription'
 });
 
+// Promotions (merchandising CMS) — reference v2 catalogue devices & shops
+Promotion.hasMany(PromotionDevice, { foreignKey: 'promotionId', as: 'deviceLinks', onDelete: 'CASCADE' });
+PromotionDevice.belongsTo(Promotion, { foreignKey: 'promotionId', as: 'promotion' });
+PromotionDevice.belongsTo(Device, { foreignKey: 'deviceId', as: 'device' });
+Device.hasMany(PromotionDevice, { foreignKey: 'deviceId', as: 'promotion_links' });
+Promotion.hasMany(PromotionShop, { foreignKey: 'promotionId', as: 'shopLinks', onDelete: 'CASCADE' });
+PromotionShop.belongsTo(Promotion, { foreignKey: 'promotionId', as: 'promotion' });
+PromotionShop.belongsTo(Shop, { foreignKey: 'shopId', as: 'shop' });
+Shop.hasMany(PromotionShop, { foreignKey: 'shopId', as: 'promotion_links' });
+Promotion.belongsTo(Device, { foreignKey: 'anchorDeviceId', as: 'anchorDevice' });
+
 const db = {
   sequelize,
   Sequelize: sequelize.Sequelize,
@@ -283,7 +297,10 @@ const db = {
   ListingImage,
   CatalogueProductRequest,
   LegacyProductCatalogueLink,
-  PromotionCatalogueEvent
+  PromotionCatalogueEvent,
+  Promotion,
+  PromotionDevice,
+  PromotionShop
 };
 
 export default db;

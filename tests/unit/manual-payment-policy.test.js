@@ -55,3 +55,19 @@ test("coordinates are optional and notes survive a manual address", () => {
         longitude: null,
     });
 });
+
+
+test("manual payment preserves configured portal accounts and exposes storefront destinations", () => {
+    const env = {
+        MANUAL_PAYMENTS_ENABLED: "true", MANUAL_PAYMENT_REVIEW_READY: "true",
+        FRONTEND_URL: "https://shop.test", MANUAL_PAYMENT_WHATSAPP: "265991234567",
+        MANUAL_PAYMENT_PROVIDER: "Configured Bank", MANUAL_PAYMENT_ACCOUNT_NAME: "Configured Merchant",
+        MANUAL_PAYMENT_ACCOUNT_NUMBER: "123456789",
+    };
+    const result = paymentInstructions(env);
+    assert.equal(result.enabled, true);
+    assert.equal(result.provider, "Configured Bank");
+    assert.equal(result.account_number, "123456789");
+    assert.equal(result.destinations.length, 1);
+    assert.equal(paymentInstructions({ ...env, MANUAL_PAYMENT_ACCOUNT_NUMBER: "" }).enabled, false);
+});

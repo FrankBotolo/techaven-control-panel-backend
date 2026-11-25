@@ -32,7 +32,8 @@ const SellerListing = sequelize.define('SellerListing', {
   tableName: 'seller_listings', timestamps: true,
   indexes: [{ unique: true, fields: ['shop_id', 'merchant_sku'] }],
   hooks: {
-    beforeValidate(listing) {
+    // Save-time derivation persists identity changes when archiving or repricing.
+    beforeSave(listing) {
       listing.currency = String(listing.currency || 'MWK').toUpperCase();
       listing.active_identity = listingIdentity(listing);
       if (listing.status === 'active' && !listing.published_at) listing.published_at = new Date();

@@ -16,6 +16,8 @@ import * as AdminPlatformSettingController from '../controllers/AdminPlatformSet
 import * as AdminPlatformDeductionController from '../controllers/AdminPlatformDeductionController.js';
 import * as AdminUserController from '../controllers/AdminUserController.js';
 import * as AdminAirtelController from '../controllers/AdminAirtelController.js';
+import * as AdminPromotionController from '../controllers/AdminPromotionController.js';
+import { uploadPromotionImage } from '../middleware/upload.js';
 
 const router = express.Router();
 
@@ -43,6 +45,8 @@ router.post('/categories/:categoryId/reject', AdminCategoryController.rejectCate
 router.delete('/categories/:categoryId', AdminCategoryController.deleteCategory);
 
 // Products
+router.get('/products', AdminProductController.listProducts);
+router.patch('/products/:productId', AdminProductController.updateProduct);
 router.delete('/products/:productId', AdminProductController.deleteProduct);
 
 // Platform-wide settings (e.g. seller commission %)
@@ -53,6 +57,7 @@ router.get('/platform-deductions/by-seller', AdminPlatformDeductionController.li
 
 // Users
 router.get('/users', AdminUserController.listUsers);
+router.post('/users', AdminUserController.createUser);
 router.get('/users/:id', AdminUserController.getUser);
 router.patch('/users/:id', AdminUserController.updateUser);
 router.delete('/users/:id', AdminUserController.deleteUser);
@@ -86,6 +91,19 @@ router.get('/banners/:id', AdminBannerController.getOne);
 router.post('/banners', AdminBannerController.create);
 router.patch('/banners/:id', AdminBannerController.update);
 router.delete('/banners/:id', AdminBannerController.remove);
+
+// Promotions - scheduled merchandising content for storefront placements (ported from Techaven CMS)
+router.get('/promotions/options', AdminPromotionController.options);
+router.post('/promotions/upload-image', uploadPromotionImage.single('image'), AdminPromotionController.uploadImage);
+router.get('/promotions', AdminPromotionController.list);
+router.post('/promotions', AdminPromotionController.create);
+router.get('/promotions/:id', AdminPromotionController.getOne);
+router.patch('/promotions/:id', AdminPromotionController.update);
+router.delete('/promotions/:id', AdminPromotionController.remove);
+router.post('/promotions/:id/publish', AdminPromotionController.publish);
+router.post('/promotions/:id/unpublish', AdminPromotionController.unpublish);
+router.post('/promotions/:id/duplicate', AdminPromotionController.duplicate);
+router.post('/promotions/:id/preview-link', AdminPromotionController.previewLink);
 
 // Subscription packages (seller plans) & shop subscriptions
 router.get('/subscription-packages', AdminSubscriptionPackageController.list);

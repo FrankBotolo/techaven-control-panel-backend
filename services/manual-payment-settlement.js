@@ -1,3 +1,4 @@
+import { sendNotificationEmail } from "../utils/notificationHelper.js";
 import db from "../models/index.js";
 import { cents, money } from "./manual-payment-policy.js";
 export async function settleManualOrder(order, reference, transaction) {
@@ -87,8 +88,9 @@ export async function settleManualOrder(order, reference, transaction) {
         { payment_status: "paid", paid_at: new Date(), escrow_status: "held" },
         options,
     );
+    const notifications = [];
     for (const userId of new Set([order.user_id, order.seller_id, admin.id]))
-        await db.Notification.create(
+        notifications.push(await db.Notification.create(
             {
                 user_id: userId,
                 title: "Payment approved",
@@ -98,5 +100,9 @@ export async function settleManualOrder(order, reference, transaction) {
                 read: false,
             },
             options,
-        );
+        ));
+    // Only tell people once the payment is really saved.
+    transaction?.afterCommit?.(() => {
+        for (const notification of notifications) sendNotificationEmail(notification);
+    });
 }

@@ -1,6 +1,6 @@
 import db from '../models/index.js';
 import { CatalogueError, sendCatalogueError } from '../services/catalogue/errors.js';
-import { validateListingInput } from '../services/marketplace/listings.js';
+import { validateListingInput, sanitizeListingDetails } from '../services/marketplace/listings.js';
 import { enqueueDevice } from '../services/catalogue/promotionSync.js';
 
 const { SellerListing, ListingImage, DeviceVariant, DeviceVariantColor, Device, Brand, Shop, sequelize } = db;
@@ -44,7 +44,7 @@ export async function create(req, res) {
     const images = Array.isArray(req.body.images) ? req.body.images : [];
     const values = validateListingInput(req.body, images.length);
     const variant = await validatedVariant(req.body.device_variant_id, req.body.device_variant_color_id, transaction);
-    const listing = await SellerListing.create({ ...req.body, ...values, shop_id: Number(req.params.shopId) }, { transaction });
+    const listing = await SellerListing.create({ ...req.body, ...values, details: sanitizeListingDetails(req.body.details ?? null), shop_id: Number(req.params.shopId) }, { transaction });
     if (images.length) await ListingImage.bulkCreate(images.map((image, index) => ({ ...image, listing_id: listing.id, sort_order: image.sort_order ?? index, is_primary: image.is_primary ?? index === 0 })), { transaction });
     await enqueueDevice(variant.device_id, { transaction, reason: `listing-create:${listing.id}:${listing.updatedAt.toISOString()}` });
     await transaction.commit();
@@ -71,6 +71,7 @@ export async function update(req, res) {
     const allowed = ['device_variant_id', 'device_variant_color_id', 'merchant_sku', 'condition', 'price', 'quantity', 'currency', 'warranty_months', 'status'];
     for (const field of allowed) if (next[field] !== undefined) listing[field] = next[field];
     Object.assign(listing, values);
+    if (req.body.details !== undefined) listing.details = sanitizeListingDetails(req.body.details, listing.details);
     await listing.save({ transaction });
     if (req.body.images !== undefined) {
       await ListingImage.destroy({ where: { listing_id: listing.id }, transaction });

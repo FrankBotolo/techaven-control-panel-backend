@@ -39,6 +39,15 @@ export const sendNotificationEmail = async (notification, orderData = null) => {
     const title = notificationData.title;
     const orderNumber = notificationData.order?.order_number || '';
 
+    // Send SMS when user has phone number - before email, so an email error cannot skip it
+    if (user.phone_number) {
+      try {
+        await sendNotificationSms(user.phone_number, title, orderNumber);
+      } catch (smsErr) {
+        console.error('Failed to send notification SMS:', smsErr.message);
+      }
+    }
+
     // Send email when user has email - ALL notifications
     if (user.email) {
       if (userRole === 'seller') {
@@ -66,14 +75,6 @@ export const sendNotificationEmail = async (notification, orderData = null) => {
       }
     }
 
-    // Send SMS when user has phone number - ALL notifications/transactions
-    if (user.phone_number) {
-      try {
-        await sendNotificationSms(user.phone_number, title, orderNumber);
-      } catch (smsErr) {
-        console.error('Failed to send notification SMS:', smsErr.message);
-      }
-    }
   } catch (error) {
     console.error('Failed to send notification email:', error);
     // Don't throw - email failure shouldn't break the notification creation

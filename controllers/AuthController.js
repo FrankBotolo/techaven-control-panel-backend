@@ -50,9 +50,11 @@ const sendOtp = async (user, type) => {
     expires_at: moment().add(12, 'hours').toDate()
   });
 
+  let emailed = false;
+  let texted = false;
   if (user.email) {
     try {
-      await sendOtpEmail(user.email, code, type);
+      emailed = await sendOtpEmail(user.email, code, type);
     } catch (error) {
       console.error('Mail error:', error.message);
     }
@@ -60,16 +62,30 @@ const sendOtp = async (user, type) => {
   if (user.phone_number) {
     try {
       if (type === 'password_reset') {
-        await sendPasswordResetOtpSms(user.phone_number, code);
+        texted = (await sendPasswordResetOtpSms(user.phone_number, code)).success;
       } else {
-        await sendOtpSms(user.phone_number, code);
+        texted = (await sendOtpSms(user.phone_number, code)).success;
       }
     } catch (error) {
       console.error('SMS error:', error.message);
     }
   }
+  if (user.phone_number && !texted) console.warn(`OTP ${type}: SMS not sent for user ${user.id} (email ${emailed ? 'sent' : 'not sent'})`);
 
-  return code;
+  return { code, delivered: Boolean(emailed || texted), emailed: Boolean(emailed), texted };
+};
+
+const isDevelopment = () => process.env.NODE_ENV === 'development';
+
+/** Registration keeps the new account but says so when the code could not be delivered. */
+const deliveryInfo = (otp) => ({ otp_sent: otp.delivered, otp_sent_by_sms: otp.texted, otp_sent_by_email: otp.emailed });
+const signupMessage = (otp, message) => (otp.delivered ? message : 'Account created, but we could not send the verification code. Please request a new code.');
+
+/** Login, resend and reset are pointless without a code. Returns true when the request was answered. */
+const rejectUndelivered = (otp, res) => {
+  if (otp.delivered || isDevelopment()) return false;
+  res.status(503).json({ success: false, message: 'We could not send your verification code. Please try again.', data: null });
+  return true;
 };
 
 export const registerDeliveryAgent = async (req, res) => {
@@ -122,21 +138,23 @@ export const registerDeliveryAgent = async (req, res) => {
       is_available: false
     });
 
-    const otpCode = await sendOtp(user, 'signup');
+    const otp = await sendOtp(user, 'signup');
 
     const responseData = {
       user_id: user.id,
       email: user.email,
-      phone_number: user.phone_number
+      phone_number: user.phone_number,
+      ...deliveryInfo(otp)
     };
 
-    if (user.phone_number && !user.email) {
-      responseData.otp = otpCode;
+    // Never return the code in production: it would verify a number the caller does not own.
+    if (isDevelopment() && user.phone_number && !user.email) {
+      responseData.otp = otp.code;
     }
 
     return res.json({
       success: true,
-      message: 'Delivery agent registration submitted. Please verify OTP.',
+      message: signupMessage(otp, 'Delivery agent registration submitted. Please verify OTP.'),
       data: responseData
     });
   } catch (error) {
@@ -264,22 +282,24 @@ export const registerSeller = async (req, res) => {
       }
     });
 
-    const otpCode = await sendOtp(user, 'signup');
+    const otp = await sendOtp(user, 'signup');
 
     const responseData = {
       user_id: user.id,
       email: user.email,
       phone_number: user.phone_number,
-      shop_id: shop.id
+      shop_id: shop.id,
+      ...deliveryInfo(otp)
     };
 
-    if (user.phone_number && !user.email) {
-      responseData.otp = otpCode;
+    // Never return the code in production: it would verify a number the caller does not own.
+    if (isDevelopment() && user.phone_number && !user.email) {
+      responseData.otp = otp.code;
     }
 
     return res.json({
       success: true,
-      message: 'Seller registration submitted. Please verify OTP and wait for admin approval.',
+      message: signupMessage(otp, 'Seller registration submitted. Please verify OTP and wait for admin approval.'),
       data: responseData
     });
   } catch (error) {
@@ -394,21 +414,23 @@ export const register = async (req, res) => {
       });
     }
 
-    const otpCode = await sendOtp(user, 'signup');
+    const otp = await sendOtp(user, 'signup');
 
     const responseData = {
       user_id: user.id,
       email: user.email,
-      phone_number: user.phone_number
+      phone_number: user.phone_number,
+      ...deliveryInfo(otp)
     };
 
-    if (user.phone_number && !user.email) {
-      responseData.otp = otpCode;
+    // Never return the code in production: it would verify a number the caller does not own.
+    if (isDevelopment() && user.phone_number && !user.email) {
+      responseData.otp = otp.code;
     }
 
     return res.json({
       success: true,
-      message: 'Registration successful. Please verify OTP.',
+      message: signupMessage(otp, 'Registration successful. Please verify OTP.'),
       data: responseData
     });
   } catch (error) {
@@ -557,7 +579,9 @@ export const sendLoginOtp = async (req, res) => {
       });
     }
     if (!assertActiveUser(user, res)) return;
-    const otpCode = await sendOtp(user, 'login');
+    const sent = await sendOtp(user, 'login');
+    if (rejectUndelivered(sent, res)) return;
+    const otpCode = sent.code;
 
     // For mobile clients following the doc, prefer identifier + expires_at.
     const expiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000); // matches sendOtp 12h window
@@ -790,7 +814,7 @@ export const resendOtp = async (req, res) => {
 
     const validTypes = ['signup', 'login', 'password_reset'];
     const otpType = validTypes.includes(type) ? type : 'signup';
-    await sendOtp(user, otpType);
+    if (rejectUndelivered(await sendOtp(user, otpType), res)) return;
 
     return res.json({
       success: true,
@@ -838,12 +862,14 @@ export const forgotPassword = async (req, res) => {
 
     if (!assertActiveUser(user, res)) return;
 
-    const otpCode = await sendOtp(user, 'password_reset');
+    const sent = await sendOtp(user, 'password_reset');
+    if (rejectUndelivered(sent, res)) return;
+    const otpCode = sent.code;
 
     // For mobile API docs: behave like \"password reset link sent\" while still using OTP under the hood.
     return res.json({
       success: true,
-      message: 'Password reset link sent to your email',
+      message: 'Password reset code sent',
       // include OTP in development to simplify testing
       data: process.env.NODE_ENV === 'development' ? { otp: otpCode } : undefined
     });

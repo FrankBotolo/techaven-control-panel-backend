@@ -19,18 +19,13 @@ let fdiAccessTokenExpiresAt = 0; // ms timestamp
 let fdiRefreshToken = null;
 
 /**
- * Format phone number to international format (265XXXXXXXXX)
+ * Format a Malawi phone number to 265XXXXXXXXX. Returns null for anything that is not one.
+ * Accepts 0991234567, 991234567, 265991234567, +265 991 234 567, +265 (0)991 234 567, 00265...
  */
 export function formatPhoneNumber(phoneNumber) {
   if (!phoneNumber || typeof phoneNumber !== 'string') return null;
-  let normalized = phoneNumber.replace(/\D/g, '');
-  if (normalized.startsWith('0')) {
-    normalized = '265' + normalized.substring(1);
-  }
-  if (!normalized.startsWith('265')) {
-    normalized = '265' + normalized;
-  }
-  return normalized;
+  const national = phoneNumber.replace(/\D/g, '').replace(/^(?:00)?265/, '').replace(/^0/, '');
+  return /^\d{9}$/.test(national) ? '265' + national : null;
 }
 
 /**
@@ -62,7 +57,8 @@ async function getFdiAccessToken() {
         },
         body: JSON.stringify({
           refresh_token: fdiRefreshToken
-        })
+        }),
+        signal: AbortSignal.timeout(15000)
       });
 
       const text = await response.text();
@@ -105,7 +101,8 @@ async function getFdiAccessToken() {
       body: JSON.stringify({
         api_username: fdiApiUsername,
         api_password: fdiApiPassword
-      })
+      }),
+      signal: AbortSignal.timeout(15000)
     });
 
     const text = await response.text();
@@ -157,7 +154,7 @@ async function getFdiAccessToken() {
  * @param {string} [refId] - Optional reference ID
  * @returns {{ success: boolean, message?: string, data?: object }}
  */
-export async function sendSms(phoneNumber, message, refId = null) {
+export async function sendSms(phoneNumber, message, refId = null, maxLength = 160) {
   if (!isSmsConfigured()) {
     console.warn('SMS not configured (missing FDI SMS API URL/auth URL/credentials or sender ID). Skipping SMS.');
     return { success: false, message: 'SMS not configured' };
@@ -165,7 +162,7 @@ export async function sendSms(phoneNumber, message, refId = null) {
 
   const to = formatPhoneNumber(phoneNumber);
   if (!to) {
-    console.error('Invalid phone number for SMS:', phoneNumber);
+    console.error('Invalid Malawi phone number for SMS');
     return { success: false, message: 'Invalid phone number' };
   }
 
@@ -186,7 +183,7 @@ export async function sendSms(phoneNumber, message, refId = null) {
   try {
     const payload = {
       msisdn,
-      message: message.substring(0, 160),
+      message: message.substring(0, maxLength),
       sender_id: senderId,
       msgRef
     };
@@ -198,7 +195,8 @@ export async function sendSms(phoneNumber, message, refId = null) {
         // FDI expects a Bearer token in the Authorization header.
         Authorization: `Bearer ${authResult.token}`
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(15000)
     });
 
     const text = await response.text();
@@ -209,9 +207,17 @@ export async function sendSms(phoneNumber, message, refId = null) {
       data = { raw: text };
     }
 
-    if (response.ok) {
-      console.log('FDI SMS sent successfully to', msisdn, 'ref:', msgRef);
+    // A 200 can still carry a rejection in the body.
+    if (response.ok && data.success !== false) {
+      console.log('FDI SMS accepted, ref:', msgRef);
       return { success: true, message: 'SMS sent successfully', data };
+    }
+
+    // The gateway dropped our cached token: log in again on the next attempt.
+    if (response.status === 401) {
+      fdiAccessToken = null;
+      fdiAccessTokenExpiresAt = 0;
+      fdiRefreshToken = null;
     }
 
     console.error('FDI SMS failed:', response.status, data);
@@ -233,17 +239,22 @@ export async function sendSms(phoneNumber, message, refId = null) {
 /**
  * Send OTP for verification (signup / login)
  */
-export async function sendOtpSms(phoneNumber, otp) {
-  const message = `Your verification code is: ${otp}. This code expires in 12 hours. Do not share this code.`;
+export async function sendOtpSms(phoneNumber, otp, validFor = '12 hours') {
+  const message = `Your Techaven verification code is: ${otp}. It expires in ${validFor}. Do not share this code.`;
   return sendSms(phoneNumber, message);
 }
 
 /**
  * Send OTP for password reset
  */
-export async function sendPasswordResetOtpSms(phoneNumber, otp) {
-  const message = `Your password reset code is: ${otp}. This code expires in 12 hours. If you didn't request this, ignore.`;
+export async function sendPasswordResetOtpSms(phoneNumber, otp, validFor = '12 hours') {
+  const message = `Your Techaven password reset code is: ${otp}. It expires in ${validFor}. If you didn't request this, ignore.`;
   return sendSms(phoneNumber, message);
+}
+
+/** Shop owner invitation. The link must arrive whole, so this may use several SMS parts. */
+export async function sendInvitationSms(phoneNumber, shopName, link) {
+  return sendSms(phoneNumber, `Techaven: you are invited to manage ${String(shopName).slice(0, 60)}. Register: ${link}`, null, 459);
 }
 
 /**

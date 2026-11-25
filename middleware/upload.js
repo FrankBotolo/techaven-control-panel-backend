@@ -62,3 +62,19 @@ export const uploadShopLogo = multer({
   fileFilter: shopLogoFileFilter
 });
 
+/** Promotion artwork: images only (JPEG, PNG, GIF, WebP). Larger default limit for hero artwork. */
+const promotionImageFileFilter = (req, file, cb) => {
+  const extOk = /\.(jpe?g|png|gif|webp)$/i.test(path.extname(file.originalname));
+  const mimeOk = /^image\/(jpeg|png|gif|webp)$/i.test(file.mimetype);
+  if (mimeOk && extOk) return cb(null, true);
+  cb(new Error('Promotion image must be a JPEG, PNG, GIF, or WebP image.'));
+};
+
+export const uploadPromotionImage = multer({
+  storage,
+  limits: {
+    fileSize: parseInt(process.env.PROMOTION_MAX_FILE_SIZE) || 10485760 // 10MB default
+  },
+  fileFilter: promotionImageFileFilter
+});
+

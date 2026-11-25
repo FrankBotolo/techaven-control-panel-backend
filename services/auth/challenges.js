@@ -4,9 +4,26 @@ import sequelize from '../../config/database.js';
 import { AuthChallenge } from '../../models/AuthSession.js';
 import { AuthError, equalHash, hash, opaque } from './config.js';
 import { sendOtpEmail } from '../emailService.js';
-export const challengeDelivery = { send: sendOtpEmail };
+import { formatPhoneNumber, sendOtpSms, sendPasswordResetOtpSms } from '../smsService.js';
+export const challengeDelivery = {
+  send: sendOtpEmail,
+  sms: async (phone, code, type, minutes) => {
+    const send = type === 'password_reset' ? sendPasswordResetOtpSms : sendOtpSms;
+    return (await send(phone, code, `${minutes} minutes`)).success;
+  }
+};
+
+/** SMS costs money: cap codes per phone number, whichever account asks. */
+async function sendSmsCode(user, code, type) {
+  const phone = formatPhoneNumber(user.phone_number);
+  if (!phone) return false;
+  await rateLimit('sms', phone, 5, 3600);
+  return challengeDelivery.sms(phone, code, type, 10);
+}
 
 export async function rateLimit(scope, identifier, limit = 10, seconds = 900) {
+  // Local development switch: set AUTH_RATE_LIMIT_DISABLED=true (ignored in production).
+  if (process.env.AUTH_RATE_LIMIT_DISABLED === 'true' && process.env.NODE_ENV !== 'production') return;
   const key = hash(`${scope}:${identifier}`);
   const blocked = await sequelize.transaction(async transaction => {
     await sequelize.query('INSERT IGNORE INTO auth_v2_rate_limits (`key`, `count`, expires_at) VALUES (?, 0, ?)',
@@ -36,13 +53,26 @@ export async function sendCode(user, type) {
     return AuthChallenge.create({ id: randomUUID(), type, user_id: user.id, identifier: user.email,
       secret_hash: hash(code), expires_at: new Date(Date.now() + 600000) }, { transaction });
   });
+  // Local development: print the code instead of failing when email can't be sent (ignored in production).
+  const devLog = process.env.AUTH_DEV_LOG_OTP === 'true' && process.env.NODE_ENV !== 'production';
+  if (devLog) console.log('[dev] ' + type + ' code for ' + user.email + ': ' + code);
   try {
-    const delivered = await challengeDelivery.send(user.email, code, type, 10);
-    if (!delivered) throw new Error('Email delivery failed');
+    const attempt = (channel, promise) => promise.catch((error) => {
+      console.warn(`Auth v2 ${channel} delivery failed:`, error.code || error.message);
+      return false;
+    });
+    const [emailed, texted] = await Promise.all([
+      attempt('email', challengeDelivery.send(user.email, code, type, 10)),
+      attempt('sms', sendSmsCode(user, code, type))
+    ]);
+    if (!emailed || !texted) console.warn(`Auth v2 ${type} code for user ${user.id}: email=${emailed ? 'sent' : 'not sent'} sms=${texted ? 'sent' : 'not sent'}`);
+    const delivered = emailed || texted;
+    if (!delivered && devLog) return;
+    if (!delivered) throw new Error('Code delivery failed');
   }
   catch {
     await row.update({ consumed_at: new Date() });
-    throw new AuthError('DELIVERY_UNAVAILABLE', 'We could not send the verification email. Please try again', 503);
+    throw new AuthError('DELIVERY_UNAVAILABLE', 'We could not send your verification code. Please try again', 503);
   }
 }
 // Return failures from transactions before throwing so failed attempts are persisted.

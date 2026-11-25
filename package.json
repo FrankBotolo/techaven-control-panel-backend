@@ -36,7 +36,17 @@
     "test-airtel-transaction": "node scripts/test-airtel-transaction.js",
     "fix-invitations": "node scripts/fix-invitations-timestamps.js",
     "seed": "node scripts/seed.js",
-    "setup": "npm run create-db && npm run migrate && npm run seed"
+    "setup": "npm run create-db && npm run migrate && npm run seed",
+    "seed:promotions": "node scripts/seed-promotions.js",
+    "seed:variants": "node scripts/seed-device-variants.js",
+    "seed:variants:apply": "node scripts/seed-device-variants.js --apply",
+    "catalog:build": "node scripts/build-device-catalogue.js",
+    "catalog:images:resolve": "node scripts/resolve-device-images.js",
+    "catalog:images:download": "node scripts/download-device-images.js",
+    "seed:catalogue": "node scripts/seed-device-catalogue.js",
+    "seed:catalogue:apply": "node scripts/seed-device-catalogue.js --apply",
+    "seed:packages": "node scripts/seed-subscription-packages.js",
+    "seed:packages:apply": "node scripts/seed-subscription-packages.js --apply"
   },
   "keywords": [
     "express",

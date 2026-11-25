@@ -1,16 +1,15 @@
+import { getPayChanguPaymentOptions } from '../utils/paychanguProviders.js';
 import db from '../models/index.js';
 import CustomerPaymentMethod from '../models/CustomerPaymentMethod.js';
 import { normalizeMobileNumber, setupState } from '../services/customer-setup-policy.js';
 
-const mobileMoneyProviders = [
-  { id: 1, slug: 'airtel-money', name: 'Airtel Money' },
-  { id: 2, slug: 'mpamba', name: 'TNM Mpamba' },
-];
-
 export async function getPaymentMethods(req, res) {
   try {
-    const payment_methods = await CustomerPaymentMethod.findAll({ where: { user_id: req.user.id }, attributes: ['id', 'type', 'provider', 'phone_number', 'is_default'], order: [['is_default', 'DESC'], ['createdAt', 'ASC']] });
-    return res.json({ success: true, data: { payment_methods, available_providers: mobileMoneyProviders } });
+    const [payment_methods, available_providers] = await Promise.all([
+      CustomerPaymentMethod.findAll({ where: { user_id: req.user.id }, attributes: ['id', 'type', 'provider', 'phone_number', 'is_default'], order: [['is_default', 'DESC'], ['createdAt', 'ASC']] }),
+      getPayChanguPaymentOptions(),
+    ]);
+    return res.json({ success: true, data: { payment_methods, available_providers } });
   } catch { return res.status(503).json({ success: false, message: 'Unable to load payment methods. Please retry.' }); }
 }
 export async function addPaymentMethod(req, res) {
@@ -18,7 +17,8 @@ export async function addPaymentMethod(req, res) {
     if (setupState(req.user).requires_address) return res.status(409).json({ success: false, message: 'Complete your address first' });
     const { type, provider, is_default = false, use_for_contact = false } = req.body;
     if (type !== 'mobile_money' || typeof is_default !== 'boolean' || typeof use_for_contact !== 'boolean') return res.status(400).json({ success: false, message: 'Choose a mobile-money provider and valid preferences' });
-    if (!mobileMoneyProviders.some(option => option.slug === provider)) return res.status(400).json({ success: false, message: 'Choose an available mobile-money provider' });
+    const providers = await getPayChanguPaymentOptions();
+    if (!providers.some(option => option.slug === provider)) return res.status(400).json({ success: false, message: 'Choose an available mobile-money provider' });
     const phone_number = normalizeMobileNumber(req.body.phone_number);
     const method = await db.sequelize.transaction(async transaction => {
       const user = await db.User.findByPk(req.user.id, { transaction, lock: transaction.LOCK.UPDATE });

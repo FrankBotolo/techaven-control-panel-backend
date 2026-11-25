@@ -8,12 +8,22 @@ export function paymentInstructions(env = process.env) {
         { provider: "Airtel Money", account_name: "Chifundo Chiwaya", account_number: "3554899", brand: "airtel-money" },
         { provider: "FDH Bank", account_name: "TECHAVEN", account_number: "1920100270922", brand: "fdh-bank" },
     ];
+    const fields = {
+        provider: env.MANUAL_PAYMENT_PROVIDER,
+        account_name: env.MANUAL_PAYMENT_ACCOUNT_NAME,
+        account_number: env.MANUAL_PAYMENT_ACCOUNT_NUMBER,
+    };
+    const supplied = Object.values(fields).some(value => value != null && value !== '');
+    const configured = Object.values(fields).every(value => typeof value === 'string' && value.trim() && !/placeholder|example|replace|todo|^0+$/i.test(value));
+    if (supplied && !configured) return { enabled: false };
+    const selected = configured ? [fields] : destinations;
     const whatsapp = env.MANUAL_PAYMENT_WHATSAPP;
     const enabled = env.MANUAL_PAYMENTS_ENABLED === "true" &&
         env.MANUAL_PAYMENT_REVIEW_READY === "true" &&
         /^https?:\/\/[^\s]+$/i.test(env.FRONTEND_URL || "") &&
         /^\d{10,15}$/.test(whatsapp || "") && !/^0+$/.test(whatsapp);
-    return enabled ? { enabled: true, destinations, whatsapp } : { enabled: false };
+    // Both storefront destination lists and the portal's single-account contract.
+    return enabled ? { enabled: true, ...selected[0], destinations: selected, whatsapp } : { enabled: false };
 }
 export function cents(value) {
     const text = String(value);

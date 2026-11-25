@@ -12,11 +12,15 @@ const { Cart, SellerListing, ListingImage, DeviceVariant, Device, DeviceMedia, B
 const orderNumber = () => `ORD${new Date().toISOString().slice(0, 10).replace(/-/g, '')}${Math.floor(Math.random() * 1e8).toString().padStart(8, '0')}`;
 
 export async function checkout(req, res) {
+  const shippingAddressId = Number(req.body?.shipping_address_id);
+  if (!Number.isInteger(shippingAddressId) || shippingAddressId < 1) {
+    return sendCatalogueError(res, new CatalogueError('SHIPPING_ADDRESS_REQUIRED', 'shipping_address_id is required'));
+  }
   const transaction = await sequelize.transaction();
   try {
     const manual = req.body.payment_method === "bank-transfer";
     if (manual && !paymentInstructions().enabled) throw new CatalogueError("MANUAL_PAYMENT_UNAVAILABLE", "Bank transfer is unavailable", 503);
-    const address = await ShippingAddress.findOne({ where: { id: req.body.shipping_address_id, user_id: req.user.id }, transaction });
+    const address = await ShippingAddress.findOne({ where: { id: shippingAddressId, user_id: req.user.id }, transaction });
     if (!address) throw new CatalogueError('SHIPPING_ADDRESS_NOT_FOUND', 'Shipping address not found', 404);
     const requested = Array.isArray(req.body.items) && req.body.items.length
       ? req.body.items.map((item) => ({ seller_listing_id: Number(item.seller_listing_id), quantity: Number(item.quantity || 1) }))

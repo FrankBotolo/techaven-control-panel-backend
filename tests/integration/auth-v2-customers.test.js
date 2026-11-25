@@ -23,6 +23,8 @@ test('customer auth endpoints, Google linking and legacy compatibility', async t
   await AuthRateLimit.destroy({ where: {} });
   const codes = new Map();
   const deliver = challengeDelivery.send;
+  const deliverSms = challengeDelivery.sms;
+  challengeDelivery.sms = async () => false;
   challengeDelivery.send = async (email, code, type, minutes) => { assert.match(code, /^\d{6}$/); assert.equal(minutes, 10); codes.set(`${email}:${type}`, code); return true; };
   const googleVerify = googleIdentity.verify;
   const googlePayloads = new Map();
@@ -140,7 +142,7 @@ test('customer auth endpoints, Google linking and legacy compatibility', async t
       assert.equal((await request('/me', null, { token: logged.body.data.access_token, method: 'GET' })).status, 401);
     });
   } finally {
-    challengeDelivery.send = deliver; googleIdentity.verify = googleVerify;
+    challengeDelivery.send = deliver; challengeDelivery.sms = deliverSms; googleIdentity.verify = googleVerify;
     await new Promise(resolve => server.close(resolve));
     await User.destroy({ where: sequelize.where(sequelize.col('email'), 'LIKE', `%${suffix}@example.test`) });
     await sequelize.close();
