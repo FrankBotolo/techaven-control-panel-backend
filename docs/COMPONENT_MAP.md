@@ -2,6 +2,8 @@ Customer setup: controllers/CustomerSetupController.js and routes/user.js own se
 
 # Codebase Navigation Map
 
+Selective store/stock import: `scripts/export-store-stock.js` exports private active store/inventory bundles; `services/catalogue/store-stock-import.js` owns exact identity planning and holds; `scripts/import-store-stock.js` owns dry-run reports and transactional application. Tests: `tests/unit/store-stock-import.test.js`, `tests/integration/store-stock-import.test.js`. Operational boundaries: `docs/STORE_STOCK_IMPORT.md`.
+
 PAYGO/shop expansion: scripts/seed-shop-expansion.js + scripts/data/shop-expansion.js own four-shop source seed; migration 202610140002_shop_profiles.js adds shop profile/offer details. ShopController exports profile/address; final-price.js protects tax-exclusive quotations at cart/order boundaries. Frontend ShopHero.tsx and routes/paygo.tsx own edited shop heroes and the Yellow guide. See docs/SHOP_EXPANSION_PAYGO.md.
 
 Brand navigation: controllers/CategoryController.js owns live stock-qualified brand facets. Frontend BrandTiles.tsx/Header.tsx render navigation; catalog-api.ts maps facets; category.$slug.tsx and resolve-catalog.ts own URL brand filters and category pagination. See docs/BRAND_NAVIGATION.md.
