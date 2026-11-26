@@ -1,3 +1,4 @@
+import { fulfilmentFields } from '../services/order-fulfilment.js';
 import db from '../models/index.js';
 import { Op } from 'sequelize';
 import { logAudit, auditContext } from '../utils/audit.js';
@@ -54,6 +55,8 @@ export const listSellerOrders = async (req, res) => {
       shipping_phone: o.shipping_phone,
       items: o.items,
       buyer: o.user,
+      escrow_amount: o.escrow_amount != null ? parseFloat(o.escrow_amount) : null,
+      ...fulfilmentFields(o),
       created_at: o.createdAt
     }));
 
@@ -189,10 +192,10 @@ export const rejectOrder = async (req, res) => {
       });
     }
 
-    if (order.seller_accepted_at) {
+    if (order.dispatched_at || ['shipped', 'delivered'].includes(order.status)) {
       return res.status(400).json({
         success: false,
-        message: 'Cannot reject an order that has already been accepted'
+        message: 'Cannot reject an order that has already been sent'
       });
     }
 

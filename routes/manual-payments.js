@@ -14,6 +14,11 @@ import {
     money,
 } from "../services/manual-payment-policy.js";
 import { settleManualOrder } from "../services/manual-payment-settlement.js";
+import {
+    objectExists,
+    readObject,
+    saveObject,
+} from "../services/storage/objectStore.js";
 const router = express.Router();
 const fail = (message, status = 400) =>
     Object.assign(new Error(message), { status });
@@ -31,6 +36,8 @@ const dto = (row) => ({
     amount: row.amount,
     currency: row.currency,
     payer_name: row.payer_name,
+    payer_bank: row.payer_bank ?? null,
+    declared_amount: row.declared_amount ?? null,
     payment_reference: row.payment_reference,
     payment_date: row.payment_date,
     status: row.status,
@@ -39,10 +46,14 @@ const dto = (row) => ({
     created_at: row.createdAt,
     ...(paymentInstructions().enabled
         ? {
-              whatsapp_url: `https://wa.me/${paymentInstructions().whatsapp}?text=${encodeURIComponent(`Hello Techaven, I submitted payment proof.\nSubmission: ${row.id}\nOrders: ${row.order_references.join(", ")}\nAmount: MWK ${row.amount}\nPayer: ${row.payer_name}\nTransaction: ${row.payment_reference}\nPayment date: ${row.payment_date}`)}`,
+              whatsapp_url: `https://wa.me/${paymentInstructions().whatsapp}?text=${encodeURIComponent(`Hello Techaven, I submitted payment proof.\nSubmission: ${row.id}\nOrders: ${row.order_references.join(", ")}\nAmount: MWK ${row.amount}\nPayer: ${row.payer_name}${row.payer_bank ? ` (${row.payer_bank})` : ""}\nTransaction: ${row.payment_reference || "Not provided"}\nPayment date: ${row.payment_date}`)}`,
           }
         : {}),
 });
+const publicReceiptUrl = (key) =>
+    process.env.R2_PUBLIC_URL
+        ? `${process.env.R2_PUBLIC_URL.trim().replace(/\/+$/, "")}/${key}`
+        : null;
 const receiptRoot = () => {
     const dest = path.resolve(
         process.env.PAYMENT_PROOF_DIR || "private/payment-proofs",
@@ -204,7 +215,7 @@ const upload = multer({
     limits: {
         fileSize: 10 * 1024 * 1024,
         files: 1,
-        fields: 6,
+        fields: 10,
         fieldSize: 2000,
     },
 }).single("receipt");
@@ -226,24 +237,42 @@ router.post(
         const key = String(req.body.submission_key || "");
         if (!/^[a-zA-Z0-9_-]{16,80}$/.test(key))
             throw fail("A valid submission key is required");
-        for (const field of ["payer_name", "payment_reference"])
-            if (
-                typeof req.body[field] !== "string" ||
-                !req.body[field].trim() ||
-                req.body[field].length > 160
-            )
-                throw fail(`Invalid ${field}`);
-        const date = req.body.payment_date;
+        const text = (field, label, { required = false, max = 160 } = {}) => {
+            const value = req.body[field];
+            if (value == null || value === "") {
+                if (required) throw fail(`${label} is required`);
+                return null;
+            }
+            if (typeof value !== "string" || !value.trim() || value.length > max)
+                throw fail(`Invalid ${label.toLowerCase()}`);
+            return value.trim();
+        };
+        const payerName = text("payer_name", "Account name", { required: true });
+        const payerBank = text("payer_bank", "Bank name", { max: 120 });
+        const reference = text("payment_reference", "Transaction reference");
+        const today = new Date().toISOString().slice(0, 10);
+        const date = req.body.payment_date || today;
         if (
-            !/^\d{4}-\d{2}-\d{2}$/.test(date || "") ||
+            typeof date !== "string" ||
+            !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
             !Number.isFinite(Date.parse(date)) ||
             new Date(date).toISOString().slice(0, 10) !== date ||
-            date > new Date().toISOString().slice(0, 10)
+            date > today
         )
             throw fail("Enter a valid payment date");
+        let declared = null;
+        if (req.body.declared_amount != null && req.body.declared_amount !== "") {
+            const raw = String(req.body.declared_amount).trim();
+            if (!/^\d{1,10}(\.\d{1,2})?$/.test(raw) || cents(raw) <= 0)
+                throw fail("Enter the amount you paid");
+            declared = money(cents(raw));
+        }
         let ids;
         try {
-            ids = JSON.parse(req.body.order_ids);
+            ids =
+                typeof req.body.order_ids === "string"
+                    ? JSON.parse(req.body.order_ids)
+                    : req.body.order_ids;
         } catch {
             throw fail("Invalid orders");
         }
@@ -255,10 +284,31 @@ router.post(
             new Set(ids).size !== ids.length
         )
             throw fail("Invalid orders");
-        if (!req.file?.buffer?.length) throw fail("A receipt is required");
-        const type = receiptType(req.file.buffer),
-            file = randomUUID();
-        let saved = false;
+        // A receipt arrives either as a file in this request or as the key returned by
+        // POST /api/uploads/payment-proof. Keys are scoped to the uploader.
+        let receipt;
+        if (req.file?.buffer?.length) {
+            const type = receiptType(req.file.buffer);
+            const extension =
+                type === "application/pdf" ? "pdf" : type === "image/png" ? "png" : "jpg";
+            receipt = {
+                type,
+                key: `payment-proofs/u${req.user.id}/${randomUUID()}.${extension}`,
+                buffer: req.file.buffer,
+            };
+        } else if (req.body.receipt_key) {
+            const key = String(req.body.receipt_key);
+            const match = key.match(
+                new RegExp(`^payment-proofs/u${req.user.id}/[0-9a-f-]{36}\\.(jpg|png|pdf)$`),
+            );
+            if (!match || !(await objectExists(key, { visibility: "private" })))
+                throw fail("Upload the receipt again");
+            receipt = {
+                key,
+                type: { jpg: "image/jpeg", png: "image/png", pdf: "application/pdf" }[match[1]],
+            };
+        } else throw fail("A receipt is required");
+        let stored = null;
         try {
             const row = await db.sequelize.transaction(async (transaction) => {
                 await db.User.findByPk(req.user.id, {
@@ -273,9 +323,8 @@ router.post(
                     if (
                         JSON.stringify([...previous.order_ids].sort()) !==
                             JSON.stringify([...ids].sort()) ||
-                        previous.payment_reference !==
-                            req.body.payment_reference.trim() ||
-                        previous.payer_name !== req.body.payer_name.trim() ||
+                        (previous.payment_reference ?? null) !== reference ||
+                        previous.payer_name !== payerName ||
                         previous.payment_date !== date
                     )
                         throw fail(
@@ -337,13 +386,12 @@ router.post(
                 );
                 if (cents(amount) <= 0)
                     throw fail("Order amount must be positive", 409);
-                await fs.mkdir(receiptRoot(), { recursive: true, mode: 0o700 });
-                await fs.writeFile(
-                    path.join(receiptRoot(), file),
-                    req.file.buffer,
-                    { flag: "wx", mode: 0o600 },
-                );
-                saved = true;
+                if (receipt.buffer) {
+                    receiptRoot(); // refuses a receipt directory inside public uploads
+                    stored = await saveObject(receipt.key, receipt.buffer, receipt.type, {
+                        visibility: "private",
+                    });
+                } else stored = { key: receipt.key, url: publicReceiptUrl(receipt.key), reused: true };
                 const submission = await Submission.create(
                     {
                         id: randomUUID(),
@@ -353,11 +401,15 @@ router.post(
                         order_references: orders.map((o) => o.order_number),
                         amount,
                         currency: "MWK",
-                        payer_name: req.body.payer_name.trim(),
-                        payment_reference: req.body.payment_reference.trim(),
+                        payer_name: payerName,
+                        payer_bank: payerBank,
+                        declared_amount: declared,
+                        payment_reference: reference,
                         payment_date: date,
-                        receipt_file: file,
-                        receipt_type: type,
+                        receipt_file: null,
+                        receipt_key: receipt.key,
+                        receipt_url: stored.url,
+                        receipt_type: receipt.type,
                         status: "pending_review",
                     },
                     { transaction },
@@ -407,7 +459,7 @@ router.post(
                 return submission;
             });
             const config = paymentInstructions();
-            const text = `Hello Techaven, I submitted payment proof.\nSubmission: ${row.id}\nOrders: ${row.order_references.join(", ")}\nAmount: MWK ${row.amount}\nPayer: ${row.payer_name}\nTransaction: ${row.payment_reference}\nPayment date: ${row.payment_date}`;
+            const text = `Hello Techaven, I submitted payment proof.\nSubmission: ${row.id}\nOrders: ${row.order_references.join(", ")}\nAmount: MWK ${row.amount}\nPayer: ${row.payer_name}${row.payer_bank ? ` (${row.payer_bank})` : ""}\nTransaction: ${row.payment_reference || "Not provided"}\nPayment date: ${row.payment_date}`;
             res.status(201).json({
                 success: true,
                 data: {
@@ -416,8 +468,10 @@ router.post(
                 },
             });
         } catch (error) {
-            if (saved)
-                await fs.unlink(path.join(receiptRoot(), file)).catch(() => {});
+            if (stored?.storage === "local")
+                await fs
+                    .unlink(path.join(receiptRoot(), ...stored.key.split("/")))
+                    .catch(() => {});
             throw error;
         }
     }),
@@ -465,9 +519,11 @@ router.get(
                       : "jpg") +
                 '"',
         });
-        const buffer = await fs.readFile(
-            path.join(receiptRoot(), path.basename(row.receipt_file)),
-        );
+        const buffer = row.receipt_key
+            ? await readObject(row.receipt_key, { visibility: "private" })
+            : await fs.readFile(
+                  path.join(receiptRoot(), path.basename(row.receipt_file)),
+              );
         res.send(buffer);
     }),
 );

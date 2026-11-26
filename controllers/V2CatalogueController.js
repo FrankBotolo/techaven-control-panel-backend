@@ -2,6 +2,7 @@ import { Op } from 'sequelize';
 import db from '../models/index.js';
 import { CatalogueError, sendCatalogueError } from '../services/catalogue/errors.js';
 import { toDeviceDto, toVariantDto } from '../services/catalogue/dto.js';
+import { cached } from '../utils/ttlCache.js';
 
 const { Brand, Device, DeviceVariant, DeviceVariantColor, Color, Category, DeviceMedia } = db;
 const pagination = (page, perPage, count) => ({ current_page: page, per_page: perPage, total_items: count, total_pages: Math.ceil(count / perPage), has_next: page * perPage < count, has_prev: page > 1 });
@@ -27,9 +28,19 @@ export async function listDevices(req, res) {
     const where = { is_active: true };
     if (req.query.category_id) where.category_id = req.query.category_id;
     if (req.query.search) where[Op.or] = [{ name: { [Op.like]: `%${req.query.search}%` } }, { slug: { [Op.like]: `%${req.query.search}%` } }];
-    const brandWhere = { is_active: true };
-    if (req.query.brand) brandWhere[Op.or] = [{ slug: req.query.brand }, { id: Number(req.query.brand) || 0 }];
-    const { count, rows } = await Device.findAndCountAll({ where, include: [{ model: Brand, as: 'brand', where: brandWhere }, { model: Category, as: 'category', attributes: ['id', 'name'] }], distinct: true, limit: perPage, offset: (page - 1) * perPage, order: [['name', 'ASC']] });
+    // Only devices of active brands are listed. Filtering by brand id lets MySQL read devices in
+    // name order from the (is_active, name) index instead of sorting every device per request.
+    const activeBrandIds = await cached('catalogue:active-brand-ids', 60_000, async () =>
+      (await Brand.findAll({ where: { is_active: true }, attributes: ['id'], raw: true })).map((brand) => brand.id));
+    if (req.query.brand) {
+      const brand = await Brand.findOne({ where: { is_active: true, [Op.or]: [{ slug: String(req.query.brand) }, { id: Number(req.query.brand) || 0 }] }, attributes: ['id'], raw: true });
+      where.brand_id = brand ? [brand.id] : [];
+    } else where.brand_id = activeBrandIds;
+    const countKey = `catalogue:device-count:${req.query.category_id || ''}:${req.query.brand || ''}:${req.query.search || ''}`;
+    const [rows, count] = await Promise.all([
+      Device.findAll({ where, include: [{ model: Brand, as: 'brand' }, { model: Category, as: 'category', attributes: ['id', 'name'] }], limit: perPage, offset: (page - 1) * perPage, order: [['name', 'ASC']] }),
+      cached(countKey, 60_000, () => Device.count({ where }))
+    ]);
     return res.json({ success: true, message: 'Devices retrieved', data: { devices: rows.map((row) => toDeviceDto(row)), pagination: pagination(page, perPage, count) } });
   } catch (error) { return sendCatalogueError(res, error); }
 }

@@ -2,6 +2,7 @@ import express from 'express';
 import { authenticate } from '../middleware/auth.js';
 import * as OrderController from '../controllers/OrderController.js';
 import * as DisputeController from '../controllers/DisputeController.js';
+import * as DeliveryController from '../controllers/DeliveryController.js';
 
 const router = express.Router();
 
@@ -18,6 +19,8 @@ router.post('/:order_id/pay/paychangu', OrderController.payWithPayChangu);
 router.post('/:order_id/cancel', OrderController.cancelOrder);
 router.post('/:order_id/payment/complete', OrderController.completePayment);
 router.post('/:order_id/delivery/confirm', OrderController.confirmDelivery);
+router.post('/:order_id/delivery/proof', DeliveryController.submitProof);
+router.get('/:order_id/delivery/proof', DeliveryController.proofFile);
 router.patch('/:order_id/status', OrderController.updateOrderStatus);
 
 router.post('/:order_id/disputes', DisputeController.openDispute);

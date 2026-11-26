@@ -9,11 +9,12 @@ import { getSellerCommissionPercent, computeSellerEscrowSplit } from '../utils/s
 import { verifyPayChanguTxRef, paychanguVerifyDataIndicatesPaid } from '../utils/paychanguVerify.js';
 import { completeOrderPaidWithEscrow } from '../utils/orderEscrowFinalize.js';
 import { restoreOrderItemStock } from '../utils/orderItemStock.js';
+import { fulfilmentFields, submitDeliveryProof } from '../services/order-fulfilment.js';
 
 const { Order, OrderItem, Cart, Product, User, Notification, Shop, Escrow, Wallet, WalletTransaction, ShippingAddress, CourierService, UserShopPoints } = db;
 
 /** Award points to customer when order is completed (delivery confirmed). Points come from product.points * quantity, attributed per shop. */
-const awardPointsForOrder = async (orderId, userId) => {
+export const awardPointsForOrder = async (orderId, userId) => {
   const items = await OrderItem.findAll({
     where: { order_id: orderId },
     include: [{ model: Product, as: 'product', attributes: ['id', 'points', 'shop_id'] }]
@@ -79,7 +80,8 @@ const formatOrderForApi = (order) => {
     escrow_status: order.escrow_status || null,
     courier_tracking_number: order.courier_tracking_number || null,
     delivery_confirmed_at: order.delivery_confirmed_at || null,
-    delivery_confirmation_proof_url: order.delivery_confirmation_proof_url || null
+    delivery_confirmation_proof_url: order.delivery_confirmation_proof_url || null,
+    ...fulfilmentFields(order)
   };
 };
 
@@ -735,11 +737,23 @@ export const updateOrderStatus = async (req, res) => {
     const { status, payment_status, courier_tracking_number, delivery_method } = req.body;
 
     const order = await Order.findByPk(id);
-    if (!order) {
+    if (!order || (userRole === 'seller' && order.seller_id !== req.user.id)) {
       return res.status(404).json({
         success: false,
         message: 'Order not found'
       });
+    }
+
+    // Sellers mark orders as sent with POST /api/sellers/orders/:id/dispatch. "Delivered" is set by the
+    // buyer's proof of delivery, and escrow is released only when an admin approves that proof.
+    if (userRole === 'seller' && status && !['processing', 'shipped'].includes(status)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Sellers can only mark orders as processing or sent'
+      });
+    }
+    if (status === 'shipped' && (order.payment_status !== 'paid' || order.escrow_status !== 'held')) {
+      return res.status(409).json({ success: false, message: 'Only paid orders can be marked as sent' });
     }
 
     if (status) {
@@ -780,118 +794,9 @@ export const updateOrderStatus = async (req, res) => {
 
     await order.save();
 
-    // When admin marks order as 'delivered', automatically release escrow to seller wallet
-    if (order.status === 'delivered' && order.escrow_status === 'held' && !order.delivery_confirmed_at) {
-      // Update order escrow status
-      order.delivery_confirmed_at = new Date();
-      order.escrow_status = 'released';
-      order.funds_released_at = new Date();
+    if (status === 'shipped' && !order.dispatched_at) {
+      order.dispatched_at = new Date();
       await order.save();
-
-      // Update escrow record
-      const escrow = await Escrow.findOne({ where: { order_id: order.id } });
-      if (escrow) {
-        escrow.status = 'released';
-        escrow.released_at = new Date();
-        await escrow.save();
-      }
-
-      // Get or create seller wallet
-      let sellerWallet = await Wallet.findOne({ where: { user_id: order.seller_id } });
-      if (!sellerWallet) {
-        sellerWallet = await Wallet.create({
-          user_id: order.seller_id,
-          balance: 0.00,
-          currency: 'MWK'
-        });
-      }
-
-      // Transfer funds from admin escrow to seller
-      const adminUsersForWallet = await User.findAll({ where: { role: 'admin' }, limit: 1 });
-      if (adminUsersForWallet.length > 0) {
-        const adminWallet = await Wallet.findOne({ where: { user_id: adminUsersForWallet[0].id } });
-        if (adminWallet) {
-          // Deduct from admin wallet
-          const adminNewBalance = parseFloat(adminWallet.balance) - parseFloat(order.escrow_amount);
-          adminWallet.balance = adminNewBalance;
-          await adminWallet.save();
-
-          // Create debit transaction for admin
-          await WalletTransaction.create({
-            wallet_id: adminWallet.id,
-            user_id: adminUsersForWallet[0].id,
-            type: 'debit',
-            amount: order.escrow_amount,
-            currency: 'MWK',
-            description: `Escrow release for order ${order.order_number} to seller`,
-            reference: `escrow_release_${order.id}`,
-            status: 'completed',
-            balance_after: adminNewBalance
-          });
-        }
-      }
-
-      // Add to seller wallet
-      const sellerNewBalance = parseFloat(sellerWallet.balance) + parseFloat(order.escrow_amount);
-      sellerWallet.balance = sellerNewBalance;
-      await sellerWallet.save();
-
-      // Update the pending/processing transaction to completed
-      const pendingTransaction = await WalletTransaction.findOne({
-        where: {
-          user_id: order.seller_id,
-          reference: `order_${order.id}`,
-          status: { [Op.in]: ['pending', 'processing'] } // Can be either pending or processing
-        }
-      });
-
-      if (pendingTransaction) {
-        pendingTransaction.status = 'completed';
-        pendingTransaction.balance_after = sellerNewBalance;
-        pendingTransaction.description = `Payment received for order ${order.order_number}`;
-        await pendingTransaction.save();
-      } else {
-        // If pending transaction not found, create completed one
-        await WalletTransaction.create({
-          wallet_id: sellerWallet.id,
-          user_id: order.seller_id,
-          type: 'credit',
-          amount: order.escrow_amount,
-          currency: 'MWK',
-          description: `Payment received for order ${order.order_number}`,
-          reference: `order_payment_${order.id}`,
-          status: 'completed',
-          balance_after: sellerNewBalance
-        });
-      }
-
-      // Notify seller
-      const sellerReleaseNotification = await Notification.create({
-        user_id: order.seller_id,
-        title: 'Payment Released',
-        message: `MWK ${order.escrow_amount} has been released to your wallet for order ${order.order_number}.`,
-        type: 'payment',
-        order_id: order.id,
-        read: false
-      });
-      sendNotificationEmail(sellerReleaseNotification, order);
-
-      // Notify admin
-      const allAdminUsers = await User.findAll({ where: { role: 'admin' } });
-      for (const admin of allAdminUsers) {
-        const adminReleaseNotification = await Notification.create({
-          user_id: admin.id,
-          title: 'Escrow Released',
-          message: `Escrow funds of MWK ${order.escrow_amount} have been released to seller for order ${order.order_number}.`,
-          type: 'payment',
-          order_id: order.id,
-          read: false
-        });
-        sendNotificationEmail(adminReleaseNotification, order);
-      }
-
-      // Award points to customer when admin auto-confirms delivery
-      await awardPointsForOrder(order.id, order.user_id);
     }
 
     // Create notification for customer
@@ -899,7 +804,7 @@ export const updateOrderStatus = async (req, res) => {
       const deliveredNotification = await Notification.create({
         user_id: order.user_id,
         title: 'Order Delivered',
-        message: `Your order ${order.order_number} has been delivered. Payment has been released to the seller.`,
+        message: `Your order ${order.order_number} is marked as delivered. Upload a photo of the parcel on your order page to confirm it.`,
         type: 'order',
         order_id: order.id,
         read: false
@@ -964,204 +869,35 @@ export const completePayment = async (req, res) => {
   } catch (error) { res.status(error.status || 500).json({ success: false, message: error.status ? error.message : 'Payment could not be completed' }); }
 };
 
-// Delivery confirmation endpoint - releases escrow funds to seller
+// Delivery confirmation (mobile app): submits proof for admin review. Escrow is released to the
+// seller only when an admin approves it (POST /api/admin/orders/:id/delivery/approve).
 export const confirmDelivery = async (req, res) => {
   try {
-    const userId = req.user.id;
-    const { order_id } = req.params;
-    const id = order_id.replace('ord_', '');
-
-    const proofRaw =
-      req.body?.proof_url ??
-      req.body?.file_url ??
-      req.body?.delivery_proof_url ??
-      req.body?.confirmation_file_url;
-    const proofUrl =
-      proofRaw != null && String(proofRaw).trim() !== ''
-        ? String(proofRaw).trim().slice(0, 2048)
-        : null;
-
-    const order = await Order.findOne({
-      where: {
-        id: id,
-        user_id: userId
-      },
-      include: [
-        { model: User, as: 'seller', attributes: ['id', 'name', 'email'] }
-      ]
+    const proofRaw = req.body?.proof_url ?? req.body?.file_url ?? req.body?.delivery_proof_url ?? req.body?.confirmation_file_url;
+    const proofUrl = proofRaw != null && String(proofRaw).trim() !== '' ? String(proofRaw).trim().slice(0, 2048) : null;
+    const order = await submitDeliveryProof({
+      buyerId: req.user.id,
+      id: req.params.order_id,
+      proofKey: req.body?.proof_key,
+      proofUrl,
+      ip: req.ip
     });
-
-    if (!order) {
-      return res.status(404).json({
-        success: false,
-        message: 'Order not found'
-      });
-    }
-
-    if (order.status !== 'delivered') {
-      return res.status(400).json({
-        success: false,
-        message: 'Order must be marked as delivered before confirming delivery'
-      });
-    }
-
-    if (order.delivery_confirmed_at) {
-      return res.status(400).json({
-        success: false,
-        message: 'Delivery already confirmed'
-      });
-    }
-
-    if (order.escrow_status !== 'held') {
-      return res.status(400).json({
-        success: false,
-        message: `Cannot confirm delivery. Escrow status is: ${order.escrow_status}`
-      });
-    }
-
-    // Update order
-    order.delivery_confirmed_at = new Date();
-    order.escrow_status = 'released';
-    order.funds_released_at = new Date();
-    if (proofUrl) {
-      order.delivery_confirmation_proof_url = proofUrl;
-    }
-    await order.save();
-
-    // Update escrow record
-    const escrow = await Escrow.findOne({ where: { order_id: order.id } });
-    if (escrow) {
-      escrow.status = 'released';
-      escrow.released_at = new Date();
-      await escrow.save();
-    }
-
-    // Get or create seller wallet
-    let sellerWallet = await Wallet.findOne({ where: { user_id: order.seller_id } });
-    if (!sellerWallet) {
-      sellerWallet = await Wallet.create({
-        user_id: order.seller_id,
-        balance: 0.00,
-        currency: 'MWK'
-      });
-    }
-
-    // Transfer funds from admin escrow to seller
-    const adminUsersForWallet = await User.findAll({ where: { role: 'admin' }, limit: 1 });
-    if (adminUsersForWallet.length > 0) {
-      const adminWallet = await Wallet.findOne({ where: { user_id: adminUsersForWallet[0].id } });
-      if (adminWallet) {
-        // Deduct from admin wallet
-        const adminNewBalance = parseFloat(adminWallet.balance) - parseFloat(order.escrow_amount);
-        adminWallet.balance = adminNewBalance;
-        await adminWallet.save();
-
-        // Create debit transaction for admin
-        await WalletTransaction.create({
-          wallet_id: adminWallet.id,
-          user_id: adminUsersForWallet[0].id,
-          type: 'debit',
-          amount: order.escrow_amount,
-          currency: 'MWK',
-          description: `Escrow release for order ${order.order_number} to seller`,
-          reference: `escrow_release_${order.id}`,
-          status: 'completed',
-          balance_after: adminNewBalance
-        });
-      }
-    }
-
-    // Add to seller wallet
-    const sellerNewBalance = parseFloat(sellerWallet.balance) + parseFloat(order.escrow_amount);
-    sellerWallet.balance = sellerNewBalance;
-    await sellerWallet.save();
-
-    // Create credit transaction for seller
-    await WalletTransaction.create({
-      wallet_id: sellerWallet.id,
-      user_id: order.seller_id,
-      type: 'credit',
-      amount: order.escrow_amount,
-      currency: 'MWK',
-      description: `Payment received for order ${order.order_number}`,
-      reference: `order_payment_${order.id}`,
-      status: 'completed',
-      balance_after: sellerNewBalance
-    });
-
-    // Award points to customer (from product.points * quantity)
-    await awardPointsForOrder(order.id, order.user_id);
-
-    // Notify customer
-    const customerDeliveryNotification = await Notification.create({
-      user_id: order.user_id,
-      title: 'Delivery Confirmed',
-      message: `Thank you for confirming delivery of order ${order.order_number}. Payment has been released to the seller.`,
-      type: 'order',
-      order_id: order.id,
-      read: false
-    });
-    sendNotificationEmail(customerDeliveryNotification, order);
-
-    // Notify seller
-    if (order.seller) {
-      const sellerReleaseNotification = await Notification.create({
-        user_id: order.seller_id,
-        title: 'Payment Released',
-        message: `MWK ${order.escrow_amount} has been released to your wallet for order ${order.order_number}.`,
-        type: 'payment',
-        order_id: order.id,
-        read: false
-      });
-      sendNotificationEmail(sellerReleaseNotification, order);
-    }
-
-    // Notify admin
-    const allAdminUsers = await User.findAll({ where: { role: 'admin' } });
-    for (const admin of allAdminUsers) {
-      const adminReleaseNotification = await Notification.create({
-        user_id: admin.id,
-        title: 'Escrow Released',
-        message: `Escrow funds of MWK ${order.escrow_amount} have been released to seller for order ${order.order_number}.`,
-        type: 'payment',
-        order_id: order.id,
-        read: false
-      });
-      sendNotificationEmail(adminReleaseNotification, order);
-    }
-
-    await logAudit({
-      action: 'order.delivery.confirm',
-      actor_user_id: userId,
-      target_type: 'order',
-      target_id: order.id,
-      metadata: {
-        order_number: order.order_number,
-        escrow_amount: order.escrow_amount,
-        seller_id: order.seller_id,
-        has_delivery_proof_url: Boolean(proofUrl)
-      },
-      ip_address: req.ip
-    });
-
     return res.json({
       success: true,
-      message: 'Delivery confirmed. Funds released to seller.',
+      message: 'Delivery confirmation received. Techaven will review it and then release payment to the seller.',
       data: {
         order_id: `ord_${order.id}`,
         order_number: order.order_number,
-        escrow_status: 'released',
-        amount_released: order.escrow_amount,
-        released_at: order.funds_released_at,
-        delivery_confirmation_proof_url: order.delivery_confirmation_proof_url || null
+        escrow_status: order.escrow_status,
+        delivery_confirmation_proof_url: order.delivery_confirmation_proof_url || null,
+        ...fulfilmentFields(order)
       }
     });
   } catch (error) {
-    console.error('Confirm delivery error:', error);
-    return res.status(500).json({
+    if (!error.status) console.error('Confirm delivery error:', error);
+    return res.status(error.status || 500).json({
       success: false,
-      message: 'Failed to confirm delivery',
-      error: error.message
+      message: error.status ? error.message : 'Failed to confirm delivery'
     });
   }
 };

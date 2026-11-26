@@ -9,26 +9,58 @@ const { Shop, ShopInvitation } = db;
 
 const generateInviteToken = () => crypto.randomBytes(32).toString('hex');
 
+/**
+ * Shop fields an admin can set. Empty strings clear optional fields. Returns { values } or { error }.
+ * `partial` (update) leaves missing fields untouched; create requires a name.
+ */
+function shopFields(body, { partial }) {
+  const values = {};
+  const text = (key, column, max, { required = false } = {}) => {
+    const raw = body[key];
+    if (raw === undefined) {
+      if (required && !partial) return `${key} is required`;
+      return null;
+    }
+    if (raw !== null && typeof raw !== 'string') return `${key} must be text`;
+    const value = (raw ?? '').trim();
+    if (required && !value) return `${key} is required`;
+    if (value.length > max) return `${key} must be at most ${max} characters`;
+    values[column] = value || null;
+    return null;
+  };
+  const errors = [
+    text('shop_name', 'name', 255, { required: true }),
+    text('location', 'location', 255),
+    text('address', 'address', 255),
+    text('phone', 'phone', 50),
+    text('email', 'email', 255),
+    text('description', 'description', 5000),
+    text('logo_url', 'logo', 2048)
+  ].filter(Boolean);
+  if (errors.length) return { error: errors[0] };
+  if (values.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) return { error: 'Enter a valid email address' };
+  if (values.logo && !/^https?:\/\//i.test(values.logo)) return { error: 'logo_url must be a web address' };
+  if (body.status !== undefined) {
+    if (!['active', 'inactive'].includes(body.status)) return { error: 'status must be active or inactive' };
+    values.status = body.status;
+  }
+  if (body.is_verified !== undefined) values.is_verified = body.is_verified === true || body.is_verified === 'true';
+  return { values };
+}
+
+const shopDto = (shop) => {
+  const plain = shop.get ? shop.get({ plain: true }) : shop;
+  const { users, ...rest } = plain;
+  return { ...rest, owners: (users || []).map((user) => ({ id: user.id, name: user.name, email: user.email })) };
+};
+
 export const createShop = async (req, res) => {
   try {
-    const { shop_name, location, address, phone, email, logo_url } = req.body;
+    const { values, error } = shopFields(req.body, { partial: false });
+    if (error) return res.status(400).json({ success: false, message: error });
 
-    if (!shop_name) {
-      return res.status(400).json({ success: false, message: 'shop_name is required' });
-    }
-
-    if (!logo_url) {
-      return res.status(400).json({ success: false, message: 'logo_url is required' });
-    }
-
-    const shop = await Shop.create({
-      name: shop_name,
-      location: location || null,
-      address: address || null,
-      phone: phone || null,
-      email: email || null,
-      logo: logo_url
-    });
+    // Shops added by an admin are live straight away; applications from sellers go through review.
+    const shop = await Shop.create({ status: 'active', application_status: 'approved', ...values });
     await enqueueShop(shop.id, { reason: `admin-create:${shop.updatedAt.toISOString()}` });
 
     await logAudit({
@@ -37,17 +69,17 @@ export const createShop = async (req, res) => {
       actor_user_id: req.user.id,
       target_type: 'shop',
       target_id: shop.id,
-      metadata: { shop_name, location, address, phone, email, logo_url }
+      metadata: values
     });
 
-    return res.json({
+    return res.status(201).json({
       success: true,
       message: 'Shop created successfully',
-      data: { shop_id: `shop_${String(shop.id).padStart(3, '0')}` }
+      data: { ...shopDto(shop), shop_id: `shop_${String(shop.id).padStart(3, '0')}` }
     });
   } catch (error) {
     console.error('Admin create shop error:', error);
-    return res.status(500).json({ success: false, message: 'Failed to create shop', error: error.message });
+    return res.status(500).json({ success: false, message: 'Failed to create shop' });
   }
 };
 
@@ -65,9 +97,10 @@ export const listShops = async (req, res) => {
 
     const shops = await Shop.findAll({
       where,
+      include: [{ model: db.User, as: 'users', attributes: ['id', 'name', 'email'], where: { role: 'seller' }, required: false }],
       order: [['id', 'DESC']]
     });
-    return res.json({ success: true, message: 'Shops retrieved', data: shops });
+    return res.json({ success: true, message: 'Shops retrieved', data: shops.map(shopDto) });
   } catch (error) {
     console.error('Admin list shops error:', error);
     return res.status(500).json({ success: false, message: 'Failed to fetch shops', error: error.message });
@@ -80,17 +113,11 @@ export const updateShop = async (req, res) => {
     const shop = await Shop.findByPk(shopId);
     if (!shop) return res.status(404).json({ success: false, message: 'Shop not found' });
 
-    const { shop_name, location, address, phone, email, status, logo_url } = req.body;
+    const { values, error } = shopFields(req.body, { partial: true });
+    if (error) return res.status(400).json({ success: false, message: error });
+    if (!Object.keys(values).length) return res.status(400).json({ success: false, message: 'Nothing to update' });
 
-    if (shop_name != null) shop.name = shop_name;
-    if (location != null) shop.location = location;
-    if (address != null) shop.address = address;
-    if (phone != null) shop.phone = phone;
-    if (email != null) shop.email = email;
-    if (status != null) shop.status = status;
-    if (logo_url != null) shop.logo = logo_url;
-
-    await shop.save();
+    await shop.update(values);
     await enqueueShop(shop.id, { reason: `admin-update:${shop.updatedAt.toISOString()}` });
     await enqueueShopDevices(shop.id, { reason: `admin-update:${shop.updatedAt.toISOString()}` });
 
@@ -100,13 +127,13 @@ export const updateShop = async (req, res) => {
       actor_user_id: req.user.id,
       target_type: 'shop',
       target_id: shop.id,
-      metadata: { shop_name, location, address, phone, email, status, logo_url }
+      metadata: values
     });
 
-    return res.json({ success: true, message: 'Shop updated successfully', data: shop });
+    return res.json({ success: true, message: 'Shop updated successfully', data: shopDto(shop) });
   } catch (error) {
     console.error('Admin update shop error:', error);
-    return res.status(500).json({ success: false, message: 'Failed to update shop', error: error.message });
+    return res.status(500).json({ success: false, message: 'Failed to update shop' });
   }
 };
 
@@ -193,19 +220,43 @@ export const rejectShopApplication = async (req, res) => {
   }
 };
 
+/**
+ * Deletes a shop only when nothing depends on it (e.g. one created by mistake). A shop with sellers,
+ * listings, products, orders or subscriptions is refused with 409: deleting it would erase listings and
+ * history through database cascades, so suspend it instead.
+ */
 export const deleteShop = async (req, res) => {
   try {
     const { shopId } = req.params;
     const shop = await Shop.findByPk(shopId);
     if (!shop) return res.status(404).json({ success: false, message: 'Shop not found' });
 
+    const [[usage]] = await db.sequelize.query(
+      `SELECT
+         (SELECT COUNT(*) FROM users WHERE shop_id = :id) sellers,
+         (SELECT COUNT(*) FROM seller_listings WHERE shop_id = :id) listings,
+         (SELECT COUNT(*) FROM products WHERE shop_id = :id) products,
+         (SELECT COUNT(*) FROM shop_subscriptions WHERE shop_id = :id) subscriptions,
+         (SELECT COUNT(*) FROM orders o JOIN users u ON u.id = o.seller_id WHERE u.shop_id = :id) orders`,
+      { replacements: { id: shop.id } }
+    );
+    const blockers = Object.entries(usage).filter(([, count]) => Number(count) > 0).map(([name, count]) => `${count} ${name}`);
+    if (blockers.length) {
+      return res.status(409).json({
+        success: false,
+        message: `This shop has ${blockers.join(', ')}. Suspend it instead so its history is kept.`,
+        data: { usage }
+      });
+    }
+
     const shopIdForAudit = shop.id;
     const shopName = shop.name;
-
-    await enqueueTombstone('shop', shop.id, { name: shop.name }, { reason: `admin-delete:${shop.updatedAt.toISOString()}` });
-    await enqueueShopDevices(shop.id, { reason: `admin-delete:${shop.updatedAt.toISOString()}` });
-    // Hard delete - permanently remove the shop from database
-    await shop.destroy({ force: true });
+    await db.sequelize.transaction(async (transaction) => {
+      await db.ShopFollow.destroy({ where: { shop_id: shop.id }, transaction });
+      await ShopInvitation.destroy({ where: { shop_id: shop.id }, transaction });
+      await shop.destroy({ force: true, transaction });
+    });
+    await enqueueTombstone('shop', shopIdForAudit, { name: shopName }, { reason: `admin-delete:${new Date().toISOString()}` });
 
     await logAudit({
       ...auditContext(req),
@@ -219,7 +270,7 @@ export const deleteShop = async (req, res) => {
     return res.json({ success: true, message: 'Shop deleted successfully' });
   } catch (error) {
     console.error('Admin delete shop error:', error);
-    return res.status(500).json({ success: false, message: 'Failed to delete shop', error: error.message });
+    return res.status(500).json({ success: false, message: 'Failed to delete shop' });
   }
 };
 

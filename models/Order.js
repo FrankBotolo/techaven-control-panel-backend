@@ -153,6 +153,22 @@ const Order = sequelize.define('Order', {
     type: DataTypes.DATE,
     allowNull: true
   },
+  /** 'delivery' (courier / Techaven rider) or 'pickup' (buyer collects at the shop). */
+  fulfilment_type: {
+    type: DataTypes.STRING(20),
+    allowNull: false,
+    defaultValue: 'delivery'
+  },
+  /** When the seller marked the parcel as sent, or handed over at the shop. */
+  dispatched_at: { type: DataTypes.DATE, allowNull: true },
+  /** Private storage key of the buyer's proof of delivery (see /api/uploads/delivery-proof). */
+  delivery_proof_key: { type: DataTypes.STRING(255), allowNull: true },
+  /** null, 'pending_review', 'approved' or 'rejected'. Escrow is released only on approval. */
+  delivery_proof_status: { type: DataTypes.STRING(20), allowNull: true },
+  delivery_proof_submitted_at: { type: DataTypes.DATE, allowNull: true },
+  delivery_proof_reviewed_at: { type: DataTypes.DATE, allowNull: true },
+  delivery_proof_reviewed_by: { type: DataTypes.INTEGER, allowNull: true },
+  delivery_proof_rejection_reason: { type: DataTypes.STRING(1000), allowNull: true },
   notes: {
     type: DataTypes.TEXT,
     allowNull: true

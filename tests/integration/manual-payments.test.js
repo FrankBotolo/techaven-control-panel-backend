@@ -10,9 +10,14 @@ import orderRouter from "../../routes/orders.js";
 import addressRouter from "../../routes/shipping-addresses.js";
 import Submission from "../../models/PaymentSubmission.js";
 import { up } from "../../database/migrations-js/202611060001-mobile-commerce.js";
+import { up as upProofDetails } from "../../database/migrations-js/202611260001-payment-proof-details.js";
+import { saveObject } from "../../services/storage/objectStore.js";
 
 if (process.env.DB_NAME !== "techaven_mobile_commerce_test")
     throw new Error("This test requires the isolated scratch database");
+// Receipts go to the local private directory here, never to the real R2 bucket.
+for (const name of Object.keys(process.env))
+    if (name.startsWith("R2_")) delete process.env[name];
 Object.assign(process.env, {
     MANUAL_PAYMENTS_ENABLED: "true",
     MANUAL_PAYMENT_REVIEW_READY: "true",
@@ -29,6 +34,8 @@ test("private proof submission and transactional multi-order review", async (t) 
     try {
         await up({ sequelize: db.sequelize });
         await up({ sequelize: db.sequelize });
+        await upProofDetails({ sequelize: db.sequelize });
+        await upProofDetails({ sequelize: db.sequelize });
         const admin = await db.User.create({
             name: "Test administrator",
             role: "admin",
@@ -188,6 +195,53 @@ test("private proof submission and transactional multi-order review", async (t) 
                     ).status,
                     403,
                 );
+            },
+        );
+        await t.test(
+            "a receipt uploaded first is attached by key with bank details",
+            async () => {
+                const group = randomUUID();
+                const three = await makeOrder("40.00", "32.00", group);
+                const pdf = Buffer.from("%PDF-1.7 uploaded first");
+                const own = `payment-proofs/u${customer.id}/${randomUUID()}.pdf`;
+                await saveObject(own, pdf, "application/pdf", { visibility: "private" });
+                const send = (user, extra) =>
+                    call(user, "/payment-submissions", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            submission_key: randomUUID(),
+                            order_ids: [three.id],
+                            payer_name: "Fixture Account",
+                            payer_bank: "Fixture Bank",
+                            declared_amount: "40",
+                            receipt_key: own,
+                            ...extra,
+                        }),
+                    });
+                const missing = `payment-proofs/u${customer.id}/${randomUUID()}.pdf`;
+                const foreign = `payment-proofs/u${stranger.id}/${randomUUID()}.pdf`;
+                assert.equal((await send(customer, { receipt_key: missing })).status, 400);
+                assert.equal((await send(customer, { receipt_key: foreign })).status, 400);
+                assert.equal((await send(customer, { receipt_key: "../../etc/passwd" })).status, 400);
+                assert.equal((await send(customer, { declared_amount: "-1" })).status, 400);
+                assert.equal((await send(customer, { payer_name: "" })).status, 400);
+                const response = await send(customer);
+                assert.equal(response.status, 201, await response.clone().text());
+                const data = (await response.json()).data;
+                assert.equal(data.amount, "40.00");
+                assert.equal(data.declared_amount, "40.00");
+                assert.equal(data.payer_bank, "Fixture Bank");
+                assert.equal(data.payment_reference, null);
+                assert.equal("receipt_key" in data, false);
+                const row = await Submission.findByPk(data.id);
+                assert.equal(row.receipt_key, own);
+                assert.equal(row.receipt_file, null);
+                assert.equal(row.payment_date, new Date().toISOString().slice(0, 10));
+                const receipt = await call(admin, `/payment-submissions/${data.id}/receipt`);
+                assert.equal(receipt.status, 200);
+                assert.equal(receipt.headers.get("content-type"), "application/pdf");
+                assert.deepEqual(Buffer.from(await receipt.arrayBuffer()), pdf);
             },
         );
         const review = (id, decision, body = {}) =>

@@ -1,3 +1,5 @@
+import * as SellerReportController from '../controllers/SellerReportController.js';
+import * as DeliveryController from '../controllers/DeliveryController.js';
 import express from 'express';
 import { authenticate, authorizeRoles, requireApprovedSeller, requireShopOwnerForShopParam } from '../middleware/auth.js';
 import * as SellerCategoryController from '../controllers/SellerCategoryController.js';
@@ -26,12 +28,16 @@ router.use(requireApprovedSeller);
 router.get('/orders', SellerOrderController.listSellerOrders);
 router.post('/orders/:order_id/accept', SellerOrderController.acceptOrder);
 router.post('/orders/:order_id/reject', SellerOrderController.rejectOrder);
+// No acceptance step: the seller marks a paid order as sent, or handed over at the shop.
+router.post('/orders/:order_id/dispatch', DeliveryController.dispatch);
 
 // Dashboard
 router.get('/dashboard', SellerDashboardController.getDashboard);
 
 // Earnings & balance (available vs pending escrow; withdraw only after escrow release)
 router.get('/earnings', SellerEarningsController.getEarnings);
+// Own sales report (scoped to the signed-in seller).
+router.get('/reports', SellerReportController.getSellerReport);
 router.post('/withdraw', SellerEarningsController.requestWithdrawal);
 router.get('/withdrawals', SellerEarningsController.getWithdrawals);
 

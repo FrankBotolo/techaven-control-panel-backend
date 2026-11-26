@@ -17,7 +17,10 @@ import * as AdminPlatformDeductionController from '../controllers/AdminPlatformD
 import * as AdminUserController from '../controllers/AdminUserController.js';
 import * as AdminAirtelController from '../controllers/AdminAirtelController.js';
 import * as AdminPromotionController from '../controllers/AdminPromotionController.js';
-import { uploadPromotionImage } from '../middleware/upload.js';
+import * as DeliveryController from '../controllers/DeliveryController.js';
+import * as AdminReportController from '../controllers/AdminReportController.js';
+import { receivePromotionImage } from './uploads.js';
+import { uploadImage as uploadImageToStorage } from '../controllers/UploadController.js';
 
 const router = express.Router();
 
@@ -70,6 +73,12 @@ router.get('/dashboard', DashboardController.getDashboard);
 // Orders - Admin can view all orders and manage delivery
 router.get('/orders', OrderController.getAllOrdersAdmin);
 router.patch('/orders/:id/status', OrderController.updateOrderStatus);
+// Proof of delivery review: approving releases escrow to the seller's wallet.
+// Reports: sales by shop, escrow, payouts, payout requests, subscriptions and platform revenue.
+router.get('/reports', AdminReportController.getReport);
+router.get('/delivery-proofs', DeliveryController.listProofs);
+router.post('/orders/:id/delivery/approve', DeliveryController.approve);
+router.post('/orders/:id/delivery/reject', DeliveryController.reject);
 
 // Courier services - Admin manages courier options for customer checkout
 router.get('/courier-services', AdminCourierController.listCourierServices);
@@ -94,7 +103,8 @@ router.delete('/banners/:id', AdminBannerController.remove);
 
 // Promotions - scheduled merchandising content for storefront placements (ported from Techaven CMS)
 router.get('/promotions/options', AdminPromotionController.options);
-router.post('/promotions/upload-image', uploadPromotionImage.single('image'), AdminPromotionController.uploadImage);
+// Stored in Cloudflare R2; the response keeps { url, path } for existing callers.
+router.post('/promotions/upload-image', receivePromotionImage, uploadImageToStorage);
 router.get('/promotions', AdminPromotionController.list);
 router.post('/promotions', AdminPromotionController.create);
 router.get('/promotions/:id', AdminPromotionController.getOne);

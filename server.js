@@ -1,5 +1,6 @@
 import './utils/loadEnv.js';
 import express from 'express';
+import compression from 'compression';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -20,6 +21,8 @@ const PORT = process.env.PORT || 8000;
 
 // Middleware
 app.use(corsMiddleware);
+// Gzip JSON responses: catalogue and list payloads shrink by roughly 85-90% on the wire.
+app.use(compression({ threshold: 1024 }));
 app.use(
   express.json({
     verify: (req, res, buf) => {

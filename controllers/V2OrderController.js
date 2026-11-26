@@ -5,7 +5,7 @@ import { CatalogueError, sendCatalogueError } from '../services/catalogue/errors
 import { getSellerCommissionPercent, computeSellerEscrowSplit } from '../utils/sellerCommission.js';
 import { enqueueDevice } from '../services/catalogue/promotionSync.js';
 
-const { Cart, SellerListing, DeviceVariant, Device, Brand, Shop, User, Order, OrderItem, ShippingAddress, sequelize } = db;
+const { Cart, SellerListing, DeviceVariant, Device, Brand, Shop, User, Order, OrderItem, ShippingAddress, CourierService, sequelize } = db;
 const orderNumber = () => `ORD${new Date().toISOString().slice(0, 10).replace(/-/g, '')}${Math.floor(Math.random() * 1e8).toString().padStart(8, '0')}`;
 
 export async function checkout(req, res) {
@@ -17,6 +17,16 @@ export async function checkout(req, res) {
   try {
     const address = await ShippingAddress.findOne({ where: { id: shippingAddressId, user_id: req.user.id }, transaction });
     if (!address) throw new CatalogueError('SHIPPING_ADDRESS_NOT_FOUND', 'Shipping address not found', 404);
+    // Same contract as the mobile app's POST /api/orders: optional, must be an active courier.
+    const fulfilment = req.body.fulfilment === 'pickup' ? 'pickup' : 'delivery';
+    let courier = null;
+    if (fulfilment === 'delivery' && req.body.courier_service_id != null && req.body.courier_service_id !== '') {
+      const courierId = Number(req.body.courier_service_id);
+      courier = Number.isSafeInteger(courierId) && courierId > 0
+        ? await CourierService.findOne({ where: { id: courierId, is_active: true }, transaction })
+        : null;
+      if (!courier) throw new CatalogueError('INVALID_COURIER', 'Invalid or inactive courier service selected');
+    }
     const requested = Array.isArray(req.body.items) && req.body.items.length
       ? req.body.items.map((item) => ({ seller_listing_id: Number(item.seller_listing_id), quantity: Number(item.quantity || 1) }))
       : (await Cart.findAll({ where: { user_id: req.user.id, product_id: null }, transaction })).map((item) => ({ seller_listing_id: item.seller_listing_id, quantity: item.quantity }));
@@ -47,6 +57,7 @@ export async function checkout(req, res) {
         shipping_address: [address.address, address.city, address.region].filter(Boolean).join(', '),
         shipping_city: address.city, shipping_phone: address.phone,
         payment_method: req.body.payment_method || null, seller_id: seller?.id || null,
+        courier_service: courier?.name || null, courier_service_id: courier?.id || null, fulfilment_type: fulfilment,
         escrow_status: 'pending', escrow_amount: split.netToSeller,
         seller_gross_subtotal: split.gross, platform_commission_percent: split.percent,
         platform_fee_amount: split.platformFee, notes: req.body.notes || null

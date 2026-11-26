@@ -40,10 +40,10 @@ export const listCourierServices = async (req, res) => {
 export const createCourierService = async (req, res) => {
   try {
     const { name, description, logo_url, is_active, sort_order } = req.body;
-    if (!name || !name.trim()) {
+    if (typeof name !== 'string' || !name.trim() || name.trim().length > 100) {
       return res.status(400).json({
         success: false,
-        message: 'name is required'
+        message: 'name is required (maximum 100 characters)'
       });
     }
     const service = await CourierService.create({
@@ -96,7 +96,15 @@ export const updateCourierService = async (req, res) => {
         message: 'Courier service not found'
       });
     }
-    if (name !== undefined) service.name = name.trim();
+    if (name !== undefined) {
+      if (typeof name !== 'string' || !name.trim() || name.trim().length > 100) {
+        return res.status(400).json({
+          success: false,
+          message: 'name is required (maximum 100 characters)'
+        });
+      }
+      service.name = name.trim();
+    }
     if (description !== undefined) service.description = description;
     if (logo_url !== undefined) service.logo_url = logo_url;
     if (is_active !== undefined) service.is_active = is_active !== false && is_active !== 'false';
