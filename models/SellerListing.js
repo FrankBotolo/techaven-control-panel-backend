@@ -2,15 +2,15 @@ import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
 
 export function listingIdentity(listing) {
-  return listing.status === 'active'
-    ? `${listing.shop_id}:${listing.device_variant_id}:${listing.device_variant_color_id || 0}:${listing.condition}`
-    : null;
-}
+  if (listing.status !== 'active') return null;
 
-function deriveListingFields(listing) {
-  listing.currency = String(listing.currency || 'MWK').toUpperCase();
-  listing.active_identity = listingIdentity(listing);
-  if (listing.status === 'active' && !listing.published_at) listing.published_at = new Date();
+  const currency = String(listing.currency || 'MWK').toUpperCase();
+  const price = Number(listing.price).toFixed(2);
+  const key = [listing.shop_id, listing.device_variant_id, listing.device_variant_color_id || 0, listing.condition, currency, price];
+  if (listing.merchant_sku?.startsWith('seed-20261117-') && listing.details?.seed_unit) {
+    key.push(listing.details.seed_unit);
+  }
+  return key.join(':');
 }
 
 const SellerListing = sequelize.define('SellerListing', {
@@ -32,10 +32,12 @@ const SellerListing = sequelize.define('SellerListing', {
   tableName: 'seller_listings', timestamps: true,
   indexes: [{ unique: true, fields: ['shop_id', 'merchant_sku'] }],
   hooks: {
-    // Derive in beforeSave only: save() fixes its column list before validation, and a field first
-    // changed in beforeValidate is then ignored, so clearing active_identity on archive never persisted
-    // (re-listing the same device + condition hit DUPLICATE_LISTING forever). beforeSave changes are saved.
-    beforeSave: deriveListingFields
+    // Save-time derivation persists identity changes when archiving or repricing.
+    beforeSave(listing) {
+      listing.currency = String(listing.currency || 'MWK').toUpperCase();
+      listing.active_identity = listingIdentity(listing);
+      if (listing.status === 'active' && !listing.published_at) listing.published_at = new Date();
+    }
   }
 });
 

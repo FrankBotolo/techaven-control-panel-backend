@@ -1,3 +1,4 @@
+import { getDeviceFavorites } from './DeviceFavoriteController.js';
 import db from '../models/index.js';
 
 const { Favorite, Product, Category, Shop } = db;
@@ -22,10 +23,12 @@ export const getFavorites = async (req, res) => {
       order: [['id', 'DESC']]
     });
 
+    const devices = req.query.include_devices === "true" ? await getDeviceFavorites(userId) : [];
     const items = favorites.map(favorite => {
       const product = favorite.product;
       return {
         id: `wish_${favorite.id}`,
+        product_id: product.id,
         product: {
           id: product.id,
           name: product.name,
@@ -43,8 +46,8 @@ export const getFavorites = async (req, res) => {
       success: true,
       message: 'Wishlist retrieved',
       data: {
-        items,
-        total_items: items.length
+        items: [...devices.map((device) => ({ ...device, id: `device_${device.device_id}` })), ...items],
+        total_items: items.length + devices.length
       }
     });
   } catch (error) {

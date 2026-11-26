@@ -1,4 +1,5 @@
-import { Op } from 'sequelize';
+import { resolveDeviceIdentity } from '../services/catalogue/deviceIdentity.js';
+import { Op, literal } from 'sequelize';
 import db from '../models/index.js';
 import { CatalogueError, sendCatalogueError } from '../services/catalogue/errors.js';
 import { toDeviceDto, publicListingDetails, publicSpecifications } from '../services/catalogue/dto.js';
@@ -55,6 +56,36 @@ export async function listDevices(req, res) {
       query.listingCategoryWhere = filter.listingWhere;
     }
     if (req.query.search) where.name = { [Op.like]: `%${req.query.search}%` };
+    if (["newest", "price_asc", "price_desc", "rating"].includes(query.sort) && !requestedIds) {
+      const joins = include(query);
+      const brand = joins[0];
+      const variants = joins[3];
+      const offers = variants.include[1];
+      const sortField = query.sort === 'newest'
+        ? [literal('MAX(`variants->seller_listings`.`createdAt`)'), 'DESC']
+        : query.sort === 'price_asc' || query.sort === 'price_desc'
+          ? [literal('MIN(`variants->seller_listings`.`price`)'), query.sort === 'price_asc' ? 'ASC' : 'DESC']
+          : ['name', 'ASC'];
+      const matching = {
+        where,
+        include: [
+          { ...brand, attributes: [] },
+          { ...variants, attributes: [], include: [{
+            ...offers, attributes: [], include: [{ ...offers.include[0], attributes: [] }],
+          }] },
+        ],
+      };
+      const count = await Device.count({ ...matching, distinct: true });
+      const keys = await Device.findAll({ ...matching, attributes: ['id'], group: ['Device.id'],
+        order: [sortField, ['id', 'ASC']], limit: perPage, offset: (page - 1) * perPage, subQuery: false, raw: true });
+      const ids = keys.map(row => row.id);
+      const rows = ids.length ? await Device.findAll({ where: { id: ids }, include: joins }) : [];
+      const ordered = new Map(rows.map(row => [row.id, toDeviceDto(row, { includeOffers: true })]));
+      return res.json({ success: true, message: 'Marketplace devices retrieved', data: {
+        devices: ids.flatMap(id => ordered.has(id) ? [ordered.get(id)] : []),
+        pagination: { current_page: page, per_page: perPage, total_items: count, total_pages: Math.ceil(count / perPage) },
+      } });
+    }
     const { count, rows } = await Device.findAndCountAll({ where, include: include(query), distinct: true, subQuery: false, limit: requestedIds ? 50 : perPage, offset: requestedIds ? 0 : (page - 1) * perPage, order: [['name', 'ASC']] });
     const dtoRows = rows.map((row) => toDeviceDto(row, { includeOffers: true }));
     const devices = requestedIds ? requestedIds.flatMap((id) => dtoRows.filter((row) => row.id === id)) : dtoRows;
@@ -66,8 +97,8 @@ export async function listDevices(req, res) {
 export async function getDevice(req, res) {
   try {
     const identifier = String(req.params.id);
-    const identity = /^\d+$/.test(identifier) ? { id: Number(identifier) } : { slug: identifier };
-    const device = await Device.findOne({ where: { ...identity, is_active: true }, include: include(req.query) });
+    const canonical = await resolveDeviceIdentity(identifier);
+    const device = canonical?.is_active && await Device.findOne({ where: { id: canonical.id, is_active: true }, include: include(req.query) });
     if (!device) throw new CatalogueError('DEVICE_NOT_FOUND', 'Device with available offers not found', 404);
     return res.json({ success: true, message: 'Marketplace device retrieved', data: toDeviceDto(device, { includeOffers: true }) });
   } catch (error) { return sendCatalogueError(res, error); }

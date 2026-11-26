@@ -6,6 +6,8 @@ import { enqueueDevice, enqueueShop } from '../services/catalogue/promotionSync.
 import { createHash } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
+import { reviewedCanonicalSlug } from '../services/catalogue/reviewedIdentity.js';
+import { resolveDeviceIdentity } from '../services/catalogue/deviceIdentity.js';
 
 const apply = process.argv.includes('--apply');
 const report = { applied:apply,created:{shops:0,devices:0,variants:0,listings:0},shops:[],held:heldItems,excluded:excludedItems };
@@ -31,8 +33,10 @@ try {
         const source={...config.source,shop:config.name,sources:offer.sources};
         const [category]=await db.Category.findOrCreate({where:{name:offer.category,shop_id:null},defaults:{status:'approved'},transaction});
         const [brand]=await db.Brand.findOrCreate({where:{slug:offer.brand},defaults:{name:title(offer.brand)},transaction});
-        const [device,newDevice]=await db.Device.findOrCreate({where:{slug:offer.slug},defaults:{name:title(offer.slug),brand_id:brand.id,category_id:category.id,
+        const canonicalSlug = reviewedCanonicalSlug(offer.brand, offer.slug);
+        const [matched,newDevice]=await db.Device.findOrCreate({where:{slug:canonicalSlug},defaults:{name:title(canonicalSlug),brand_id:brand.id,category_id:category.id,
           verification_status:'unverified',source_metadata:source},transaction});
+        const device = matched.canonical_device_id ? await resolveDeviceIdentity(matched.id, transaction) : matched;
         assert.equal(device.brand_id,brand.id,`Brand mismatch: ${offer.slug}`);
         assert.equal(device.category_id,category.id,`Category mismatch: ${offer.slug}`);
         if(newDevice) report.created.devices++;

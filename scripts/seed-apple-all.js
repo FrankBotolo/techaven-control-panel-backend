@@ -1,5 +1,6 @@
 import '../utils/loadEnv.js';
 import db from '../models/index.js';
+import { listingIdentity } from '../models/SellerListing.js';
 import { readFile, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
@@ -66,8 +67,10 @@ try {
         ram_gb: offer.ram_gb ?? null, condition: offer.condition, unresolved: offer.unresolved ?? null,
         device_id: device?.id ?? null, variant_id: variant?.id ?? null };
       if (apply) {
-        const identity = `${shop.id}:${variant.id}:0:${offer.condition}`;
-        const existing = await db.SellerListing.findOne({ where: { active_identity: identity }, transaction });
+        const identity = listingIdentity({ shop_id: shop.id, device_variant_id: variant.id,
+          condition: offer.condition, currency: 'MWK', price: offer.price, status: 'active' });
+        const existing = await db.SellerListing.findOne({ where: { shop_id: shop.id, merchant_sku: `apple-all-${offer.slug}` }, transaction })
+          ?? await db.SellerListing.findOne({ where: { active_identity: identity }, transaction });
         const values = { shop_id: shop.id, device_variant_id: variant.id, condition: offer.condition, currency: 'MWK',
           price: Math.max(Number(existing?.price) || 0, offer.price), quantity: existing?.quantity ?? 1, status: 'active', merchant_sku: `apple-all-${offer.slug}` };
         const listing = existing ? await existing.update(values, { transaction }) : await db.SellerListing.create(values, { transaction });

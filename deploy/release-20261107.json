@@ -1,0 +1,42 @@
+{
+  "date": "2026-11-07",
+  "platform": "linux/amd64",
+  "tag": "20261107-customer-setup",
+  "frontend": {
+    "image": "gshaibu/techaven-frontend:20261107-customer-setup",
+    "local_manifest_digest": "sha256:a840de268c956a7d3176c223fba181dc7a888c8ed0c67ea7d341e4b94c71e434",
+    "source_commit": "6a702ea055fc856a8bf0f7cba4d471e6506a1e74",
+    "github_source_published": true,
+    "registry_published": true,
+    "registry_verified": true,
+    "digest": "sha256:a840de268c956a7d3176c223fba181dc7a888c8ed0c67ea7d341e4b94c71e434"
+  },
+  "backend": {
+    "image": "gshaibu/techaven-backend:20261107-customer-setup",
+    "local_manifest_digest": "sha256:c4d189a37fdd2a750a878226e17b414f3db7d898f6a821c33b7d5abb1647750b",
+    "source_commit": "011b1fdf6e0e9dd1d383872fc692d5ca3a1bb665",
+    "github_source_published": true,
+    "registry_published": true,
+    "registry_verified": true,
+    "digest": "sha256:c4d189a37fdd2a750a878226e17b414f3db7d898f6a821c33b7d5abb1647750b"
+  },
+  "registry_blocker": null,
+  "latest_updated": false,
+  "production_deployed": false,
+  "migration": "202611070001-customer-setup.js",
+  "prior_migration_if_missing": "202611060001-mobile-commerce.js",
+  "rollout_order": [
+    "Back up production database",
+    "Run only the required migrations before starting new app versions",
+    "Deploy versioned backend image",
+    "Deploy versioned frontend image",
+    "Verify login, address setup, payment preferences and shop previews"
+  ],
+  "validation": [
+    "Frontend 76 tests and 15 focused rerun pass",
+    "Backend 44 unit tests and four isolated MySQL integration checks pass",
+    "Linux frontend build, health, API forwarding and SSR home pass",
+    "Linux backend route/migration imports and two setup policy tests pass",
+    "Both images run non-root and omit /app/.env"
+  ]
+}

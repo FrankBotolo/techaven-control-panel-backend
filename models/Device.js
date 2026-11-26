@@ -3,6 +3,7 @@ import sequelize from '../config/database.js';
 
 const Device = sequelize.define('Device', {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  canonical_device_id: { type: DataTypes.INTEGER, allowNull: true },
   brand_id: { type: DataTypes.INTEGER, allowNull: false },
   category_id: { type: DataTypes.INTEGER, allowNull: false },
   slug: { type: DataTypes.STRING(220), allowNull: false, unique: true },

@@ -6,9 +6,12 @@ import { randomUUID } from "node:crypto";
 import fs from "node:fs/promises";
 import db from "../../models/index.js";
 import router from "../../routes/manual-payments.js";
+import checkoutRouter from "../../routes/v2/orders.js";
 import orderRouter from "../../routes/orders.js";
 import addressRouter from "../../routes/shipping-addresses.js";
 import Submission from "../../models/PaymentSubmission.js";
+import { queueManualCheckout, expireManualCheckout, processManualCheckoutNotices } from "../../services/manual-checkout.js";
+import { up as upManualNotices } from "../../database/migrations-js/202611170002-manual-checkout-notices.js";
 import { up } from "../../database/migrations-js/202611060001-mobile-commerce.js";
 import { up as upProofDetails } from "../../database/migrations-js/202611260001-payment-proof-details.js";
 import { saveObject } from "../../services/storage/objectStore.js";
@@ -21,9 +24,7 @@ for (const name of Object.keys(process.env))
 Object.assign(process.env, {
     MANUAL_PAYMENTS_ENABLED: "true",
     MANUAL_PAYMENT_REVIEW_READY: "true",
-    MANUAL_PAYMENT_PROVIDER: "Fixture Bank",
-    MANUAL_PAYMENT_ACCOUNT_NAME: "Techaven Fixture",
-    MANUAL_PAYMENT_ACCOUNT_NUMBER: "123456789",
+    FRONTEND_URL: "https://example.com",
     MANUAL_PAYMENT_WHATSAPP: "265991234567",
     PAYMENT_PROOF_DIR: "/tmp/techaven-private-test",
     JWT_SECRET: "isolated-local-payment-fixture-secret",
@@ -34,6 +35,7 @@ test("private proof submission and transactional multi-order review", async (t) 
     try {
         await up({ sequelize: db.sequelize });
         await up({ sequelize: db.sequelize });
+        await upManualNotices({ sequelize: db.sequelize });
         await upProofDetails({ sequelize: db.sequelize });
         await upProofDetails({ sequelize: db.sequelize });
         const admin = await db.User.create({
@@ -72,6 +74,7 @@ test("private proof submission and transactional multi-order review", async (t) 
         app.use(express.json());
         app.use("/api", router);
         app.use("/api/orders", orderRouter);
+        app.use("/api/v2/orders", checkoutRouter);
     app.use("/api/shipping-addresses", addressRouter);
         server = app.listen(0, "0.0.0.0");
         await new Promise((resolve) => server.once("listening", resolve));
@@ -345,6 +348,88 @@ test("private proof submission and transactional multi-order review", async (t) 
                 assert.equal(await db.Escrow.count(), 2);
             },
         );
+        await t.test("checkout expiry releases stock once and serializes with proof", async () => {
+            const tag = randomUUID();
+            const shop = await db.Shop.create({ name: "Expiry fixture " + tag });
+            const category = await db.Category.create({ name: "Expiry fixture " + tag, status: "approved" });
+            const brand = await db.Brand.create({ name: "Fixture", slug: tag });
+            const device = await db.Device.create({ name: "Fixture", slug: tag, brand_id: brand.id, category_id: category.id });
+            const variant = await db.DeviceVariant.create({ device_id: device.id, canonical_key: tag });
+            const listing = await db.SellerListing.create({ shop_id: shop.id, device_variant_id: variant.id, price: "10.00", condition: "new", quantity: 0, status: "active" });
+            const reserve = async () => {
+                const order = await makeOrder("10.00", "8.00", randomUUID());
+                await order.update({ payment_method: "bank-transfer" });
+                await db.OrderItem.create({ order_id: order.id, seller_listing_id: listing.id,
+                    product_name: "Fixture", quantity: 1, price: "10.00", subtotal: "10.00" });
+                await queueManualCheckout([order], null, "Fixture");
+                return order;
+            };
+            const afterDeadline = new Date(Date.now() + 13 * 60 * 60 * 1000);
+            const unpaid = await reserve();
+            const context = (await (await call(customer, `/orders/${unpaid.id}/payment-context`)).json()).data;
+            assert.equal(new Date(context.deadline).getTime() - (await unpaid.reload()).createdAt.getTime(), 12 * 60 * 60 * 1000);
+            assert.match(context.proof_url, /#payment-proof$/);
+            assert.equal((await call(stranger, `/orders/${unpaid.id}/payment-context`)).status, 404);
+            await Promise.all([expireManualCheckout(unpaid.checkout_group_id, afterDeadline), expireManualCheckout(unpaid.checkout_group_id, afterDeadline)]);
+            assert.equal((await listing.reload()).quantity, 1);
+            assert.equal((await unpaid.reload()).status, "cancelled");
+            const timely = await reserve();
+            assert.equal((await submit(customer, [timely.id])).status, 201);
+            await expireManualCheckout(timely.checkout_group_id, afterDeadline);
+            assert.equal((await timely.reload()).status, "pending");
+            assert.equal((await listing.reload()).quantity, 1);
+            const racing = await reserve();
+            const [response] = await Promise.all([submit(customer, [racing.id]), expireManualCheckout(racing.checkout_group_id, afterDeadline)]);
+            assert.ok([201, 409].includes(response.status));
+            assert.equal((await racing.reload()).status, response.status === 201 ? "pending" : "cancelled");
+            assert.equal((await listing.reload()).quantity, response.status === 201 ? 1 : 2);
+            await seller.update({ shop_id: shop.id });
+            const address = await db.ShippingAddress.create({ user_id: customer.id, name: "Fixture",
+                phone: "000", address: "Area 47", city: "Lilongwe", region: "Area 47" });
+            const photo = "https://example.com/fixture-listing.jpg";
+            await db.ListingImage.create({ listing_id: listing.id, url: photo, is_primary: true });
+            await listing.update({ quantity: 2 });
+            const checkout = payment_method => call(customer, "/v2/orders", {
+                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
+                    payment_method, shipping_address_id: address.id, items: [{ seller_listing_id: listing.id, quantity: 1 }],
+                }),
+            });
+            const manual = await checkout("bank-transfer");
+            assert.equal(manual.status, 201, await manual.clone().text());
+            const manualId = (await manual.json()).data.orders[0].id;
+            const manualContext = (await (await call(customer, `/orders/${manualId}/payment-context`)).json()).data;
+            assert.match(manualContext.proof_url, /#payment-proof$/);
+            assert.equal(manualContext.items[0].product_image, photo);
+            assert.equal((await db.OrderItem.findOne({ where: { order_id: manualId } })).product_image, photo);
+            const mobile = await checkout("airtel-money");
+            assert.equal(mobile.status, 201, await mobile.clone().text());
+            const mobileId = (await mobile.json()).data.orders[0].id;
+            const mobileContext = (await (await call(customer, `/orders/${mobileId}/payment-context`)).json()).data;
+            assert.equal(mobileContext.deadline, null);
+            assert.equal((await listing.reload()).quantity, 0);
+            const cancel = id => call(customer, `/orders/${id}/cancel`, { method: "POST" });
+            assert.equal((await cancel(timely.id)).status, 409);
+            const repeated = await Promise.all([cancel(manualId), cancel(manualId)]);
+            assert.deepEqual(repeated.map(response => response.status), [200, 200]);
+            assert.equal((await db.Order.findByPk(manualId)).status, "cancelled");
+            assert.equal((await listing.reload()).quantity, 1);
+        });
+        await t.test("SMTP failure retries the same proof link without changing the deadline", async () => {
+            const order = await makeOrder("10.00", "8.00", randomUUID());
+            await order.update({ payment_method: "bank-transfer" });
+            await queueManualCheckout([order], "buyer@example.com", "Fixture");
+            const messages = [];
+            await processManualCheckoutNotices({ deliver: async (_email, message) => {
+                messages.push(message);
+                throw new Error("Fixture SMTP failure");
+            } });
+            assert.equal(messages.length, 1);
+            await db.sequelize.query("UPDATE manual_checkout_notices SET next_attempt = NOW(3) WHERE checkout_group_id = ?", { replacements: [order.checkout_group_id] });
+            await processManualCheckoutNotices({ deliver: async (_email, message) => { messages.push(message); } });
+            await processManualCheckoutNotices({ deliver: async () => { assert.fail("Email was already sent"); } });
+            assert.equal(messages.length, 2);
+            assert.deepEqual(messages[1], messages[0]);
+        });
         await t.test("address API validates coordinate pairs and preserves notes", async () => {
             const post = body => call(customer, '/shipping-addresses', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
             const body = {name:'Fixture recipient',phone:'000',address:'Street',city:'Lilongwe',latitude:-13.9626,longitude:33.7741,delivery_notes:'Blue gate'};

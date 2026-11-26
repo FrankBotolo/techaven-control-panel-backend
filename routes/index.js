@@ -31,11 +31,13 @@ import subscriptionPackageRoutes from './subscription-packages.js';
 import subscriptionAccessRoutes from './subscription-access.js';
 import platformSettingsRoutes from './platform-settings.js';
 import v2Routes from './v2/index.js';
+import promotionParticipationRoutes from './promotion-participation.js';
 import promotionRoutes from './promotions.js';
 import healthRoutes from './health.js';
 import uploadRoutes from './uploads.js';
 
 const router = express.Router();
+router.use('/promotion-participation', promotionParticipationRoutes);
 
 router.use(manualPaymentRoutes);
 router.use('/v2', v2Routes);

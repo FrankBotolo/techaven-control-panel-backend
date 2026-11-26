@@ -1,3 +1,4 @@
+import { startManualCheckoutWorker } from './services/manual-checkout.js';
 import './utils/loadEnv.js';
 import express from 'express';
 import compression from 'compression';
@@ -95,6 +96,7 @@ const startServer = async () => {
     }
 
     startSubscriptionExpiryJob();
+    if (process.env.MANUAL_PAYMENTS_ENABLED === "true") startManualCheckoutWorker();
     startAirtelTokenWarmup();
 
     // Start server

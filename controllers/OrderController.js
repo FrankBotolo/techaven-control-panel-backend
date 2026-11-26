@@ -1,3 +1,4 @@
+import { orderItemSummary, orderListingMedia } from '../services/catalogue/order-media.js';
 import { settleManualOrder } from '../services/manual-payment-settlement.js';
 import db from '../models/index.js';
 import { Op } from 'sequelize';
@@ -8,6 +9,7 @@ import { getAirtelTransactionSummary } from '../utils/airtelTransactions.js';
 import { getSellerCommissionPercent, computeSellerEscrowSplit } from '../utils/sellerCommission.js';
 import { verifyPayChanguTxRef, paychanguVerifyDataIndicatesPaid } from '../utils/paychanguVerify.js';
 import { completeOrderPaidWithEscrow } from '../utils/orderEscrowFinalize.js';
+import { enqueueDevice } from '../services/catalogue/promotionSync.js';
 import { restoreOrderItemStock } from '../utils/orderItemStock.js';
 import { fulfilmentFields, submitDeliveryProof } from '../services/order-fulfilment.js';
 
@@ -54,14 +56,7 @@ const generateOrderNumber = () => {
 
 /** Format order for API doc response */
 const formatOrderForApi = (order) => {
-  const items = (order.items || []).map((i) => ({
-    id: i.id,
-    product_id: i.product_id,
-    product_name: i.product_name,
-    quantity: i.quantity,
-    price: parseFloat(i.price),
-    subtotal: parseFloat(i.subtotal)
-  }));
+  const items = (order.items || []).map(orderItemSummary);
   return {
     id: order.id,
     order_number: order.order_number,
@@ -74,6 +69,7 @@ const formatOrderForApi = (order) => {
     shipping_address_id: order.shipping_address_id || null,
     delivery_location: order.delivery_location || null,
     checkout_group_id: order.checkout_group_id || null,
+    can_cancel: order.status === "pending" && order.payment_status === "pending" && !order.manual_payment_submission_id,
     items,
     created_at: order.createdAt || order.created_at,
     paid_at: order.paid_at || null,
@@ -652,9 +648,10 @@ export const getOrder = async (req, res) => {
     const userId = req.user.id;
     const userRole = req.user.role;
     const { order_id } = req.params;
-    const id = order_id.replace('ord_', '');
-
-    let whereClause = { id };
+    const identifier = order_id.replace(/^ord_/, '');
+    const whereClause = /^\d+$/.test(identifier)
+      ? { id: identifier }
+      : { order_number: identifier };
     if (userRole === 'customer') {
       whereClause.user_id = userId;
     }
@@ -666,6 +663,7 @@ export const getOrder = async (req, res) => {
           model: OrderItem,
           as: 'items',
           include: [
+            orderListingMedia,
             {
               model: Product,
               as: 'product',
@@ -968,71 +966,69 @@ export const cancelOrder = async (req, res) => {
   try {
     const userId = req.user.id;
     const { order_id } = req.params;
-    const { reason } = req.body;
-    const id = order_id.replace('ord_', '');
-
-    const order = await Order.findOne({
-      where: {
-        id: id,
-        user_id: userId
-      },
-      include: [{ model: OrderItem, as: 'items' }]
+    const id = order_id.replace(/^ord_/, '');
+    const fail = (message, status) => Object.assign(new Error(message), { status });
+    const { order, cancelled } = await db.sequelize.transaction(async transaction => {
+      const target = await Order.findOne({ where: { id, user_id: userId }, transaction });
+      if (!target) throw fail('Order not found', 404);
+      const where = target.payment_method === 'bank-transfer' && target.checkout_group_id
+        ? { user_id: userId, checkout_group_id: target.checkout_group_id }
+        : { user_id: userId, id };
+      const orders = await Order.findAll({ where, order: [['id', 'ASC']], transaction, lock: transaction.LOCK.UPDATE });
+      const order = orders.find(row => String(row.id) === id);
+      if (!order) throw fail('Order not found', 404);
+      if (orders.every(row => row.status === 'cancelled')) return { order, cancelled: [] };
+      if (orders.some(row => row.status !== 'pending' || row.payment_status !== 'pending' || row.manual_payment_submission_id)) {
+        throw fail('Only pending, unpaid orders without submitted proof can be cancelled.', 409);
+      }
+      const items = await OrderItem.findAll({
+        where: { order_id: orders.map(row => row.id) },
+        order: [['seller_listing_id', 'ASC'], ['product_id', 'ASC'], ['id', 'ASC']], transaction
+      });
+      for (const item of items) {
+        await restoreOrderItemStock(item, { transaction, lock: transaction.LOCK.UPDATE });
+        if (!item.seller_listing_id) continue;
+        const listing = await db.SellerListing.findByPk(item.seller_listing_id, { transaction });
+        const variant = listing && await db.DeviceVariant.findByPk(listing.device_variant_id, { transaction });
+        if (variant) await enqueueDevice(variant.device_id, { transaction, reason: `customer-cancel:${item.id}` });
+      }
+      for (const row of orders) await row.update({ status: 'cancelled', payment_status: 'failed' }, { transaction });
+      return { order, cancelled: orders };
     });
 
-    if (!order) {
-      return res.status(404).json({
-        success: false,
-        message: 'Order not found'
-      });
-    }
-
-    // API doc: can only cancel orders with status = 'pending'
-    if (order.status !== 'pending') {
-      return res.status(400).json({
-        success: false,
-        message: `Cannot cancel order with status: ${order.status}. Only pending orders can be cancelled.`,
-        data: null
-      });
-    }
-
-    // Restore product stock
-    for (const item of order.items) {
-      await restoreOrderItemStock(item);
-    }
-
-    order.status = 'cancelled';
-    await order.save();
-
-    const customerCancelNotification = await Notification.create({
-      user_id: order.user_id,
-      title: 'Order Cancelled',
-      message: `Your order ${order.order_number} has been cancelled.`,
-      type: 'order',
-      order_id: order.id,
-      read: false
-    });
-    sendNotificationEmail(customerCancelNotification, order);
-
-    if (order.seller_id) {
-      const sellerCancelNotification = await Notification.create({
-        user_id: order.seller_id,
+    for (const cancelledOrder of cancelled) {
+      const customerCancelNotification = await Notification.create({
+        user_id: cancelledOrder.user_id,
         title: 'Order Cancelled',
-        message: `Order ${order.order_number} was cancelled by the customer.`,
+        message: `Your order ${cancelledOrder.order_number} has been cancelled.`,
         type: 'order',
-        order_id: order.id,
+        order_id: cancelledOrder.id,
         read: false
       });
-      sendNotificationEmail(sellerCancelNotification, order);
-    }
+      sendNotificationEmail(customerCancelNotification, cancelledOrder);
 
-    await logAudit({
-      ...auditContext(req),
-      action: 'customer.order.cancel',
-      actor_user_id: userId,
-      target_type: 'order',
-      target_id: order.id,
-      metadata: { order_number: order.order_number }
-    });
+      if (cancelledOrder.seller_id) {
+        const sellerCancelNotification = await Notification.create({
+          user_id: cancelledOrder.seller_id,
+          title: 'Order Cancelled',
+          message: `Order ${cancelledOrder.order_number} was cancelled by the customer.`,
+          type: 'order',
+          order_id: cancelledOrder.id,
+          read: false
+        });
+        sendNotificationEmail(sellerCancelNotification, cancelledOrder);
+      }
+
+      await logAudit({
+        ...auditContext(req),
+        action: 'customer.order.cancel',
+        actor_user_id: userId,
+        target_type: 'order',
+        target_id: cancelledOrder.id,
+        metadata: { order_number: cancelledOrder.order_number }
+      });
+
+    }
 
     const orderWithItems = await Order.findByPk(order.id, { include: [{ model: OrderItem, as: 'items' }] });
     return res.json({
@@ -1041,6 +1037,7 @@ export const cancelOrder = async (req, res) => {
       data: formatOrderForApi(orderWithItems)
     });
   } catch (error) {
+    if (error.status) return res.status(error.status).json({ success: false, message: error.message });
     console.error('Cancel order error:', error);
     return res.status(500).json({
       success: false,

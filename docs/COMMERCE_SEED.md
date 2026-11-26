@@ -21,7 +21,6 @@ Left out: the dump's customer account, orders, addresses, payment methods, sessi
 
 - Rows that already exist are never changed. Matching is by slug (brands, devices), `canonical_key` (variants), name (categories, shops) and shop + SKU or active identity (listings). Photos are added only where a device or listing has none.
 - `http://localhost:8000` media URLs become `PUBLIC_API_BASE_URL`. The files themselves are not in git: extract `backend-uploads.tar.gz` from the handoff into `uploads/`.
-- Ten pairs of active listings differ only by price. The second of each pair gets a price suffix on `active_identity`; saving it in the app will report a duplicate until one of the pair is archived.
 - On an empty database run this before `seed:catalogue`, which recognises devices by model. The other order can leave two entries for the same phone.
 
 Device data: [TechAPI](https://github.com/GetTechAPI/TechAPI), CC BY-SA 4.0. Show the credit and share adapted datasets under the same licence.

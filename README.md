@@ -2,6 +2,17 @@
 
 This is the Node.js/Express version of the Chiwaya server, converted from Laravel PHP.
 
+## Repository Navigation
+
+- [`AGENTS.md`](AGENTS.md) — working protocol for coding agents and contributors using agents.
+- [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) — current handoff, known risks, and next actions.
+- [`docs/COMPONENT_MAP.md`](docs/COMPONENT_MAP.md) — navigation map for routes, controllers, services, models, infrastructure, and deeper documentation.
+- [`docs/DECISIONS.md`](docs/DECISIONS.md) — durable decisions, including documentation authority and unresolved naming.
+- [`API_DOCUMENTATION.md`](API_DOCUMENTATION.md) — primary approved backend API contract.
+- [`docs/CATALOGUE_API_V2.md`](docs/CATALOGUE_API_V2.md) — catalogue marketplace v2 API, migrations, import, and compatibility guide.
+
+The repository currently uses Chiwaya, Techaven, and TecHaven names in different places. The canonical name has not been established; see the decisions record before undertaking naming changes.
+
 ## Features
 
 - ✅ User Authentication (Register, Login, OTP Verification)
@@ -61,6 +72,20 @@ npm start
 
 The server will start on `http://localhost:8000` (or the port specified in `.env`).
 
+### Docker Compose
+
+The Compose stack runs exactly two services: `backend` and `database` (MySQL 8.4).
+
+```bash
+cp .env.example .env
+# Replace JWT_SECRET, DB_PASSWORD, and DB_ROOT_PASSWORD before shared or production use.
+docker compose up --build -d
+docker compose ps
+curl http://localhost:8000/health
+```
+
+Uploaded files, logs, and MySQL data are stored in named volumes. `DB_BOOTSTRAP=true` performs a non-destructive schema bootstrap suitable for a fresh database. Set it to `false` for an existing staging/production database and apply reviewed migrations separately. Stop the stack with `docker compose down`; add `--volumes` only when you intentionally want to delete all container-managed data.
+
 ## API Endpoints
 
 ### Authentication
@@ -80,7 +105,7 @@ The server will start on `http://localhost:8000` (or the port specified in `.env
 - `POST /api/user/change-password` - Change password
 
 ### Subscriptions (admin + seller)
-- **User access (per JWT):** `GET /api/plans`, `POST /api/subscribe`, `GET /api/subscription/transactions`, `GET /api/subscription/status/:userId`, `GET /api/subscription/ping` (gated). Details: `SUBSCRIPTION_API.md`, `docs/SUBSCRIPTION_ACCESS_ARCHITECTURE.md`.
+- **User access (per JWT):** `GET /api/plans`, `POST /api/subscribe`, `GET /api/subscription/transactions`, `GET /api/subscription/status/:userId`, `GET /api/subscription/ping` (gated). See the user-subscription sections of `API_DOCUMENTATION.md`; the previously referenced dedicated subscription documents are not present in this checkout.
 - **Shop subscriptions:** public `GET /api/subscription-packages`; admin `GET|POST|PATCH|DELETE /api/admin/subscription-packages`, `GET|PATCH /api/admin/shop-subscriptions`; seller `GET …/subscription`, `POST …/subscription/subscribe`, `POST …/subscription/pay/paychangu`, cancel, resume.
 - **Loyalty (MWK per point):** seller `PATCH /api/sellers/:shopId/shop` body `points_mwk_per_point`; admin `GET|PATCH /api/admin/platform-settings` field `default_points_mwk_per_point` (general bucket `shop_id` 0). See `API_DOCUMENTATION.md` (sections 2b, 15b, Admin Platform settings).
 - See `docs/SUBSCRIPTION_PACKAGES.md`

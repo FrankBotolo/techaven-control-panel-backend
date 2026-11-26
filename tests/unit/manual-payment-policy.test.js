@@ -11,16 +11,15 @@ test("manual payment is gated by complete instructions and a ready reviewer", ()
     const env = {
         MANUAL_PAYMENTS_ENABLED: "true",
         MANUAL_PAYMENT_REVIEW_READY: "true",
-        MANUAL_PAYMENT_PROVIDER: "Fixture Bank",
-        MANUAL_PAYMENT_ACCOUNT_NAME: "Techaven",
-        MANUAL_PAYMENT_ACCOUNT_NUMBER: "12345678",
+        FRONTEND_URL: "https://example.com",
         MANUAL_PAYMENT_WHATSAPP: "265991234567",
     };
     assert.equal(paymentInstructions(env).enabled, true);
+    assert.equal(paymentInstructions(env).destinations.length, 7);
     assert.equal(
         paymentInstructions({
             ...env,
-            MANUAL_PAYMENT_ACCOUNT_NUMBER: "REPLACE_ME",
+            FRONTEND_URL: "",
         }).enabled,
         false,
     );
@@ -55,4 +54,20 @@ test("coordinates are optional and notes survive a manual address", () => {
         latitude: null,
         longitude: null,
     });
+});
+
+
+test("manual payment preserves configured portal accounts and exposes storefront destinations", () => {
+    const env = {
+        MANUAL_PAYMENTS_ENABLED: "true", MANUAL_PAYMENT_REVIEW_READY: "true",
+        FRONTEND_URL: "https://shop.test", MANUAL_PAYMENT_WHATSAPP: "265991234567",
+        MANUAL_PAYMENT_PROVIDER: "Configured Bank", MANUAL_PAYMENT_ACCOUNT_NAME: "Configured Merchant",
+        MANUAL_PAYMENT_ACCOUNT_NUMBER: "123456789",
+    };
+    const result = paymentInstructions(env);
+    assert.equal(result.enabled, true);
+    assert.equal(result.provider, "Configured Bank");
+    assert.equal(result.account_number, "123456789");
+    assert.equal(result.destinations.length, 1);
+    assert.equal(paymentInstructions({ ...env, MANUAL_PAYMENT_ACCOUNT_NUMBER: "" }).enabled, false);
 });

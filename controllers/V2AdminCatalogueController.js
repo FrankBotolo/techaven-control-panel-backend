@@ -208,6 +208,7 @@ export async function createMedia(req, res) {
   try {
     if (!req.body.device_id || !req.body.url) throw new CatalogueError('INVALID_MEDIA', 'device_id and url are required');
     const media = await DeviceMedia.create(req.body);
+    await enqueueDevice(media.device_id, { reason: `media-create:${media.id}` });
     return ok(res, 'Media created', media, 201);
   } catch (error) { return sendCatalogueError(res, error); }
 }
@@ -230,6 +231,7 @@ export async function updateMedia(req, res) {
     if (!media) throw new CatalogueError('MEDIA_NOT_FOUND', 'Media not found', 404);
     for (const field of ['url', 'storage_key', 'media_type', 'sort_order', 'is_primary', 'source', 'device_variant_id', 'device_variant_color_id']) if (req.body[field] !== undefined) media[field] = req.body[field];
     await media.save();
+    await enqueueDevice(media.device_id, { reason: `media-update:${media.id}:${media.updatedAt.toISOString()}` });
     return ok(res, 'Media updated', media);
   } catch (error) { return sendCatalogueError(res, error); }
 }

@@ -1,10 +1,11 @@
+import { cataloguePhoto } from '../services/catalogue/order-media.js';
 import db from '../models/index.js';
 import { assertFinalPrice } from '../services/marketplace/final-price.js';
 import { publicListingDetails } from '../services/catalogue/dto.js';
 import { CatalogueError, sendCatalogueError } from '../services/catalogue/errors.js';
 
-const { Cart, SellerListing, ListingImage, DeviceVariant, Device, Brand, Shop } = db;
-const listingInclude = { model: SellerListing, as: 'seller_listing', include: [{ model: ListingImage, as: 'images' }, { model: Shop, as: 'shop', attributes: ['id', 'name', 'status', 'application_status'] }, { model: DeviceVariant, as: 'variant', include: [{ model: Device, as: 'device', include: [{ model: Brand, as: 'brand' }] }] }] };
+const { Cart, SellerListing, ListingImage, DeviceVariant, Device, DeviceMedia, Brand, Shop } = db;
+const listingInclude = { model: SellerListing, as: 'seller_listing', include: [{ model: ListingImage, as: 'images' }, { model: Shop, as: 'shop', attributes: ['id', 'name', 'status', 'application_status'] }, { model: DeviceVariant, as: 'variant', include: [{ model: Device, as: 'device', include: [{ model: Brand, as: 'brand' }, { model: DeviceMedia, as: 'media' }] }] }] };
 const eligible = (listing) => listing?.status === 'active' && listing.quantity > 0 && listing.shop?.status === 'active' && listing.shop?.application_status === 'approved' && listing.variant?.is_active && listing.variant.device?.is_active && listing.variant.device.brand?.is_active;
 
 const dto = (item) => ({
@@ -22,8 +23,8 @@ export function publicCartListing(value) {
   const variant=row.variant,device=variant.device;
   return {id:row.id,price:row.price,quantity:row.quantity,condition:row.condition,currency:row.currency,
     details:publicListingDetails(row.details),shop:{id:row.shop.id,name:row.shop.name},
-    images:[],variant:{id:variant.id,ram_gb:variant.ram_gb,storage_gb:variant.storage_gb,sim_type:variant.sim_type,
-      device:{id:device.id,name:device.name,slug:device.slug,primary_image_url:device.primary_image_url}}};
+    images:(cataloguePhoto(device) ? [] : row.images ?? []).map(({url,is_primary}) => ({url,is_primary})),variant:{id:variant.id,ram_gb:variant.ram_gb,storage_gb:variant.storage_gb,sim_type:variant.sim_type,
+      device:{id:device.id,name:device.name,slug:device.slug,primary_image_url:device.primary_image_url,media:(device.media ?? []).map(({url,is_primary,media_type}) => ({url,is_primary,media_type}))}}};
 }
 
 export async function getCart(req, res) {

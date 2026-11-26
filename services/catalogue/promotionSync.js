@@ -7,6 +7,7 @@ const iso = (value) => new Date(value || Date.now()).toISOString();
 const key = (kind, id, reason) => `${kind}:${id}:${reason}`.slice(0, 255);
 
 export async function projectDevice(deviceId, transaction) {
+  const observedAt = new Date().toISOString();
   const device = await Device.findByPk(deviceId, {
     include: [
       { model: Brand, as: 'brand' },
@@ -14,7 +15,7 @@ export async function projectDevice(deviceId, transaction) {
       { model: DeviceMedia, as: 'media', separate: true, limit: 1, order: [['is_primary', 'DESC'], ['sort_order', 'ASC'], ['id', 'ASC']] },
       { model: DeviceVariant, as: 'variants', required: false, include: [{
         model: SellerListing, as: 'seller_listings', required: false,
-        include: [{ model: Shop, as: 'shop', attributes: ['id', 'status', 'application_status'] }]
+        include: [{ model: Shop, as: 'shop', attributes: ['id', 'name', 'status', 'application_status'] }]
       }] }
     ],
     transaction
@@ -25,7 +26,16 @@ export async function projectDevice(deviceId, transaction) {
       listing.status === 'active' && listing.quantity > 0 && listing.shop?.status === 'active' && listing.shop?.application_status === 'approved'
     )
   ));
+  const shops = new Map((device.variants || []).flatMap((variant) =>
+    (variant.seller_listings || []).filter((listing) =>
+      variant.is_active && listing.status === 'active' && listing.quantity > 0 &&
+      listing.shop?.status === 'active' && listing.shop?.application_status === 'approved'
+    )
+      .map(({ shop }) => [String(shop.id), shop.name])
+  ));
   return {
+    shopIds: [...shops.keys()],
+    shopNames: [...new Set(shops.values())].sort().join(', '),
     externalId: `device:${device.id}`,
     slug: device.slug,
     name: device.name,
@@ -33,7 +43,7 @@ export async function projectDevice(deviceId, transaction) {
     category: device.category?.name || null,
     thumbnailUrl: device.primary_image_url || device.media?.[0]?.url || null,
     active,
-    sourceUpdatedAt: iso(device.updatedAt)
+    sourceUpdatedAt: observedAt
   };
 }
 
@@ -99,11 +109,30 @@ export async function enqueueTombstone(kind, id, snapshot = {}, { transaction, r
     externalId,
     slug: snapshot.slug || `${kind}-${id}`,
     name: snapshot.name || `Deleted ${kind} ${id}`,
-    ...(kind === 'shop' ? { logoUrl: null, locationLabel: null, verified: false } : { brand: null, category: null, thumbnailUrl: null }),
+    ...(kind === 'shop' ? { logoUrl: null, locationLabel: null, verified: false } : { brand: null, category: null, thumbnailUrl: null, shopIds: [], shopNames: null }),
     active: false,
     sourceUpdatedAt: new Date().toISOString()
   };
   return append(kind, externalId, payload, key(kind, id, reason), transaction);
+}
+
+export async function snapshot(kind, after, limit) {
+  const model = kind === 'device' ? Device : Shop;
+  const project = kind === 'device' ? projectDevice : projectShop;
+  const rows = await model.findAll({
+    where: { id: { [Op.gt]: after } }, attributes: ['id'], order: [['id', 'ASC']], limit: limit + 1
+  });
+  const page = rows.slice(0, limit);
+  const items = [];
+  for (const row of page) {
+    const item = await project(row.id);
+    if (item) items.push(item);
+  }
+  return {
+    items,
+    next_cursor: String(page.at(-1)?.id ?? after),
+    has_more: rows.length > limit
+  };
 }
 
 export async function feed(kind, after = 0, limit = 100) {
