@@ -16,7 +16,9 @@
     "migrate:v2": "node scripts/run-migrations.js up",
     "migrate:v2:status": "node scripts/run-migrations.js status",
     "migrate:v2:dry-run": "node scripts/run-migrations.js up --dry-run",
-    "migrate:v2:down": "node scripts/run-migrations.js down",
+    "migrate:v2:down": "node scripts/run-migrations.js down",,
+    "migrate:v2:baseline": "node scripts/baseline-migrations.js",
+    "migrate:v2:baseline:apply": "node scripts/baseline-migrations.js --apply"
     "catalog:import:techapi": "node scripts/import-techapi.js",
     "catalog:migrate-legacy": "node scripts/migrate-legacy-products.js",
     "catalog:backfill-promotions": "node scripts/backfill-promotion-catalogue.js",
