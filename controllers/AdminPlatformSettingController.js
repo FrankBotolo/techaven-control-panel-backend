@@ -9,6 +9,7 @@ const toDto = (row) => ({
     row && row.default_points_mwk_per_point != null
       ? parseFloat(row.default_points_mwk_per_point)
       : null,
+  shops_tab_hidden: Boolean(row?.shops_tab_hidden),
   updated_at: row?.updatedAt || row?.updated_at || null
 });
 
@@ -35,13 +36,20 @@ export const getSettings = async (req, res) => {
 
 export const updateSettings = async (req, res) => {
   try {
-    const { seller_commission_percent, default_points_mwk_per_point } = req.body;
-    if (seller_commission_percent === undefined && default_points_mwk_per_point === undefined) {
+    const { seller_commission_percent, default_points_mwk_per_point, shops_tab_hidden } = req.body;
+    if (
+      seller_commission_percent === undefined &&
+      default_points_mwk_per_point === undefined &&
+      shops_tab_hidden === undefined
+    ) {
       return res.status(400).json({
         success: false,
         message:
-          'Provide seller_commission_percent (0–100) and/or default_points_mwk_per_point (MWK per point for general/legacy balances, or null to disable)'
+          'Provide seller_commission_percent (0–100), default_points_mwk_per_point (MWK per point for general/legacy balances, or null to disable) and/or shops_tab_hidden (true or false)'
       });
+    }
+    if (shops_tab_hidden !== undefined && typeof shops_tab_hidden !== 'boolean') {
+      return res.status(400).json({ success: false, message: 'shops_tab_hidden must be true or false' });
     }
 
     let row = await PlatformSetting.findOne({ order: [['id', 'ASC']] });
@@ -77,6 +85,11 @@ export const updateSettings = async (req, res) => {
         row.default_points_mwk_per_point = r;
         metadata.default_points_mwk_per_point = r;
       }
+    }
+
+    if (shops_tab_hidden !== undefined) {
+      row.shops_tab_hidden = shops_tab_hidden;
+      metadata.shops_tab_hidden = shops_tab_hidden;
     }
 
     await row.save();

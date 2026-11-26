@@ -23,6 +23,12 @@ const PlatformSetting = sequelize.define(
       type: DataTypes.DECIMAL(12, 4),
       allowNull: true,
       defaultValue: null
+    },
+    /** Hides the storefront's Shops tab and links; products and shop pages stay reachable. */
+    shops_tab_hidden: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
     }
   },
   {

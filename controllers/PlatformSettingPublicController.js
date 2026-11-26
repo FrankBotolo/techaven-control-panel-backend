@@ -16,7 +16,8 @@ export const getPublic = async (req, res) => {
         default_points_mwk_per_point:
           row.default_points_mwk_per_point != null
             ? parseFloat(row.default_points_mwk_per_point)
-            : null
+            : null,
+        shops_tab_hidden: Boolean(row.shops_tab_hidden)
       }
     });
   } catch (error) {
